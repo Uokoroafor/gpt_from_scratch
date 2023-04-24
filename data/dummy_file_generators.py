@@ -1,7 +1,7 @@
 import os
 import random
 from typing import List, Dict, Optional
-from data_handler import read_in_data
+from data.data_handler import read_in_data
 
 
 def generate_dummy_char_data(char_dict: Dict[str, List[str]], min_length: Optional[int] = 1,
@@ -216,7 +216,7 @@ if __name__ == '__main__':
                   'blue', 'red', 'green', 'yellow', 'orange', 'purple', 'black', 'white', 'gray']
     adverbs = ['quickly', 'slowly', 'quietly', 'loudly', 'happily', 'sadly', 'angrily', 'calmly', 'easily', 'hardly']
     prepositions = ['in', 'on', 'at', 'under', 'over', 'above', 'below', 'behind', 'beside','to']
-    determiners = ['the', 'a', 'an', 'this', 'that', 'these', 'those', 'my', 'your', 'its', 'our', 'their']
+    determiners = ['the', 'a', 'an', 'this', 'that', 'my', 'your', 'its', 'our', 'their']
     conjunctions = ['and', 'but', 'or', 'so', 'yet', 'for', 'nor']
     pronouns = ['I', 'you', 'he', 'she', 'it', 'we', 'they', 'me', 'him', 'her', 'us', 'them']
     interjections = ['wow', 'oh', 'oops', 'ah', 'hmm', 'huh', 'yuck', 'yikes', 'yay', 'uh']

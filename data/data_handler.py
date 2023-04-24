@@ -1,4 +1,5 @@
-from typing import Union, List, Dict, Tuple
+from typing import Union, List, Dict, Tuple, Callable
+import torch
 
 
 # This is a file for generating dummy data for testing purposes.
@@ -84,7 +85,7 @@ def create_simple_encoder_decoder(char_dict: Dict[str, List[str]]) -> Tuple[Dict
     for char_type in char_dict.keys():
         char_list += char_dict[char_type]
 
-    char_list = list(set(char_list))
+    char_list = sorted(list(set(char_list)))
 
     # Add the characters to the encoder and decoder dictionaries
     for i, char in enumerate(char_list):
@@ -99,8 +100,18 @@ def create_simple_encoder_decoder(char_dict: Dict[str, List[str]]) -> Tuple[Dict
     return encoder_dict, decoder_dict, encode, decode
 
 
-# Define the function to generate the dummy data
+def tensor_to_string(tensor: torch.Tensor, decode: Callable) -> str:
+    """Convert a tensor to a string using the decode function."""
+    # Convert the tensor to a list
+    tensor_list = tensor.tolist()
 
+    # Decode the tensor
+    string = decode(tensor_list)
+
+    # Join the list into a string
+    string = ''.join(string)
+
+    return string
 
 
 if __name__ == '__main__':
