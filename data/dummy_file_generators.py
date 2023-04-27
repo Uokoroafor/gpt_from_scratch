@@ -88,6 +88,59 @@ def generate_dummy_word_data(pos_dict: Dict[str, List[str]], min_length: Optiona
 
     return dummy_data
 
+def generate_building_blocks_data(min_length: Optional[int]=5, max_length: Optional[int]=100,num_lines: int = 5, seed: Optional[int] = 1111) -> str:
+    """Generate dummy data that follows the rules defined below"""
+
+    # data= 'abcde\n '
+
+    # Rule 1 whenever c is chosen, the next character must be d or b
+    # Rule 2 whenever e is chosen, the next character must be a new line
+    # Rule 3 whenever a is chosen, the next character cannot be a new line
+    # Rule 4 first character in a line cannot be new line or space
+
+    # Set the random seed manually for reproducibility.
+    random.seed(seed)
+
+    output_data = ''
+
+    for i in range(num_lines):
+        # Generate the length of the dummy data
+        length = random.randint(min_length, max_length)
+        # Generate the dummy data
+        for char in range(length):
+            if char == 0:
+                char_value = random.choice('abcde')
+                output_data += char_value
+            elif output_data[-1] == 'c':
+                char_value = random.choice('db')
+                output_data += char_value
+            elif output_data[-1] == 'e':
+                char_value = '\n'
+                output_data += char_value
+            elif output_data[-1] == 'a':
+                char_value = random.choice('abcde ')
+                output_data += char_value
+            else:
+                char_value = random.choice('abcde \n')
+                output_data += char_value
+
+            if char_value == '\n':
+                break
+        # Add a new line if the last character is not a new line
+        if output_data[-1] != '\n':
+            output_data += '\n'
+
+    # Remove the last line break
+    output_data = output_data[:-1]
+    return output_data
+
+
+
+
+
+
+
+
 
 def remove_non_unique_lines(string: str) -> str:
     """Remove non-unique lines from a string.
@@ -210,30 +263,43 @@ if __name__ == '__main__':
     # save_data_as_txt(dummy_data, path='asimov/asimov_data_1000.txt')
 
     # Create the pos_dict
-    nouns = ['cat', 'dog', 'house', 'car', 'tree', 'book', 'computer', 'phone', 'table', 'chair']
-    verbs = ['runs', 'walks', 'jumps', 'talks', 'speaks', 'writes', 'reads', 'thinks', 'sleeps', 'eats']
-    adjectives = ['quick', 'small', 'tall', 'short', 'fat', 'thin', 'smart', 'robotic', 'large', 'dainty', 'brown',
-                  'blue', 'red', 'green', 'yellow', 'orange', 'purple', 'black', 'white', 'gray']
-    adverbs = ['quickly', 'slowly', 'quietly', 'loudly', 'happily', 'sadly', 'angrily', 'calmly', 'easily', 'hardly']
-    prepositions = ['in', 'on', 'at', 'under', 'over', 'above', 'below', 'behind', 'beside','to']
-    determiners = ['the', 'a', 'an', 'this', 'that', 'my', 'your', 'its', 'our', 'their']
-    conjunctions = ['and', 'but', 'or', 'so', 'yet', 'for', 'nor']
-    pronouns = ['I', 'you', 'he', 'she', 'it', 'we', 'they', 'me', 'him', 'her', 'us', 'them']
-    interjections = ['wow', 'oh', 'oops', 'ah', 'hmm', 'huh', 'yuck', 'yikes', 'yay', 'uh']
+    # nouns = ['cat', 'dog', 'house', 'car', 'tree', 'book', 'computer', 'phone', 'table', 'chair']
+    # verbs = ['runs', 'walks', 'jumps', 'talks', 'speaks', 'writes', 'reads', 'thinks', 'sleeps', 'eats']
+    # adjectives = ['quick', 'small', 'tall', 'short', 'fat', 'thin', 'smart', 'robotic', 'large', 'dainty', 'brown',
+    #               'blue', 'red', 'green', 'yellow', 'orange', 'purple', 'black', 'white', 'gray']
+    # adverbs = ['quickly', 'slowly', 'quietly', 'loudly', 'happily', 'sadly', 'angrily', 'calmly', 'easily', 'hardly']
+    # prepositions = ['in', 'on', 'at', 'under', 'over', 'above', 'below', 'behind', 'beside','to']
+    # determiners = ['the', 'a', 'an', 'this', 'that', 'my', 'your', 'its', 'our', 'their']
+    # conjunctions = ['and', 'but', 'or', 'so', 'yet', 'for', 'nor']
+    # pronouns = ['I', 'you', 'he', 'she', 'it', 'we', 'they', 'me', 'him', 'her', 'us', 'them']
+    # interjections = ['wow', 'oh', 'oops', 'ah', 'hmm', 'huh', 'yuck', 'yikes', 'yay', 'uh']
+    #
+    # pos_dict = {'nouns': nouns, 'verbs': verbs, 'adjectives': adjectives, 'adverbs': adverbs,
+    #             'prepositions': prepositions,
+    #             'determiners': determiners, 'conjunctions': conjunctions, 'pronouns': pronouns,
+    #             'interjections': interjections}
+    #
+    # # Generate the dummy data
+    # dummy_data = generate_dummy_word_data(pos_dict, min_length=5, max_length=100, num_lines=1000, seed=1111)
+    #
+    # # Remove any non unique lines
+    # dummy_data = shuffle_lines(remove_non_unique_lines(dummy_data))
+    #
+    # # Check that the determinants are correct
+    # dummy_data = determinant_check(dummy_data)
+    #
+    # # Save the data
+    # save_data_as_txt(dummy_data, path='madlibs/dummy_data.txt')
 
-    pos_dict = {'nouns': nouns, 'verbs': verbs, 'adjectives': adjectives, 'adverbs': adverbs,
-                'prepositions': prepositions,
-                'determiners': determiners, 'conjunctions': conjunctions, 'pronouns': pronouns,
-                'interjections': interjections}
+    basic_data = generate_building_blocks_data(100, 1000, 1111)
 
-    # Generate the dummy data
-    dummy_data = generate_dummy_word_data(pos_dict, min_length=5, max_length=100, num_lines=1000, seed=1111)
+    # Shuffle the lines
+    basic_data = shuffle_lines(basic_data)
 
     # Remove any non unique lines
-    dummy_data = shuffle_lines(remove_non_unique_lines(dummy_data))
+    basic_data = remove_non_unique_lines(basic_data)
 
-    # Check that the determinants are correct
-    dummy_data = determinant_check(dummy_data)
+    print(basic_data)
 
     # Save the data
-    save_data_as_txt(dummy_data, path='madlibs/dummy_data.txt')
+    save_data_as_txt(basic_data, path='basic_data/basic_data_1000.txt')

@@ -71,12 +71,12 @@ def create_simple_encoder_decoder(char_dict: Dict[str, List[str]]) -> Tuple[Dict
     decoder_dict = dict()
 
     # Add the special tokens
-    encoder_dict['<pad>'] = 0
-    decoder_dict[0] = '<pad>'
-    encoder_dict['<sos>'] = 1
-    decoder_dict[1] = '<sos>'
-    encoder_dict['<eos>'] = 2
-    decoder_dict[2] = '<eos>'
+    # encoder_dict['<pad>'] = 0
+    # decoder_dict[0] = '<pad>'
+    # encoder_dict['<sos>'] = 1
+    # decoder_dict[1] = '<sos>'
+    # encoder_dict['<eos>'] = 2
+    # decoder_dict[2] = '<eos>'
 
     # Encode based on the position in the dictionary
     # List all the character values in the dict
@@ -87,10 +87,12 @@ def create_simple_encoder_decoder(char_dict: Dict[str, List[str]]) -> Tuple[Dict
 
     char_list = sorted(list(set(char_list)))
 
+    k = len(encoder_dict.keys())
+
     # Add the characters to the encoder and decoder dictionaries
     for i, char in enumerate(char_list):
-        encoder_dict[char] = i + 3
-        decoder_dict[i + 3] = char
+        encoder_dict[char] = i + k
+        decoder_dict[i + k] = char
 
 
     # create encode, decode functions
