@@ -1,7 +1,7 @@
 import os
 import random
 from typing import List, Dict, Optional
-from data.data_handler import read_in_data
+from utils.data_handler import save_data_as_txt
 
 
 def generate_dummy_char_data(char_dict: Dict[str, List[str]], min_length: Optional[int] = 1,
@@ -88,7 +88,9 @@ def generate_dummy_word_data(pos_dict: Dict[str, List[str]], min_length: Optiona
 
     return dummy_data
 
-def generate_building_blocks_data(min_length: Optional[int]=5, max_length: Optional[int]=100,num_lines: int = 5, seed: Optional[int] = 1111) -> str:
+
+def generate_building_blocks_data(min_length: Optional[int] = 5, max_length: Optional[int] = 100, num_lines: int = 5,
+                                  seed: Optional[int] = 1111) -> str:
     """Generate dummy data that follows the rules defined below"""
 
     # data= 'abcde\n '
@@ -133,13 +135,6 @@ def generate_building_blocks_data(min_length: Optional[int]=5, max_length: Optio
     # Remove the last line break
     output_data = output_data[:-1]
     return output_data
-
-
-
-
-
-
-
 
 
 def remove_non_unique_lines(string: str) -> str:
@@ -201,58 +196,8 @@ def determinant_check(string: str) -> str:
     return string
 
 
-def save_data_as_txt(data: str, path: Optional[str] = None) -> None:
-    """Save the data as a txt file. Add one to the name if the file already exists.
-
-    Args:
-        data (str): The data to save.
-        path (str): The path to save the data to.
-    """
-
-    if path is None:
-        path = 'data/dummy_data.txt'
-    else:
-        path = path
-
-    while os.path.exists(path):
-        # Get the numeric characters from the right side of the string
-        numerics = get_numerics_from_string(path)
-        # Add one to the numerics
-        numerics = int(numerics) + 1
-        # Add the numerics to the path
-        path = path.replace(str(numerics - 1), str(numerics)) if numerics > 1 else path[:-4] + '_1.txt'
-
-    # Save the data as a txt file
-    with open(path, 'w') as f:
-        f.write(data)
-
-
-def get_numerics_from_string(string: str) -> int:
-    """Get the numeric characters from the right side of the string.
-
-    Args:
-        string (str): The string to get the numeric characters from.
-
-    Returns:
-        int: The numeric characters from the right side of the string.
-    """
-    # Get the numeric characters from the right side of the string
-    numerics = ''
-    string = string[:-4]
-    for char in string[::-1]:
-        if char.isdigit():
-            numerics += char
-        else:
-            break
-    # Reverse the string
-    numerics = numerics[::-1]
-    if len(numerics) == 0:
-        numerics = 0
-
-    return numerics
-
-
 if __name__ == '__main__':
+    pass
     # # First we read in the data 'data/asimov/asimov_data_1000.txt'
     # char_dict, data = read_in_data('data/asimov/asimov_data_1000.txt')
     #
@@ -260,9 +205,9 @@ if __name__ == '__main__':
     # dummy_data = generate_dummy_char_data(char_dict, min_length=5, max_length=100, num_lines=1000, seed=1111)
     #
     # # Save the data
-    # save_data_as_txt(dummy_data, path='asimov/asimov_data_1000.txt')
-
-    # Create the pos_dict
+    # save_data_as_txt(dummy_data, path='../data/asimov/asimov_data_1000.txt')
+    #
+    # # Create the pos_dict
     # nouns = ['cat', 'dog', 'house', 'car', 'tree', 'book', 'computer', 'phone', 'table', 'chair']
     # verbs = ['runs', 'walks', 'jumps', 'talks', 'speaks', 'writes', 'reads', 'thinks', 'sleeps', 'eats']
     # adjectives = ['quick', 'small', 'tall', 'short', 'fat', 'thin', 'smart', 'robotic', 'large', 'dainty', 'brown',
@@ -289,17 +234,17 @@ if __name__ == '__main__':
     # dummy_data = determinant_check(dummy_data)
     #
     # # Save the data
-    # save_data_as_txt(dummy_data, path='madlibs/dummy_data.txt')
-
-    basic_data = generate_building_blocks_data(100, 1000, 1111)
-
-    # Shuffle the lines
-    basic_data = shuffle_lines(basic_data)
-
-    # Remove any non unique lines
-    basic_data = remove_non_unique_lines(basic_data)
-
-    print(basic_data)
-
-    # Save the data
-    save_data_as_txt(basic_data, path='basic_data/basic_data_1000.txt')
+    # save_data_as_txt(dummy_data, path='../data/madlibs/dummy_data.txt')
+    #
+    # basic_data = generate_building_blocks_data(100, 1000, 1111)
+    #
+    # # Shuffle the lines
+    # basic_data = shuffle_lines(basic_data)
+    #
+    # # Remove any non unique lines
+    # basic_data = remove_non_unique_lines(basic_data)
+    #
+    # print(basic_data)
+    #
+    # # Save the data
+    # save_data_as_txt(basic_data, path='../data/basic_data/basic_data_1000.txt')
