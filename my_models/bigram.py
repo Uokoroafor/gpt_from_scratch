@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from typing import List, Tuple, Optional
 from my_models.AbstractModelClass import AbstractModelClass
-from my_models.attention_block import SelfAttention, MultiHeadAttention
+from my_models.attention_block import SelfAttention, MultiHeadAttention, TransformerBlock
 
 
 class BigramModel(AbstractModelClass):
@@ -234,6 +234,50 @@ class BigramModelWithAandPEandLNandFFNandDO(BigramModelWithAandPEandLNandFFN):
         embeds = self.layer_norm(embeds)
         embeds = self.ffn(embeds)
         embeds = self.dropout(embeds)
+        embeds = self.linear(embeds)
+
+        if target is None:
+            # If no target is provided, no loss is provided to avoid an error
+            loss = None
+        else:
+            B, T, C = embeds.shape
+            embeds = embeds.view(B * T, C)
+            target = target.view(B * T)
+            loss = F.cross_entropy(embeds, target)
+
+        return embeds, loss
+
+
+class BigramWithTransformerBlocks(BigramModelWithAandPEandLNandFFNandDO):
+
+    def __init__(self, vocab_size: int, embedding_dim: int, block_size: int, num_heads: Optional[int] = 4,
+                 dropout_prob: Optional[float] = 0.0, num_blocks: Optional[int] = 1):
+        """Initialize the Bigram model by setting up the various layers.
+        Args:
+            vocab_size: The size of the vocabulary.
+            embedding_dim: The dimension of the embedding.
+            block_size: The size of the blocks.
+            num_heads: The number of heads to use in the attention layer.
+            dropout_prob: The probability of dropout.
+            num_blocks: The number of transformer blocks to use.
+        """
+        super(BigramWithTransformerBlocks, self).__init__(vocab_size, embedding_dim, block_size, num_heads,
+                                                          dropout_prob)
+        self.blocks = nn.ModuleList(
+            [TransformerBlock(embedding_dim=embedding_dim, output_dim=embedding_dim, num_heads=num_heads,
+                              dropout_prob=dropout_prob) for _ in range(num_blocks)])
+
+    def forward(self, idx: torch.Tensor, target: torch.Tensor = None) -> Tuple[torch.Tensor, torch.Tensor]:
+        """Perform a forward pass of our model on some input and target text."""
+        B, T = idx.shape
+        embeds = self.embeddings(idx)
+        position = torch.arange(T, device=embeds.device)
+        embeds = embeds + self.positional_encoding(position)
+        for block in self.blocks:
+            embeds = block(embeds)
+
+        # Perform a final layer normalization and linear transformation
+        embeds = self.layer_norm(embeds)
         embeds = self.linear(embeds)
 
         if target is None:

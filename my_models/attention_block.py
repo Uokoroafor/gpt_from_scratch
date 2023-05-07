@@ -208,6 +208,77 @@ class MultiHeadAttention(Attention):
         return output, attention
 
 
+class FeedForwardNetwork(nn.Module):
+    """A feed forward network."""
+
+    def __init__(self, embedding_dim: int, output_dim: int, hidden_dim: int, dropout_prob: Optional[float] = 0.0):
+        """Initialize the feed forward network.
+        Args:
+            embedding_dim: The dimension of the embedding.
+            output_dim: The dimension of the output. Embedding dim must be divisible by output dim.
+            hidden_dim: The dimension of the hidden layer.
+            dropout_prob: The dropout probability.
+        """
+        super(FeedForwardNetwork, self).__init__()
+        self.linear1 = nn.Linear(embedding_dim, hidden_dim)
+        self.linear2 = nn.Linear(hidden_dim, output_dim)
+        self.dropout = nn.Dropout(dropout_prob)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """Perform a forward pass of the feed forward network.
+        Args:
+            x: The input to the feed forward network.
+        Returns:
+            The output tensor.
+        """
+        x = self.linear1(x)
+        x = F.relu(x)
+        x = self.dropout(x)
+        x = self.linear2(x)
+        return x
+
+
+class TransformerBlock(nn.Module):
+    """A transformer block."""
+
+    def __init__(self, embedding_dim: int, output_dim: int, num_heads: int, hard: Optional[bool] = False, dropout_prob: Optional[float] = 0.0):
+        """Initialize the transformer block.
+        Args:
+            embedding_dim: The dimension of the embedding.
+            output_dim: The dimension of the output. Embedding dim must be divisible by output dim.
+            n_heads: The number of heads to use.
+            hard: Whether to use hard attention or not.
+            dropout_prob: The dropout probability.
+        """
+        super(TransformerBlock, self).__init__()
+        self.attention = MultiHeadAttention(embedding_dim, output_dim, num_heads, hard, dropout_prob)
+        self.norm1 = nn.LayerNorm(embedding_dim)
+        self.norm2 = nn.LayerNorm(embedding_dim)
+        self.ff = FeedForwardNetwork(embedding_dim, output_dim, 4*embedding_dim, dropout_prob)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """Perform a forward pass of the transformer block.
+        Args:
+            x: The input to the transformer block.
+        Returns:
+            The output tensor.
+        """
+
+        # First Apply the attention block
+        attention, _ = self.attention(x)
+
+        # Apply the first normalization (Add & Norm)
+        x = self.norm1(x + attention)
+
+        # Apply the feed forward network
+        ff = self.ff(x)
+
+        # Apply the second normalization (Add & Norm)
+        x = self.norm2(x + ff)
+
+        return x
+
+
 if __name__ == '__main__':
     x = torch.rand(2, 10, 128)
     y = torch.rand(2, 10, 128)

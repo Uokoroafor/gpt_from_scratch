@@ -9,7 +9,8 @@ from utils.data_handler import read_in_data, tensor_to_string
 from utils.my_tokeniser import create_simple_encoder_decoder
 from utils.dummy_file_generators import save_data_as_txt
 from my_models.bigram import BigramModel, BigramModelWithAttention, BigramModelWithAandPE, \
-    BigramModelWithAandPEandLN, BigramModelWithAandPEandLNandFFN, BigramModelWithAandPEandLNandFFNandDO
+    BigramModelWithAandPEandLN, BigramModelWithAandPEandLNandFFN, BigramModelWithAandPEandLNandFFNandDO, \
+    BigramWithTransformerBlocks
 import matplotlib.pyplot as plt
 
 if __name__ == '__main__':
@@ -188,14 +189,15 @@ if __name__ == '__main__':
 
 
     models = [
-        BigramModel(len(encoder_dict), embedding_dim=len(encoder_dict)),
-        BigramModelWithAttention(len(encoder_dict), embedding_dim=embedding_dim, block_size=block_size),
-        BigramModelWithAandPE(len(encoder_dict), embedding_dim=embedding_dim, block_size=block_size),
-        BigramModelWithAandPEandLN(len(encoder_dict), embedding_dim=embedding_dim, block_size=block_size),
-        BigramModelWithAandPEandLNandFFN(len(encoder_dict), embedding_dim=embedding_dim, block_size=block_size),
-        BigramModelWithAandPEandLNandFFNandDO(len(encoder_dict), embedding_dim=embedding_dim,
-                                              block_size=block_size, dropout_prob=dropout_prob),
-    ]
+        # BigramModel(len(encoder_dict), embedding_dim=len(encoder_dict)),
+        # BigramModelWithAttention(len(encoder_dict), embedding_dim=embedding_dim, block_size=block_size),
+        # BigramModelWithAandPE(len(encoder_dict), embedding_dim=embedding_dim, block_size=block_size),
+        # BigramModelWithAandPEandLN(len(encoder_dict), embedding_dim=embedding_dim, block_size=block_size),
+        # BigramModelWithAandPEandLNandFFN(len(encoder_dict), embedding_dim=embedding_dim, block_size=block_size),
+        # BigramModelWithAandPEandLNandFFNandDO(len(encoder_dict), embedding_dim=embedding_dim,
+        #                                       block_size=block_size, dropout_prob=dropout_prob),
+        BigramWithTransformerBlocks(len(encoder_dict), embedding_dim=embedding_dim, block_size=block_size, num_blocks=3,
+                                    dropout_prob=dropout_prob)]
 
     trained_models = []
 
@@ -212,7 +214,7 @@ if __name__ == '__main__':
     # Generate a sample
     for model in trained_models:
         print(f"Generating for Model: {type(model).__name__}")
-        chars = decode(model.generate(idx=torch.zeros((1, 1), dtype=torch.long), length=100)[0].tolist())
+        chars = decode(model.generate(idx=torch.zeros((1, 1), dtype=torch.long), length=1000)[0].tolist())
         # Join the characters together and then print the string
         print(''.join(chars))
         print("-----------------------------------------------------")
