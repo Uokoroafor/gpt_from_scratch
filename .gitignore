@@ -1,0 +1,3 @@
+/saved_models/archive/*.pt
+/saved_models/*.pt
+/saved_models/ignored_models/*pt
