@@ -38,7 +38,8 @@ class AbstractModelClass(ABC, nn.Module):
         """Load the model from a file."""
         self.load_state_dict(torch.load(path))
 
-    def update_model_path(self, path: str):
+    @staticmethod
+    def update_model_path(path: str):
         """Updates the model path by appending a timestamp to the path"""
         # First remove file extension
         # If path exists, append timestamp
@@ -55,4 +56,3 @@ class AbstractModelClass(ABC, nn.Module):
     def print_param_count(self):
         """Count the number of parameters in the model."""
         print(f"{self.__class__.__name__} has {sum(p.numel() for p in self.parameters()):,} parameters.")
-

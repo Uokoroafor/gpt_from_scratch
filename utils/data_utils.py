@@ -4,7 +4,7 @@ from typing import Union, Dict, Tuple, Callable, Optional
 import requests as requests
 import torch
 
-from utils.my_tokeniser import make_char_dict
+from utils.basic_tokeniser import make_char_dict
 
 
 def read_in_data(filepath: str, make_dict: Optional[bool] = True) -> Union[Tuple[Dict[str, str], str], str]:
