@@ -93,7 +93,7 @@ def create_simple_encoder_decoder(char_dict: Dict[str, List[str]], add_specials:
 
 if __name__ == '__main__':
     # Read in the data
-    from utils.data_handler import read_in_data
+    from utils.data_utils import read_in_data
     char_dict, data = read_in_data('../data/asimov/asimov123.txt')
 
     # Create the encoder and decoder dictionaries

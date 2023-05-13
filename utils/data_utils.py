@@ -1,7 +1,9 @@
 # Utility file for handling data and building the character and word-based dictionaries as well as the encoder and decoder functions.
-from typing import Union, List, Dict, Tuple, Callable, Optional
-import torch
 import os
+from typing import Union, Dict, Tuple, Callable, Optional
+import requests as requests
+import torch
+
 from utils.my_tokeniser import make_char_dict
 
 
@@ -68,6 +70,26 @@ def save_data_as_txt(data: str, path: Optional[str] = None) -> None:
         f.write(data)
 
 
+def url_to_data(url: str, path: Optional[str] = None) -> str:
+    """Get the data from the url.
+
+    Args:
+        url (str): The url to get the data from.
+        path (str): The location to save the data to.
+
+    Returns:
+        str: The data from the url.
+    """
+    # Read in the data
+    data = requests.get(url).text
+
+    # Save the data as a txt file
+    if path is not None:
+        save_data_as_txt(data, path)
+
+    return data
+
+
 def get_numerics_from_string(string: str) -> int:
     """Get the numeric characters from the right side of the string.
 
@@ -91,6 +113,3 @@ def get_numerics_from_string(string: str) -> int:
         numerics = 0
 
     return numerics
-
-
-

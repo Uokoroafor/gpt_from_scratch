@@ -1,9 +1,9 @@
+from typing import List, Tuple, Optional
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from typing import List, Tuple, Optional
 from my_models.AbstractModelClass import AbstractModelClass
-from my_models.attention_block import SelfAttention, MultiHeadAttention, TransformerBlock
+from my_models.attention_block import MultiHeadAttention, TransformerBlock
 
 
 class BigramModel(AbstractModelClass):
