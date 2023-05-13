@@ -1,10 +1,8 @@
 import os
 import time
 from typing import Tuple, List, Optional
-
 import torch
 from torch import nn
-
 from utils.data_handler import read_in_data, tensor_to_string
 from utils.my_tokeniser import create_simple_encoder_decoder
 from utils.dummy_file_generators import save_data_as_txt
@@ -173,6 +171,20 @@ if __name__ == '__main__':
         #     # Join the characters together and then print the string
         #     print(''.join(chars))
 
+        # Print the time taken for the training
+        # First convert the time to seconds, minutes and hours
+
+
+
+        if verbose:
+            total_time = int(time.time() - start_time)
+
+            hours = total_time // 3600
+            minutes = (total_time % 3600) // 60
+            seconds = total_time % 60
+            print(f'Time taken for training: {hours} hours, {minutes} minutes, {seconds} seconds')
+
+
         if plots:
             # Create x axis values tensor
             x = torch.arange(1, max_iters + 1, eval_every)
@@ -189,13 +201,13 @@ if __name__ == '__main__':
 
 
     models = [
-        # BigramModel(len(encoder_dict), embedding_dim=len(encoder_dict)),
-        # BigramModelWithAttention(len(encoder_dict), embedding_dim=embedding_dim, block_size=block_size),
-        # BigramModelWithAandPE(len(encoder_dict), embedding_dim=embedding_dim, block_size=block_size),
-        # BigramModelWithAandPEandLN(len(encoder_dict), embedding_dim=embedding_dim, block_size=block_size),
-        # BigramModelWithAandPEandLNandFFN(len(encoder_dict), embedding_dim=embedding_dim, block_size=block_size),
-        # BigramModelWithAandPEandLNandFFNandDO(len(encoder_dict), embedding_dim=embedding_dim,
-        #                                       block_size=block_size, dropout_prob=dropout_prob),
+        BigramModel(len(encoder_dict), embedding_dim=len(encoder_dict)),
+        BigramModelWithAttention(len(encoder_dict), embedding_dim=embedding_dim, block_size=block_size),
+        BigramModelWithAandPE(len(encoder_dict), embedding_dim=embedding_dim, block_size=block_size),
+        BigramModelWithAandPEandLN(len(encoder_dict), embedding_dim=embedding_dim, block_size=block_size),
+        BigramModelWithAandPEandLNandFFN(len(encoder_dict), embedding_dim=embedding_dim, block_size=block_size),
+        BigramModelWithAandPEandLNandFFNandDO(len(encoder_dict), embedding_dim=embedding_dim,
+                                              block_size=block_size, dropout_prob=dropout_prob),
         BigramWithTransformerBlocks(len(encoder_dict), embedding_dim=embedding_dim, block_size=block_size, num_blocks=3,
                                     dropout_prob=dropout_prob)]
 

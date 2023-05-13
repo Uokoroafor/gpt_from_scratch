@@ -153,9 +153,9 @@ class CrossAttention(Attention):
         # Calculate QK^T
         attention = torch.matmul(queries, keys.transpose(1, 2)) * n_channels ** (-0.5)
 
-        # Apply masking
-        mask = torch.tril(torch.ones((seq_len, seq_len))).unsqueeze(0).to(x.device)
-        attention = attention.masked_fill(mask == 0, float('-inf'))
+        # Masking is not needed for cross-attention
+        # mask = torch.tril(torch.ones((seq_len, seq_len))).unsqueeze(0).to(x.device)
+        # attention = attention.masked_fill(mask == 0, float('-inf'))
 
         # Apply the max operation
         attention = self.apply_max(attention)
