@@ -1,6 +1,6 @@
-# Utility file for handling data and building the character and word-based dictionaries as well as the encoder and decoder functions.
+# Utility file for handling data and building the character and word-based dictionaries as well as the encoder and
+# decoder functions.
 from typing import Union, List, Dict, Tuple, Callable, Optional
-import torch
 
 
 def make_char_dict(char_list: Union[List[str], str], allow_uppers: Optional[bool] = False) -> Dict[str, List[str]]:
@@ -40,30 +40,30 @@ def make_char_dict(char_list: Union[List[str], str], allow_uppers: Optional[bool
     return char_dict
 
 
-
-def create_simple_encoder_decoder(char_dict: Dict[str, List[str]], add_specials: Optional[bool] = False) -> Tuple[
-    Dict[str, int], Dict[int, str], Callable, Callable]:
-    """This will be a character encoder and decoder for a simple character level language model based on the character dictionary.
+def create_simple_encoder_decoder(char_dict: Dict[str, List[str]], add_specials: Optional[bool] = False) -> \
+        Tuple[Dict[str, int], Dict[int, str], Callable, Callable]:
+    """This will be a character encoder and decoder for a simple character level language model based on the
+    character dictionary.
 
     Args:
         char_dict (Dict[str, List[str]]): The character dictionary.
         add_specials (Optional[bool], optional): Whether to add special tokens. Defaults to False.
 
-    Returns:
-        Tuple[Dict[str, int], Dict[int, str], Callable, Callable]: The encoder and decoder dictionaries and the encoder and decoder functions.
-        """
+    Returns: Tuple[Dict[str, int], Dict[int, str], Callable, Callable]: The encoder and decoder dictionaries and the
+    encoder and decoder functions.
+    """
     # Create the encoder and decoder dictionaries
-    encoder_dict = dict()
-    decoder_dict = dict()
+    encoder_dic = dict()
+    decoder_dic = dict()
 
     # Add the special tokens if specified
     if add_specials:
-        encoder_dict['<pad>'] = 0
-        decoder_dict[0] = '<pad>'
-        encoder_dict['<sos>'] = 1
-        decoder_dict[1] = '<sos>'
-        encoder_dict['<eos>'] = 2
-        decoder_dict[2] = '<eos>'
+        encoder_dic['<pad>'] = 0
+        decoder_dic[0] = '<pad>'
+        encoder_dic['<sos>'] = 1
+        decoder_dic[1] = '<sos>'
+        encoder_dic['<eos>'] = 2
+        decoder_dic[2] = '<eos>'
 
     # Encode based on the position in the dictionary
     # List all the character values in the dict
@@ -74,26 +74,46 @@ def create_simple_encoder_decoder(char_dict: Dict[str, List[str]], add_specials:
 
     char_list = sorted(list(set(char_list)))
 
-    k = len(encoder_dict.keys())
+    k = len(encoder_dic.keys())
 
     # Add the characters to the encoder and decoder dictionaries
     for i, char in enumerate(char_list):
-        encoder_dict[char] = i + k
-        decoder_dict[i + k] = char
+        encoder_dic[char] = i + k
+        decoder_dic[i + k] = char
 
     # create encode, decode functions
-    encode = lambda x: [encoder_dict[char.lower()] for char in x]
-    decode = lambda x: [decoder_dict[char] for char in x]
+    # encode = lambda x: [encoder_dic[char.lower()] for char in x]
+    # decode = lambda x: [decoder_dic[char] for char in x]
 
-    return encoder_dict, decoder_dict, encode, decode
+    def encode_func(x: str) -> List[int]:
+        """Encode a string of characters.
 
+        Args:
+            x (str): String of characters.
 
+        Returns:
+            List[int]: List of encoded characters.
+        """
+        return [encoder_dic[char.lower()] for char in x]
 
+    def decode_func(x: List[int]) -> List[str]:
+        """Decode a list of encoded characters.
+
+        Args:
+            x (List[int]): List of encoded characters.
+
+        Returns:
+            List[str]: List of decoded characters.
+        """
+        return [decoder_dic[char] for char in x]
+
+    return encoder_dic, decoder_dic, encode_func, decode_func
 
 
 if __name__ == '__main__':
     # Read in the data
     from utils.data_utils import read_in_data
+
     char_dict, data = read_in_data('../data/asimov/asimov123.txt')
 
     # Create the encoder and decoder dictionaries

@@ -2,7 +2,7 @@
 import os.path
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 import torch
 import torch.nn as nn
 
@@ -14,20 +14,20 @@ class AbstractModelClass(ABC, nn.Module):
         super(AbstractModelClass, self).__init__()
 
     @abstractmethod
-    def forward(self, idx: torch.Tensor, target: torch.Tensor = None) -> Tuple[torch.Tensor, torch.Tensor]:
+    def forward(self, src: torch.Tensor, trg: Optional[torch.Tensor] = None) -> Tuple[torch.Tensor, torch.Tensor]:
         """Perform a forward pass of our model on some input and target text."""
         pass
 
-    @abstractmethod
-    def generate(self, idx: torch.Tensor, length: int) -> List[int]:
-        """Generate text using the model.
-        Args:
-            idx: The initial index of the text to generate.
-            length: The length of the text to generate.
-        Returns:
-            A list of integers representing the generated text.
-        """
-        pass
+    # @abstractmethod
+    # def generate(self, idx: torch.Tensor, length: int) -> List[int]:
+    #     """Generate text using the model.
+    #     Args:
+    #         idx: The initial index of the text to generate.
+    #         length: The length of the text to generate.
+    #     Returns:
+    #         A list of integers representing the generated text.
+    #     """
+    #     pass
 
     def save(self, path: str):
         """Save the model to a file."""

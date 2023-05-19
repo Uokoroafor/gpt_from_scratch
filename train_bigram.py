@@ -174,8 +174,6 @@ if __name__ == '__main__':
         # Print the time taken for the training
         # First convert the time to seconds, minutes and hours
 
-
-
         if verbose:
             total_time = int(time.time() - start_time)
 
@@ -183,7 +181,6 @@ if __name__ == '__main__':
             minutes = (total_time % 3600) // 60
             seconds = total_time % 60
             print(f'Time taken for training: {hours} hours, {minutes} minutes, {seconds} seconds')
-
 
         if plots:
             # Create x axis values tensor

@@ -122,7 +122,7 @@ class CrossAttention(Attention):
                 output_dim: The dimension of the output. Embedding dim must be divisible by output dim.
                 hard: Whether to use hard attention or not.
             """
-        super(CrossAttention, self).__init__(embedding_dim, output_dim, hard)
+        super(CrossAttention, self).__init__(embedding_dim, output_dim, hard, dropout_prob)
         self.key = nn.Linear(embedding_dim, output_dim)
         self.query = nn.Linear(embedding_dim, output_dim)
         self.value = nn.Linear(embedding_dim, output_dim)
@@ -230,7 +230,7 @@ class MultiHeadCrossAttention(Attention):
         """Perform a forward pass of the multi-head cross attention block.
         Args:
             x: The input to the multi-head cross attention block.
-            y: The input to the multi-head cross attention block.
+            y: The input to the multi-head cross attention block (the key and value).
         Returns:
             The output and attention tensors."""
 
@@ -278,7 +278,8 @@ class FeedForwardNetwork(nn.Module):
 
 
 class TransformerBlock(nn.Module):
-    """A transformer block. This is used as encoder in the encoder-decoder architecture and as decoder in the decoder only architecture."""
+    """A transformer block. This is used as encoder in the encoder-decoder architecture and as decoder in the decoder
+    only architecture."""
 
     def __init__(self, embedding_dim: int, output_dim: int, num_heads: int, hard: Optional[bool] = False,
                  dropout_prob: Optional[float] = 0.0):
@@ -347,6 +348,7 @@ class DecoderTransformerBlock(nn.Module):
         """Perform a forward pass of the transformer block.
         Args:
             x: The input to the transformer block.
+            y: The input to the transformer block from the encoder.
         Returns:
             The output tensor.
         """
