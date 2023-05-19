@@ -11,7 +11,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-
 class Attention(ABC, nn.Module):
     # Abstract class for a head of an attention block
 

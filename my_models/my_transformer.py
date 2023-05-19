@@ -3,66 +3,147 @@
 from typing import Tuple, Optional
 import torch
 from torch import nn
-from attention_block import TransformerBlock, DecoderTransformerBlock
+from my_models.attention_block import TransformerBlock, DecoderTransformerBlock
 from my_models.AbstractModelClass import AbstractModelClass
 
 
 # TODO: Complete Implementation of Full Transformer Model
+
+class InputAndPositionalEncoding(nn.Module):
+    def __init__(self, vocab_size, embedding_dim, max_seq_len):
+        super().__init__()
+        self.vocab_size = vocab_size
+        self.embedding_dim = embedding_dim
+        self.max_seq_len = max_seq_len
+        # First create the embedding layer from vocab_size to embedding_dim
+        self.embedding = nn.Embedding(vocab_size, embedding_dim)
+        self.positional_encoding = self.create_positional_encoding()
+
+        # print('InputAndPositionalEncoding initialised')
+        # print('vocab_size: ', vocab_size)
+        # print('embedding_dim: ', embedding_dim)
+        # print('max_seq_len: ', max_seq_len)
+
+    def create_positional_encoding(self):
+        """ Create the positional encoding matrix """
+        # Will eventually use sine and cosine functions but for now just use the torch.arange function
+
+        return nn.Embedding(num_embeddings=self.max_seq_len, embedding_dim=self.embedding_dim)
+
+    def forward(self, x):
+        """ Forward pass of the input and positional encoding """
+        # Get the shape of the input
+        batch_size, seq_len = x.shape
+
+        # print('batch_size: ', batch_size)
+        # print('seq_len: ', seq_len)
+        # print('x.shape: ', x.shape)
+
+        # Get the embedding of the input
+        x = self.embedding(x)
+
+        # print('new x.shape: ', x.shape)
+        # Get the positional encoding
+        pos = torch.arange(seq_len)  # .repeat(batch_size, 1)
+        # print('pos.shape: ', pos.shape)
+        # print('x.shape: ', x.shape)
+        pos = self.positional_encoding(pos)
+        # Add the positional encoding to the input
+        x = x + pos
+
+        # # Input Embedding
+        # x = self.embedding(x)  # (batch_size, seq_len, embedding_dim)
+
+        return x
+
+
+# class PositionalEncoding(nn.Module):
+#
+#     def __init__(self, d_model, dropout=0.1, max_len=5000):
+#         super().__init__()
+#
+#         self.dropout = nn.Dropout(p=dropout)
+#
+#         pe = torch.zeros(max_len, d_model)
+#
+#         position = torch.arange(0, max_len, dtype=torch.float).unsqueeze(1)
+#
+#         div_term = torch.exp(torch.arange(0, d_model, 2).float() * (-math.log(10000.0) / d_model))
+#
+#         pe[:, 0::2] = torch.sin(position * div_term)
+#
+#         pe[:, 1::2] = torch.cos(position * div_term)
+#
+#         pe = pe.unsqueeze(0).transpose(0, 1)
+#
+#         self.register_buffer('pe', pe)
+#
+#     def forward(self, x):
+#
+#         x = x + self.pe[:x.size(0), :]
+#
+#         return self.dropout(x)
+
+
 class Transformer(AbstractModelClass):
-    def __init__(self, src_vocab_size, trg_vocab_size, **kwargs):
+    def __init__(self, src_vocab_size, trg_vocab_size, embedding_dim=256, num_layers=2, num_heads=4, dropout_prob=0.2,
+                 max_seq_length=100):
         """
 
         Args:
             src_vocab_size: Size of the source vocabulary
             trg_vocab_size: Size of the target vocabulary
-            **kwargs: Keyword arguments for the transformer blocks
+            embedding_dim: Dimension of the embedding
+            num_layers: Number of layers in the encoder and decoder
+            num_heads: Number of heads in the multi-head attention
+            dropout_prob: Dropout probability
+            max_seq_length: Maximum sequence length
 
         """
         super().__init__()
         self.src_vocab_size = src_vocab_size
         self.trg_vocab_size = trg_vocab_size
-        self.Encoder = TransformerBlock(**kwargs)
-        self.Decoder = DecoderTransformerBlock(**kwargs)
-        self.num_layers = kwargs['num_layers']
-        self.linear = nn.Linear(kwargs['embedding_dim'], trg_vocab_size)
-        self.softmax = nn.Softmax(dim=1)
+        self.embedding_dim = embedding_dim
+        self.num_layers = num_layers
+        self.num_heads = num_heads
+        self.dropout_prob = dropout_prob
+        self.max_seq_length = max_seq_length
+        self.encoder_embedding = InputAndPositionalEncoding(src_vocab_size, embedding_dim, max_seq_length)
+        self.decoder_embedding = InputAndPositionalEncoding(trg_vocab_size, embedding_dim, max_seq_length)
+        self.encoder_blocks = nn.ModuleList([TransformerBlock(embedding_dim=embedding_dim, output_dim=embedding_dim,
+                                                              num_heads=num_heads, dropout_prob=dropout_prob) for _ in
+                                             range(num_layers)])
+        self.decoder_blocks = nn.ModuleList([DecoderTransformerBlock(embedding_dim=embedding_dim,
+                                                                     output_dim=embedding_dim, num_heads=num_heads,
+                                                                     dropout_prob=dropout_prob) for _ in
+                                             range(num_layers)])
+        self.linear = nn.Linear(embedding_dim, trg_vocab_size)
+        self.softmax = nn.Softmax(dim=-1)
 
     def forward(self, src: torch.Tensor, trg: Optional[torch.Tensor] = None) -> Tuple[torch.Tensor, torch.Tensor]:
-        """
-        This is a forward pass of the transformer model. It is used for training the model. It takes in a source
-        tensor and a target tensor and returns the output tensor and the attention tensor. Args: src: Source tensor
+        """Perform a forward pass of our model on some input and target text. This is used during training.
+            Args:
+                src: Source tensor
+                trg: Target tensor
 
-        trg: Target tensor
+            Returns:
+                The predicted tensor
 
-        Returns:
-            output: Output tensor
         """
-        # if trg is None:
-        #     raise ValueError("Target tensor must be provided for training.")
-        src = self.Encoder(src)
-        output = self.Decoder(trg, src)
-        output = self.linear(output)
+        # Get the embedding of the input
+        src = self.encoder_embedding(src)
+        # Pass the embedding through the encoder blocks
+        for encoder_block in self.encoder_blocks:
+            src = encoder_block(src)
+        # Get the embedding of the target
+        trg = self.decoder_embedding(trg)
+        # Pass the embedding through the decoder blocks
+        for decoder_block in self.decoder_blocks:
+            trg = decoder_block(trg, src)
+        # Get the output
+        output = self.linear(trg)
+        # Get the softmax of the output
         output = self.softmax(output)
         return output
 
-    def generate(self, idx: torch.Tensor, length: int) -> torch.Tensor:
-        """
-        This is a forward pass of the transformer model. It is used for generating text. It takes in an initial
-        index and a length and returns the generated text. Args: idx: Initial index of the text to generate
-
-        length: Length of the text to generate
-
-        Returns:
-            output: Generated text
-        """
-        pass
-
 # TODO: Complete Temperature and Top-k Sampling
-
-
-
-
-
-
-
-
