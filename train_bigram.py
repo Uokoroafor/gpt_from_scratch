@@ -112,7 +112,7 @@ if __name__ == '__main__':
             losses = torch.zeros(eval_iters)
             for i in range(eval_iters):
                 x, y = get_batch(split)
-                _, loss = model_(idx=x, target=y)
+                _, loss = model_(src=x, trg=y)
                 losses[i] = loss.item()
             out[split] = losses.mean().item()
         model_.train()
@@ -158,7 +158,7 @@ if __name__ == '__main__':
             Optimiser.zero_grad()
 
             # Get the embeddings and the loss (Forward pass)
-            embeds, loss = model(idx=xb, target=yb)
+            embeds, loss = model(src=xb, trg=yb)
 
             # Backpropagate the loss (Backward pass)
             loss.backward()

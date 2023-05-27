@@ -57,6 +57,8 @@ class InputAndPositionalEncoding(nn.Module):
         return x
 
 
+
+
 # class PositionalEncoding(nn.Module):
 #
 #     def __init__(self, d_model, dropout=0.1, max_len=5000):
@@ -135,15 +137,88 @@ class Transformer(AbstractModelClass):
         # Pass the embedding through the encoder blocks
         for encoder_block in self.encoder_blocks:
             src = encoder_block(src)
-        # Get the embedding of the target
-        trg = self.decoder_embedding(trg)
-        # Pass the embedding through the decoder blocks
-        for decoder_block in self.decoder_blocks:
-            trg = decoder_block(trg, src)
-        # Get the output
-        output = self.linear(trg)
-        # Get the softmax of the output
-        output = self.softmax(output)
-        return output
+
+        # If the target is not given, then we are in inference mode
+        if trg is None:
+            # Create a tensor to hold the predicted words
+            trg = torch.zeros((src.shape[0], self.max_seq_length)).long()
+            # Populate the first word with the start token
+            trg[:, 0] = 1
+            # Get the embedding of the target
+            trg = self.decoder_embedding(trg)
+            # Pass the embedding through the decoder blocks
+            for decoder_block in self.decoder_blocks:
+                trg = decoder_block(trg, src)
+            # Get the output
+            output = self.linear(trg)
+            # Get the softmax of the output
+            output = self.softmax(output)
+            return output
+
+        else:
+            # if trg is given, then we are in training mode
+
+            # Get the embedding of the target
+            trg = self.decoder_embedding(trg)
+
+            # Pass the embedding through the decoder blocks
+            for decoder_block in self.decoder_blocks:
+                trg = decoder_block(trg, src)
+            # Get the output
+            output = self.linear(trg)
+            # Get the softmax of the output
+            output = self.softmax(output)
+            return output
+
+    def translate(self, src: torch.Tensor) -> torch.Tensor:
+        """Perform a forward pass of our model on some input text. This is used during inference.
+        Args:
+            src: Source tensor
+
+        Returns:
+            The predicted tensor """
+        pass
+        # TODO: Decide what object should house the method
+
+        # Padding = 0
+        # <sos> = 1
+        # <eos> = 2
+
+        # # Get the embedding of the input
+        # src = self.encoder_embedding(src)
+        # # Pass the embedding through the encoder blocks
+        # for encoder_block in self.encoder_blocks:
+        #     src = encoder_block(src)
+        #
+        # # Create a tensor to hold the predicted words
+        # out = torch.zeros((src.shape[0], self.max_seq_length)).long()
+        # # The first input to the decoder is the <sos> token
+        # out[:, 0] = 1
+        # # Then we loop over the maximum sequence length for each passed sequence. Stop at max_seq_length - 1 or when we predict the <eos> token
+        # for idx in range(1, self.max_seq_length):
+        #     # Get the embedding of the target
+        #     trg = self.decoder_embedding(out)
+        #     # Pass the embedding through the decoder blocks
+        #     for decoder_block in self.decoder_blocks:
+        #         trg = decoder_block(trg, src)
+        #     # Get the output
+        #     output = self.linear(trg)
+        #     # Get the softmax of the output
+        #     output = self.softmax(output)
+        #     # Get the predicted next word by getting the index of the highest probability
+        #     output = output.argmax(2)
+        #     out[:, idx] = output[:, idx]
+        #     print('predicting idx: ', idx)
+        #     if output[:, idx] == 2:
+        #         break
+        # # Return the predicted words
+        # return out
+
+
+
+
+
+
+
 
 # TODO: Complete Temperature and Top-k Sampling

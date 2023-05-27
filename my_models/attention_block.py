@@ -11,6 +11,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+
 class Attention(ABC, nn.Module):
     # Abstract class for a head of an attention block
 
@@ -60,19 +61,21 @@ class Attention(ABC, nn.Module):
 class SelfAttention(Attention):
 
     def __init__(self, embedding_dim: int, output_dim: int, hard: Optional[bool] = False,
-                 dropout_prob: Optional[float] = 0.0):
+                 dropout_prob: Optional[float] = 0.0, use_mask: Optional[bool] = False):
         """Initialize the scaled dot product attention block.
         Args:
             embedding_dim: The dimension of the embedding.
             output_dim: The dimension of the output. Embedding dim must be divisible by output dim.
             hard: Whether to use hard attention or not.
             dropout_prob: The dropout probability.
+            use_mask: Whether to use masking or not.
 
         """
         super(SelfAttention, self).__init__(embedding_dim, output_dim, hard, dropout_prob)
         self.key = nn.Linear(embedding_dim, output_dim)
         self.query = nn.Linear(embedding_dim, output_dim)
         self.value = nn.Linear(embedding_dim, output_dim)
+        self.use_mask = use_mask
 
     def forward(self, x: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
         """Perform a forward pass of the self-attention block.
@@ -95,9 +98,10 @@ class SelfAttention(Attention):
         # Calculate QK^T
         attention = torch.matmul(queries, keys.transpose(1, 2)) * n_channels ** (-0.5)
 
-        # Apply masking
-        mask = torch.tril(torch.ones((seq_len, seq_len))).unsqueeze(0).to(x.device)
-        attention = attention.masked_fill(mask == 0, float('-inf'))
+        # Apply masking if needed
+        if self.use_mask:
+            mask = torch.tril(torch.ones((seq_len, seq_len))).unsqueeze(0).to(x.device)
+            attention = attention.masked_fill(mask == 0, float('-inf'))
 
         # Apply the max operation
         attention = self.apply_max(attention)
@@ -167,7 +171,7 @@ class CrossAttention(Attention):
 class MultiHeadAttention(Attention):
 
     def __init__(self, embedding_dim: int, output_dim: int, n_heads: int, hard: Optional[bool] = False,
-                 dropout_prob: Optional[float] = 0.0):
+                 dropout_prob: Optional[float] = 0.0, use_mask: Optional[bool] = False):
         """Initialize the multi-head self attention block.
         Args:
             embedding_dim: The dimension of the embedding.
@@ -175,13 +179,14 @@ class MultiHeadAttention(Attention):
             n_heads: The number of heads to use.
             hard: Whether to use hard attention or not.
             dropout_prob: The dropout probability.
+            use_mask: Whether to use masking or not.
         """
         super(MultiHeadAttention, self).__init__(embedding_dim, output_dim, hard)
         self.n_heads = n_heads
         self.head_dim = embedding_dim // n_heads
         self.linear = nn.Linear(self.head_dim * n_heads, output_dim)
         self.heads = nn.ModuleList([SelfAttention(self.embedding_dim,
-                                                  self.head_dim, self.hard) for _ in range(n_heads)])
+                                                  self.head_dim, self.hard, dropout_prob, use_mask) for _ in range(n_heads)])
         self.dropout = nn.Dropout(dropout_prob)
 
     def forward(self, x: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
@@ -336,7 +341,9 @@ class DecoderTransformerBlock(nn.Module):
             dropout_prob: The dropout probability.
         """
         super(DecoderTransformerBlock, self).__init__()
-        self.self_attention = MultiHeadAttention(embedding_dim, output_dim, num_heads, hard, dropout_prob)
+        # Self Attention in the decoder is masked
+        self.self_attention = MultiHeadAttention(embedding_dim, output_dim, num_heads, hard, dropout_prob, use_mask=True)
+        # Cross Attention in the decoder is not masked
         self.cross_attention = MultiHeadCrossAttention(embedding_dim, output_dim, num_heads, hard, dropout_prob)
         self.norm1 = nn.LayerNorm(embedding_dim)
         self.norm2 = nn.LayerNorm(embedding_dim)
