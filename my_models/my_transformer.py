@@ -26,9 +26,12 @@ class InputAndPositionalEncoding(nn.Module):
 
     def create_positional_encoding(self):
         """ Create the positional encoding matrix """
-        # Will eventually use sine and cosine functions but for now just use the torch.arange function
 
         return nn.Embedding(num_embeddings=self.max_seq_len, embedding_dim=self.embedding_dim)
+        # Use the formula from the paper
+
+
+
 
     def forward(self, x):
         """ Forward pass of the input and positional encoding """
