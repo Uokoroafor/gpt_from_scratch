@@ -37,7 +37,11 @@ class InputAndPositionalEncoding(nn.Module):
 
         # print('batch_size: ', batch_size)
         # print('seq_len: ', seq_len)
-        # print('x.shape: ', x.shape)
+        #
+        # if x.max() >= self.vocab_size:
+        #     print('x.max(): ', x.max())
+        #     print('self.vocab_size: ', self.vocab_size)
+        # assert x.max() < self.vocab_size, 'Input is greater than the vocabulary size'
 
         # Get the embedding of the input
         x = self.embedding(x)
@@ -55,8 +59,6 @@ class InputAndPositionalEncoding(nn.Module):
         # x = self.embedding(x)  # (batch_size, seq_len, embedding_dim)
 
         return x
-
-
 
 
 # class PositionalEncoding(nn.Module):
@@ -213,12 +215,5 @@ class Transformer(AbstractModelClass):
         #         break
         # # Return the predicted words
         # return out
-
-
-
-
-
-
-
 
 # TODO: Complete Temperature and Top-k Sampling
