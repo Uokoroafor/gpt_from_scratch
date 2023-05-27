@@ -1,7 +1,7 @@
 import os
 import random
 from typing import List, Dict, Optional
-from utils.data_handler import save_data_as_txt
+from utils.data_utils import save_data_as_txt
 
 
 def generate_dummy_char_data(char_dict: Dict[str, List[str]], min_length: Optional[int] = 1,

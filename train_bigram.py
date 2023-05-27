@@ -3,8 +3,8 @@ import time
 from typing import Tuple, List, Optional
 import torch
 from torch import nn
-from utils.data_handler import read_in_data, tensor_to_string
-from utils.my_tokeniser import create_simple_encoder_decoder
+from utils.data_utils import read_in_data, tensor_to_string
+from utils.basic_tokeniser import create_simple_encoder_decoder
 from utils.dummy_file_generators import save_data_as_txt
 from my_models.bigram import BigramModel, BigramModelWithAttention, BigramModelWithAandPE, \
     BigramModelWithAandPEandLN, BigramModelWithAandPEandLNandFFN, BigramModelWithAandPEandLNandFFNandDO, \
@@ -37,7 +37,7 @@ if __name__ == '__main__':
     # Create the encoder and decoder dictionaries and the encode and decode functions
     encoder_dict, decoder_dict, encode, decode = create_simple_encoder_decoder(char_dict)
 
-    if not os.path.exists(data_folder + 'train_data.txt'):
+    if not os.path.exists(data_folder + 'decoded_train_data.txt'):
         # Load the data into torch tensor
         data = torch.tensor(encode(data), dtype=torch.long)
         # Apply the decode function to the data when converted to a list
@@ -112,7 +112,7 @@ if __name__ == '__main__':
             losses = torch.zeros(eval_iters)
             for i in range(eval_iters):
                 x, y = get_batch(split)
-                _, loss = model_(idx=x, target=y)
+                _, loss = model_(src=x, trg=y)
                 losses[i] = loss.item()
             out[split] = losses.mean().item()
         model_.train()
@@ -158,7 +158,7 @@ if __name__ == '__main__':
             Optimiser.zero_grad()
 
             # Get the embeddings and the loss (Forward pass)
-            embeds, loss = model(idx=xb, target=yb)
+            embeds, loss = model(src=xb, trg=yb)
 
             # Backpropagate the loss (Backward pass)
             loss.backward()
@@ -174,8 +174,6 @@ if __name__ == '__main__':
         # Print the time taken for the training
         # First convert the time to seconds, minutes and hours
 
-
-
         if verbose:
             total_time = int(time.time() - start_time)
 
@@ -183,7 +181,6 @@ if __name__ == '__main__':
             minutes = (total_time % 3600) // 60
             seconds = total_time % 60
             print(f'Time taken for training: {hours} hours, {minutes} minutes, {seconds} seconds')
-
 
         if plots:
             # Create x axis values tensor

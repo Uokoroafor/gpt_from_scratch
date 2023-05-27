@@ -3,5 +3,5 @@
 import os
 import random
 from typing import List, Dict, Optional
-from utils.data_handler import save_data_as_txt
+from utils.data_utils import save_data_as_txt
 
