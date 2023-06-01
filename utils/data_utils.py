@@ -29,7 +29,6 @@ def read_in_data(filepath: str, make_dict: Optional[bool] = True) -> Union[Tuple
 
     return char_dict, data
 
-
 def tensor_to_string(tensor: torch.Tensor, decode_func: Callable) -> str:
     """Convert a tensor to a string using the decode function."""
     # Convert the tensor to a list

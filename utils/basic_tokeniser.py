@@ -40,7 +40,7 @@ def make_char_dict(char_list: Union[List[str], str], allow_uppers: Optional[bool
     return char_dict
 
 
-def create_simple_encoder_decoder(char_dict: Dict[str, List[str]], add_specials: Optional[bool] = True) -> \
+def create_simple_encoder_decoder(char_dict: Dict[str, List[str]], add_specials: Optional[bool] = False) -> \
         Tuple[Dict[str, int], Dict[int, str], Callable, Callable]:
     """This will be a character encoder and decoder for a simple character level language model based on the
     character dictionary.

@@ -28,9 +28,13 @@ class BPE:
         self.sos = sos
         self.eos = eos
         self.pad = pad
-        self.space = ' '
+        self.newline = '\n'
+        self.unknown = '<unk>'
+        self.special_tokens = [self.sos, self.eos, self.pad, self.newline]
+        self.pattern = r'\b(' + '|'.join(map(re.escape, self.special_tokens)) + r')\b|\w+\b|[^\w\s]+|\s+'
+        # self.space = ' '
         self.lookup_table = None
-        self.data = self.get_words(data)
+        self.data = get_words(data)
         self.tokens = list(set(data))
         self.vocab = self.create_initial_vocab()
 
@@ -38,21 +42,7 @@ class BPE:
         assert vocab_size >= len(
             set(data)), "Vocab size must be greater than or equal to the number of unique characters in the data"
 
-    @staticmethod
-    def get_words(data: str) -> List[List[str]]:
-        """Get the words from the data
-            Args:
-                data(str): string to be encoded
-            Returns:
-                words(List[List[str]]): list of words where each word is a list of characters
-            """
-        # Want to split on whitespace and punctuation
-        # words = re.findall(r'\w+', data)
-        words = re.findall(r'\w+\S*\s*', data)
-
-        words = [list(word) for word in words]
-
-        return words
+    # @staticmethod
 
     def create_initial_vocab(self):
         """Create the initial vocabulary
@@ -60,6 +50,7 @@ class BPE:
         vocab = self.tokens
         return vocab
 
+    @property
     def get_counts(self) -> Counter:
         """Looks at the pairs of tokens and counts their frequency
             """
@@ -67,6 +58,13 @@ class BPE:
         for word in self.data:
             for i in range(len(word) - 1):
                 counts[(word[i], word[i + 1])] += 1
+        # Don't want to count concatenation of special tokens as a pair
+        # or concatenation of special token and character
+        # for token in self.special_tokens:
+        #     counts[(token, token)] = 0
+        #     for char in self.tokens:
+        #         counts[(token, char)] = 0
+        #         counts[(char, token)] = 0
         return counts
 
     @staticmethod
@@ -105,7 +103,7 @@ class BPE:
                 verbose(bool): whether to print out the number of tokens in the vocab
             """
         for i in range(num_iters):
-            counts = self.get_counts()
+            counts = self.get_counts
             most_frequent_pair = self.get_most_frequent_pair(counts)
             self.merge_most_frequent_pair(most_frequent_pair)
 
@@ -138,13 +136,15 @@ class BPE:
         lookup_table[self.pad] = 0
         lookup_table[self.sos] = 1
         lookup_table[self.eos] = 2
-        lookup_table[self.space] = 3
+        # lookup_table[self.space] = 3
+
 
         # Space is double counted in the vocab, so we want to remove it
-        self.vocab.remove(self.space)
+        # self.vocab.remove(self.space)
 
         for i, token in enumerate(self.vocab):
-            lookup_table[token] = i + 4
+            # Start from number after number of keys in lookup table
+            lookup_table[token] = i + len(lookup_table.keys())
 
         lookup_table = self.fill_gaps(lookup_table)
 
@@ -164,12 +164,12 @@ class BPE:
         # and not 'l' + 'o' + 'w' + 'l' + 'y'
         # So we want to start with the longest token in the vocab and then work our way down
         # to the shortest token
-        for word in self.get_words(data):
+        for word in get_words(data):
             i = 0
             while i < len(word):
                 for j in range(len(word), i, -1):
                     token = ''.join(word[i:j])
-                    if token in self.vocab:
+                    if token in self.lookup_table:
                         encoded_data.append(self.lookup_table[token])
                         i = j
                         break
@@ -179,10 +179,11 @@ class BPE:
                     i += 1
         return encoded_data
 
-    def decode(self, encoded_data: List[int]) -> str:
+    def decode(self, encoded_data: List[int], skip_specials: Optional[bool] = True) -> str:
         """Decode the encoded data
             Args:
                 encoded_data(List[int]): list of integers representing the encoded data
+                skip_specials(bool): whether to skip the special tokens
             Returns:
                 decoded_data(str): decoded string
             """
@@ -192,6 +193,8 @@ class BPE:
             for key, value in self.lookup_table.items():
                 if value == token:
                     decoded_data.append(key)
+                    if skip_specials and key in [self.sos, self.eos, self.pad]:
+                        decoded_data.pop()
                     break
         return decoded_data
 
@@ -224,6 +227,46 @@ class BPE:
         print("Number of tokens in vocab: {}".format(len(self.lookup_table)))
 
 
+def get_words(data: str) -> List[List[str]]:
+    """Get the words from the data
+        Args:
+            data(str): string to be encoded
+        Returns:
+            words(List[List[str]]): list of words where each word is a list of characters
+        """
+    # Want to split on whitespace. Include space or punctuation with final character in word.
+    # Also do not split special tokens
+    # words = re.findall(r'\w+', data)
+    # words = re.findall(r'\w+\S*\s*', data)
+    # words = re.findall(r'(\W*\w+\S*)\s* ', data)
+    # words = re.findall(r'(\W*\S*\w+)\s* ', data)
+    # words = re.findall(r'(\W*\S*\w+)\s*', data)
+    # For example Want to split '<sos>hello there.<eos>' into ['<sos>', 'hello ', 'there.', '<eos>']
+    # words = re.findall(r'(\W*\S*\w+)\s* ', data)
+    words = re.split(r'(?<=\s)', data)
+    words = [list(word) for word in words]
+    # print(words)
+
+    return words
+
+
+def read_and_train(path: str, num_iters: Optional[int] = 1000) -> Tuple[str, BPE]:
+    """Read the data and train the BPE model
+        Args:
+            path(str): path to the data
+            num_iters(int): number of iterations to train the model
+        Returns:
+            Tuple[data, BPE]: tuple of the data and BPE object
+        """
+    with open(path, 'r') as f:
+        data = f.read()
+
+    bpe_obj = BPE(data, )
+    bpe_obj.train(num_iters=num_iters)
+
+    return data, bpe_obj
+
+
 if __name__ == "__main__":
     # Generate lorem ipsum for 10 lines
     data = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec a diam lectus. Sed sit amet ipsum mauris. \n'
@@ -235,13 +278,13 @@ if __name__ == "__main__":
     # Create the BPE object
     bpe = BPE(data)
     # Train the model
-    bpe.train(num_iters=10)
+    bpe.train(num_iters=50)
 
     print(bpe.lookup_table)
 
     # Encode the data
-    encoded_data = bpe.encode("lorem")
-
+    encoded_data = bpe.encode("<sos>lorem mi car.<eos>\n<sos>lorem our car.<eos>\n")
+    print(get_words("<sos>lorem mi car.<eos>\n<sos>lorem our car.<eos>\n"))
     # Decode the data
     decoded_data = bpe.decode_words(encoded_data)
 
@@ -255,11 +298,13 @@ if __name__ == "__main__":
     new_data_en = open('../data/FrenchEnglish/text_en_lite', 'r').read()
     new_data_fr = open('../data/FrenchEnglish/text_fr_lite', 'r').read()
 
+    new_data_fr += '<sos><pad><eos>'
+    new_data_en += '<sos><pad><eos>'
     # Encode the data
     # Create a new BPE object
     bpe_new_en = BPE(new_data_en)
     # Train the model
-    bpe_new_en.train(num_iters=1000, verbose=True)
+    bpe_new_en.train(num_iters=100, verbose=True)
     print(bpe_new_en.lookup_table)
     # Encode the data
 
@@ -275,7 +320,7 @@ if __name__ == "__main__":
     bpe_new_fr = BPE(new_data_fr)
 
     # Train the model
-    bpe_new_fr.train(num_iters=1000, verbose=True)
+    bpe_new_fr.train(num_iters=100, verbose=True)
 
     print(bpe_new_fr.lookup_table)
     # Encode the data
@@ -313,4 +358,4 @@ if __name__ == "__main__":
     print('encoded_data_new', encoded_data_new)
     print('decoded_data_new', decoded_data_new)
 
-# TODO: Update the code to handle unknown words
+# TODO: Update the code to handle unknown words - they currently default to <pad>

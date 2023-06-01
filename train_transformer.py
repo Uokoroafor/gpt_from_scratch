@@ -16,15 +16,15 @@ if __name__ == '__main__':
     # Wilson Pickett - 634-5789 https://www.youtube.com/watch?v=TSGuaVAufV0
 
     # Set Hyperparameters
-    batch_size = 64  # This is the size of the batch of data that will be processed at once
-    block_size = 64  # This is the size of the context window
-    max_iters = 2  # How many iterations to train for
+    batch_size = 32  # This is the size of the batch of data that will be processed at once
+    # block_size = 64  # This is the size of the context window
+    max_iters = 100  # How many iterations to train for
     eval_every = max(max_iters // 10, 1)  # How often to evaluate the model, using max to avoid 0
-    embedding_dim = 256  # The size of the embedding dimension
+    embedding_dim = 512  # The size of the embedding dimension
     lr = 3e-4
     eval_iters = 20  # How many iterations to evaluate for
     dropout_prob = 0.1
-    num_layers = 2
+    num_layers = 3
     num_heads = 4
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -72,7 +72,7 @@ if __name__ == '__main__':
 
     # print('English encoder dictionary: ', encoder_dict_en)
     # print('English decoder dictionary: ', decoder_dict_en)
-    print('French encoder dictionary: ', encoder_dict_fr)
+    # print('French encoder dictionary: ', encoder_dict_fr)
     # print('French decoder dictionary: ', decoder_dict_fr)
 
     # Encode the data
@@ -159,14 +159,14 @@ if __name__ == '__main__':
     start_time = time.time()
     last_time = start_time
     for i in range(max_iters):
-        print('Iteration: ', i)
+        # print('Iteration: ', i)
         # Get the next batch
         batch = next(iter(data_loader))
         # Unpack the batch
         x, y = batch
 
-        print('x: ', x.shape)
-        print('y: ', y.shape)
+        # print('x: ', x.shape)
+        # print('y: ', y.shape)
 
         # Get the predictions
         y_pred = model(x, y)

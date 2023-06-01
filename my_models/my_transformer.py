@@ -10,7 +10,7 @@ from my_models.AbstractModelClass import AbstractModelClass
 # TODO: Complete Implementation of Full Transformer Model
 
 class InputAndPositionalEncoding(nn.Module):
-    def __init__(self, vocab_size, embedding_dim, max_seq_len):
+    def __init__(self, vocab_size, embedding_dim, max_seq_len, dropout=0):
         super().__init__()
         self.vocab_size = vocab_size
         self.embedding_dim = embedding_dim
@@ -18,7 +18,7 @@ class InputAndPositionalEncoding(nn.Module):
         # First create the embedding layer from vocab_size to embedding_dim
         self.embedding = nn.Embedding(vocab_size, embedding_dim)
         self.positional_encoding = self.create_positional_encoding()
-
+        # self.positional_encoding = PositionalEncoding(d_model=embedding_dim, max_len=max_seq_len, dropout=0)
         # print('InputAndPositionalEncoding initialised')
         # print('vocab_size: ', vocab_size)
         # print('embedding_dim: ', embedding_dim)
@@ -57,6 +57,11 @@ class InputAndPositionalEncoding(nn.Module):
         pos = self.positional_encoding(pos)
         # Add the positional encoding to the input
         x = x + pos
+        # Get the positional encoding
+        # x = self.positional_encoding(x)
+
+
+
 
         # # Input Embedding
         # x = self.embedding(x)  # (batch_size, seq_len, embedding_dim)
@@ -91,6 +96,31 @@ class InputAndPositionalEncoding(nn.Module):
 #
 #         return self.dropout(x)
 
+# Source: https://pytorch.org/tutorials/beginner/transformer_tutorial.html
+class PositionalEncoding(nn.Module):
+    def __init__(self, d_model,  max_len=100, dropout=0):
+        """
+        Class for sinusoidal positional encoding
+        Args:
+            d_model: Dimension of the model
+            dropout: Dropout probability
+            max_len: Maximum sequence length
+        """
+        super(PositionalEncoding, self).__init__()
+        self.dropout = nn.Dropout(p=dropout)
+
+        pe = torch.zeros(max_len, d_model)
+        position = torch.arange(0, max_len, dtype=torch.float).unsqueeze(1)
+        div_term = torch.exp(torch.arange(0, d_model, 2).float() * (-torch.log(torch.tensor(10000.0)) / d_model))
+        pe[:, 0::2] = torch.sin(position * div_term)
+        pe[:, 1::2] = torch.cos(position * div_term)
+        pe = pe.unsqueeze(0).transpose(0, 1)
+        self.register_buffer('pe', pe)
+
+    def forward(self, x):
+        x = x + self.pe[:x.size(0), :]
+        return self.dropout(x)
+
 
 class Transformer(AbstractModelClass):
     def __init__(self, src_vocab_size, trg_vocab_size, embedding_dim=256, num_layers=2, num_heads=4, dropout_prob=0.2,
@@ -115,8 +145,8 @@ class Transformer(AbstractModelClass):
         self.num_heads = num_heads
         self.dropout_prob = dropout_prob
         self.max_seq_length = max_seq_length
-        self.encoder_embedding = InputAndPositionalEncoding(src_vocab_size, embedding_dim, max_seq_length)
-        self.decoder_embedding = InputAndPositionalEncoding(trg_vocab_size, embedding_dim, max_seq_length)
+        self.encoder_embedding = InputAndPositionalEncoding(src_vocab_size, embedding_dim, max_seq_length,dropout_prob)
+        self.decoder_embedding = InputAndPositionalEncoding(trg_vocab_size, embedding_dim, max_seq_length,dropout_prob)
         self.encoder_blocks = nn.ModuleList([TransformerBlock(embedding_dim=embedding_dim, output_dim=embedding_dim,
                                                               num_heads=num_heads, dropout_prob=dropout_prob) for _ in
                                              range(num_layers)])
