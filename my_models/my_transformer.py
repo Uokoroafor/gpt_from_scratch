@@ -17,8 +17,8 @@ class InputAndPositionalEncoding(nn.Module):
         self.max_seq_len = max_seq_len
         # First create the embedding layer from vocab_size to embedding_dim
         self.embedding = nn.Embedding(vocab_size, embedding_dim)
-        self.positional_encoding = self.create_positional_encoding()
-        # self.positional_encoding = PositionalEncoding(d_model=embedding_dim, max_len=max_seq_len, dropout=0)
+        # self.positional_encoding = self.create_positional_encoding()
+        self.positional_encoding = PositionalEncoding(d_model=embedding_dim, max_len=max_seq_len, dropout=0)
         # print('InputAndPositionalEncoding initialised')
         # print('vocab_size: ', vocab_size)
         # print('embedding_dim: ', embedding_dim)
@@ -49,24 +49,11 @@ class InputAndPositionalEncoding(nn.Module):
         # Get the embedding of the input
         x = self.embedding(x)
 
-        # print('new x.shape: ', x.shape)
-        # Get the positional encoding
-        pos = torch.arange(seq_len)  # .repeat(batch_size, 1)
-        # print('pos.shape: ', pos.shape)
-        # print('x.shape: ', x.shape)
-        pos = self.positional_encoding(pos)
-        # Add the positional encoding to the input
-        x = x + pos
-        # Get the positional encoding
-        # x = self.positional_encoding(x)
-
-
-
-
-        # # Input Embedding
-        # x = self.embedding(x)  # (batch_size, seq_len, embedding_dim)
+        # Add the positional encoding
+        x = self.positional_encoding(x)
 
         return x
+
 
 
 # class PositionalEncoding(nn.Module):
@@ -98,7 +85,7 @@ class InputAndPositionalEncoding(nn.Module):
 
 # Source: https://pytorch.org/tutorials/beginner/transformer_tutorial.html
 class PositionalEncoding(nn.Module):
-    def __init__(self, d_model,  max_len=100, dropout=0):
+    def __init__(self, d_model,  max_len=100, dropout=0.0):
         """
         Class for sinusoidal positional encoding
         Args:
@@ -145,8 +132,8 @@ class Transformer(AbstractModelClass):
         self.num_heads = num_heads
         self.dropout_prob = dropout_prob
         self.max_seq_length = max_seq_length
-        self.encoder_embedding = InputAndPositionalEncoding(src_vocab_size, embedding_dim, max_seq_length,dropout_prob)
-        self.decoder_embedding = InputAndPositionalEncoding(trg_vocab_size, embedding_dim, max_seq_length,dropout_prob)
+        self.encoder_embedding = InputAndPositionalEncoding(src_vocab_size, embedding_dim, max_seq_length,0)
+        self.decoder_embedding = InputAndPositionalEncoding(trg_vocab_size, embedding_dim, max_seq_length,0)
         self.encoder_blocks = nn.ModuleList([TransformerBlock(embedding_dim=embedding_dim, output_dim=embedding_dim,
                                                               num_heads=num_heads, dropout_prob=dropout_prob) for _ in
                                              range(num_layers)])
