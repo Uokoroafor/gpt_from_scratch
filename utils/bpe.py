@@ -15,7 +15,7 @@ class BPE:
     # Default symbols are <sos> for start of sentence and <eos> for end of sentence, <pad> for padding
 
     def __init__(self, data: str, vocab_size: Optional[int] = 100000, sos: Optional[str] = '<sos>',
-                 eos: Optional[str] = '<eos>', pad: Optional[str] = '<pad>'):
+                 eos: Optional[str] = '<eos>', pad: Optional[str] = '<pad>', use_special_tokens: Optional[bool] = False):
         """Byte Pair Encoding Class
             Args:
                 data(str): string to be encoded
@@ -23,6 +23,7 @@ class BPE:
                 sos(str): start of sentence symbol
                 eos(str): end of sentence symbol
                 pad(str): padding symbol
+                use_special_tokens(bool): Whether to use special tokens or not
             """
         self.vocab_size = vocab_size
         self.sos = sos
@@ -34,6 +35,7 @@ class BPE:
         self.pattern = r'\b(' + '|'.join(map(re.escape, self.special_tokens)) + r')\b|\w+\b|[^\w\s]+|\s+'
         # self.space = ' '
         self.lookup_table = None
+        self.use_special_tokens = use_special_tokens
         self.data = get_words(data)
         self.tokens = list(set(data))
         self.vocab = self.create_initial_vocab()
@@ -133,9 +135,10 @@ class BPE:
             """
         # pad, sos, eos are the first three entries in the vocab
         lookup_table = defaultdict(int)
-        lookup_table[self.pad] = 0
-        lookup_table[self.sos] = 1
-        lookup_table[self.eos] = 2
+        if self.use_special_tokens:
+            lookup_table[self.pad] = 0
+            lookup_table[self.sos] = 1
+            lookup_table[self.eos] = 2
         # lookup_table[self.space] = 3
 
 
