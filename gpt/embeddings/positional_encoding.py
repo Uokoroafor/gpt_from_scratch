@@ -24,5 +24,6 @@ class PositionalEncoding(nn.Embedding):
         b, t, e = x.size()  # b: batch_size, t: seq_len, e: d_model
         assert t == self.num_embeddings, f"Sequence length of tensor ({t}) != max_seq_len ({self.num_embeddings})"
         positions = torch.arange(t, device=x.device, dtype=x.dtype).expand(b, t).contiguous()  # (batch_size, seq_len)
+        positions = positions.long()  # (batch_size, seq_len)
         encodings = super(PositionalEncoding, self).forward(positions)  # (batch_size, seq_len, d_model)
-        return x + encodings.unsqueeze(1) # (batch_size, seq_len, d_model)
+        return x + encodings # (batch_size, seq_len, d_model)

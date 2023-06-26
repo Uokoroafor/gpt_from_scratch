@@ -1,6 +1,6 @@
 import torch
 from torch import nn
-from attention import Attention
+from gpt.layers.attention import Attention
 from typing import Optional, Tuple
 
 
@@ -39,7 +39,6 @@ class CausalSelfAttention(nn.Module):
             query (torch.Tensor): Query tensor of shape (batch_size, seq_len, d_model)
             key (torch.Tensor): Key tensor of shape (batch_size, seq_len, d_model)
             value (torch.Tensor): Value tensor of shape (batch_size, seq_len, d_model)
-            mask (Optional[torch.Tensor], optional): Mask tensor of shape (batch_size, seq_len, seq_len). Defaults to None.
         Returns:
             torch.Tensor: CausalSelfAttention output of shape (batch_size, seq_len, d_model)
             torch.Tensor: Attention weights of shape (batch_size, num_heads, seq_len, seq_len)

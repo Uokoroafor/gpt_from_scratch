@@ -1,6 +1,6 @@
 from torch import nn
-from positional_encoding import PositionalEncoding
-from token_embeddings import TokenEmbeddings
+from gpt.embeddings.positional_encoding import PositionalEncoding
+from gpt.embeddings.token_embeddings import TokenEmbeddings
 from typing import Optional
 
 

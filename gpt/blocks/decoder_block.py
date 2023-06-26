@@ -17,7 +17,7 @@ class DecoderBlock(nn.Module):
             dropout_prob (float): Dropout probability
         """
         super(DecoderBlock, self).__init__()
-        self.self_attention = CausalSelfAttention(d_model, num_heads)
+        self.attention = CausalSelfAttention(d_model, num_heads)
         self.layer_norm1 = LayerNorm(d_model)
 
         self.encoder_attention = CausalSelfAttention(d_model, num_heads)
@@ -39,11 +39,10 @@ class DecoderBlock(nn.Module):
         Returns:
             torch.Tensor: Output tensor of shape (batch_size, seq_len, embedding_dim)
         """
-
         # Layer Norm
         trg_norm = self.layer_norm1(trg)
         # Self attention
-        self_attention = self.attention(trg_norm, trg_norm, trg_norm, trg_mask)
+        self_attention, att_weights = self.attention(trg_norm, trg_norm, trg_norm)
         # Residual connection and dropout
         trg = trg + self.dropout(self_attention)
         # Layer normalization
