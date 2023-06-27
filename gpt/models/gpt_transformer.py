@@ -27,6 +27,7 @@ class GPT(nn.Module):
         self.trg_sos = trg_sos
         self.decoder = GPTDecoder(vocab_size_dec, d_model, max_seq_len, num_layers, num_heads, d_ff, dropout_prob)
         self.device = device
+        self.max_seq_len = max_seq_len
 
     def forward(self, trg: torch.Tensor) -> torch.Tensor:
         """Forward pass of the transformer
@@ -55,52 +56,49 @@ class GPT(nn.Module):
         trg_mask = trg_pad_mask & trg_sub_mask
         return trg_mask
 
-    def greedy_generate(self, start_token: int, max_length: int) -> torch.Tensor:
+    def generate(self, start_token: int, max_length: int, sampled: Optional[bool] = True, k: Optional[int] = 5,
+                 temp: Optional[float] = 1.0) -> torch.Tensor:
         """
         Generate a sequence given a start token
         Args:
             start_token (int): Start token
             max_length (int): Maximum length of the sequence to generate
+            sampled (bool): Whether to sample from the output distribution or take the argmax (greedy)
+            k (int): Number of top-k tokens to sample from
+            temp (float): Temperature to apply to the output logits
+
         Returns:
             torch.Tensor: Generated sequence
         """
         with torch.no_grad():
             generated = torch.tensor([start_token], dtype=torch.long, device=self.device).unsqueeze(0)
-            for _ in range(max_length):
-                output = self.forward(generated)
-                next_token = output.argmax(2)[:, -1].unsqueeze(1)
-                generated = torch.cat((generated, next_token), dim=1)
-        return generated
-
-    def top_k_generate(self, start_token: int, max_length: int, k: int, temp: Optional[float] = 1.0) -> torch.Tensor:
-        """
-        Generate a sequence given a start token
-        Args:
-            start_token (int): Start token
-            max_length (int): Maximum length of the sequence to generate
-            k (int): Number of top tokens to consider
-            temp (float): Temperature to apply to the logits. If provided, it must be greater than 0.0
-        Returns:
-            torch.Tensor: Generated sequence
-        """
-        with torch.no_grad():
-            generated = torch.tensor([start_token], dtype=torch.long, device=self.device).unsqueeze(0)
-            for _ in range(max_length):
+            for j in range(max_length):
+                if generated.shape[1] == max_length:
+                    break
+                if generated.shape[1] > self.max_seq_len:
+                    # If the generated sequence is longer than the maximum length, truncate it
+                    generated = generated[:, -self.max_seq_len:]
                 output = self.forward(generated)
 
-                # apply a temperature to the output logits
-                assert temp > 0.0, "Temperature must be greater than 0.0"
-                output = output[:, -1, :] / temp
+                if sampled:
 
-                # apply a softmax to transform the logits to probabilities
-                probabilities = F.softmax(output[:, -1, :], dim=-1)
-                # filter top-k tokens
-                top_k_probs, top_k_indices = torch.topk(probabilities, k=k, dim=-1)
-                # sample from the top_k tokens
-                # next_token = torch.multinomial(top_k_probs, num_samples=1)
-                # # add the sampled token to the generated sequence
-                # generated = torch.cat((generated, top_k_indices[0, next_token].unsqueeze(0).unsqueeze(0)), dim=1)
+                    # apply a temperature to the output logits
+                    assert temp > 0.0, "Temperature must be greater than 0.0"
+                    # output = output[:, -1, :] / temp
+                    output /= temp
 
-                next_token = torch.multinomial(top_k_probs, num_samples=1)
+                    # Apply top-k filtering
+                    v, _ = torch.topk(output, k)
+                    output[output < v[:, :, [-1]]] = -float('Inf')
+
+                    # apply a softmax to transform the logits to probabilities
+                    probabilities = F.softmax(output[:, -1, :], dim=1)
+
+                    assert round(probabilities.sum().item(),
+                                 2) == 1.0, f"Probabilities do not sum to 1.0, instead sum to {probabilities.sum().item()}"
+                    next_token = torch.multinomial(probabilities, num_samples=1)
+                else:
+                    next_token = output.argmax(2)[:, -1].unsqueeze(1)
+
                 generated = torch.cat((generated, next_token), dim=1)
             return generated
