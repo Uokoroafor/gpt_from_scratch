@@ -47,7 +47,7 @@ class GPT(nn.Module):
         Returns:
             torch.Tensor: Target mask tensor of shape (batch_size, seq_len, seq_len)
         """
-        # What to ignore the padding tokens
+        # Want to ignore the padding tokens
         trg_pad_mask = (trg != self.trg_pad).unsqueeze(-2)  # (batch_size, 1, seq_len)
         trg_len = trg.shape[1]
         # What to ignore the future tokens (i.e. tokens that are not yet predicted)
@@ -94,8 +94,8 @@ class GPT(nn.Module):
                     # apply a softmax to transform the logits to probabilities
                     probabilities = F.softmax(output[:, -1, :], dim=1)
 
-                    assert round(probabilities.sum().item(),
-                                 2) == 1.0, f"Probabilities do not sum to 1.0, instead sum to {probabilities.sum().item()}"
+                    assert round(probabilities.sum().item(), 2) == 1.0, f"Probabilities do not sum to 1.0," \
+                                                                        f" instead sum to {probabilities.sum().item()}"
                     next_token = torch.multinomial(probabilities, num_samples=1)
                 else:
                     next_token = output.argmax(2)[:, -1].unsqueeze(1)

@@ -146,7 +146,7 @@ class Trainer:
             print(f'Time taken for training: {hours} hours, {minutes} minutes, {seconds} seconds')
 
         if plotting:
-            saved_path = f'{self.path}/plots/{type(self.model).__name__}_losses.png' if save_model else None
+            saved_path = f'{self.path}/training_logs/{type(self.model).__name__}_losses.png' if save_model else None
             plot_losses(train_losses, val_losses, model_name=type(self.model).__name__,num_epochs=self.epochs,
                         saved_path=saved_path)
 
