@@ -5,22 +5,29 @@ from gpt.models.gpt_transformer import GPT
 from utils.basic_tokeniser import create_simple_encoder_decoder
 from utils.data_utils import read_in_data
 from utils.train_utils import Trainer
+from utils.file_utils import load_config
 
-training_hyperparams = {
-    'batch_size': 32,
-    'epochs': 1000,
-    'learning_rate': 5e-5,
-    'max_seq_len': 64,
-    'num_heads': 8,
-    'num_layers': 4,
-    'd_model': 128,
-    'd_ff': 128 * 4,
-    'dropout_prob': 0.2,
-    'device': torch.device('cuda' if torch.cuda.is_available() else 'cpu'),
-    'eval_every': 100,
-    'eval_iters': 10,
-    'save_every': 100,
-}
+
+# training_hyperparams = {
+#     'batch_size': 32,
+#     'epochs': 1000,
+#     'learning_rate': 5e-5,
+#     'max_seq_len': 64,
+#     'num_heads': 8,
+#     'num_layers': 4,
+#     'd_model': 128,
+#     'd_ff': 128 * 4,
+#     'dropout_prob': 0.2,
+#     'device': torch.device('cuda' if torch.cuda.is_available() else 'cpu'),
+#     'eval_every': 100,
+#     'eval_iters': 10,
+#     'save_every': 100,
+# }
+
+# # Save the training hyperparameters as a  txt file
+# save_config(training_hyperparams, 'gpt_config.txt')
+training_hyperparams = load_config('gpt_config.txt')
+# print(training_hyperparams)
 
 print('Using device: ', training_hyperparams['device'])
 device = training_hyperparams['device']

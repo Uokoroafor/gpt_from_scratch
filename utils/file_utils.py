@@ -1,6 +1,6 @@
 import os
 import time
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 
 
 def create_training_folder(path: Optional[str] = None) -> str:
@@ -47,3 +47,43 @@ def save_losses(train_losses: List[float], val_losses: List[float], path: str) -
         f.write('train_loss,val_loss\n')
         for train_loss, val_loss in zip(train_losses, val_losses):
             f.write(f'{train_loss},{val_loss}\n')
+
+
+def save_config(config: dict, path: Optional[str] = None) -> None:
+    """Save the config to a txt file.
+    Args:
+        config (dict): The config.
+        path (str): The path to save the config to.
+    """
+    # Save the config to a txt file
+    if path is None:
+        save_path = 'config.txt'
+    else:
+        save_path = path
+    with open(f'{save_path}', 'w') as f:
+        for key, value in config.items():
+            f.write(f'{key}: {value}\n')
+
+
+def load_config(config_path: str) -> Dict[str, Any]:
+    """Load the config from a txt file.
+    Args:
+        config_path (str): The path to load the config from.
+    Returns:
+        dict: The config.
+    """
+    # Load the config from a txt file
+    config = {}
+    with open(config_path, 'r') as f:
+        for line in f:
+            key, value = line.split(': ')
+            config[key] = value.strip()
+            # Convert to int or float if possible
+            try:
+                config[key] = int(config[key])
+            except ValueError:
+                try:
+                    config[key] = float(config[key])
+                except ValueError:
+                    pass
+    return config

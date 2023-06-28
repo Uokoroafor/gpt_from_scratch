@@ -3,7 +3,7 @@ from typing import Dict, Optional, Tuple
 import torch
 from torch import nn
 from utils.plot_utils import plot_losses
-from utils.file_utils import create_training_folder, save_losses
+from utils.file_utils import create_training_folder, save_losses, save_config
 
 
 class Trainer:
@@ -35,6 +35,9 @@ class Trainer:
 
         # Unpack training hyperparameters
         self.set_training_hyperparameters(**training_hyperparameters)
+
+        # Save the training hyperparameters as a  txt file
+        save_config(training_hyperparameters, f'{self.path}/config.txt')
 
         # training_hyperparams = {
         #     'batch_size': 32,
