@@ -29,6 +29,9 @@ from utils.file_utils import load_config
 training_hyperparams = load_config('gpt_config.txt')
 # print(training_hyperparams)
 
+torch.manual_seed(6345789)  # Set the random seed for reproducibility
+# Wilson Pickett - 634-5789 https://www.youtube.com/watch?v=TSGuaVAufV0
+
 print('Using device: ', training_hyperparams['device'])
 device = training_hyperparams['device']
 block_size = training_hyperparams['max_seq_len']
