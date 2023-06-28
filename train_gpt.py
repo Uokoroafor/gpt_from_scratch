@@ -31,9 +31,11 @@ max_iters = training_hyperparams['epochs']
 lr = training_hyperparams['learning_rate']
 
 data_folder = 'data/madlibs/'
+# data_folder = 'data/gatsby/'
 
 # First we read in the data 'data/asimov/asimov_data_1000.txt'
 char_dict, data = read_in_data(data_folder + 'dummy_data_1000_lines.txt')
+# char_dict, data = read_in_data(data_folder + 'great_gatsby.txt')
 
 # Create the encoder and decoder dictionaries and the encode and decode functions
 encoder_dict, decoder_dict, encode, decode = create_simple_encoder_decoder(char_dict)
@@ -129,7 +131,6 @@ def text_to_tensor_(text: str) -> torch.Tensor:
 train_data = text_to_tensor(train_data)
 val_data = text_to_tensor(val_data)
 test_data = text_to_tensor(test_data)
-
 
 loss_fn = nn.CrossEntropyLoss(ignore_index=encoder_dict['<pad>'])
 
