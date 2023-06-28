@@ -25,8 +25,18 @@ def create_training_folder(path: Optional[str] = None) -> str:
     else:
         path = f'{path}/{date_time}'
 
-    # Create the training folder
-    os.makedirs(path)
+    # Create the training folder, if it already exists, add a number to the end
+    try:
+        os.makedirs(path)
+    except FileExistsError:
+        i = 1
+        while True:
+            try:
+                os.makedirs(f'{path}_{i}')
+                path = f'{path}_{i}'
+                break
+            except FileExistsError:
+                i += 1
 
     # Also make a folder for the saved models and training logs
     os.makedirs(f'{path}/saved_models')

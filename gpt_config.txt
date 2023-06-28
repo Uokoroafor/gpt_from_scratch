@@ -1,12 +1,12 @@
 batch_size: 32
-epochs: 1000
-learning_rate: 5e-05
+epochs: 5000
+learning_rate: 1e-05
 max_seq_len: 64
-num_heads: 8
+num_heads: 4
 num_layers: 4
 d_model: 128
 d_ff: 512
-dropout_prob: 0.2
+dropout_prob: 0.1
 device: cpu
 eval_every: 100
 eval_iters: 10

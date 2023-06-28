@@ -6,6 +6,8 @@ from utils.plot_utils import plot_losses
 from utils.file_utils import create_training_folder, save_losses, save_config
 
 
+# TODO: Add early stopping
+# TODO: Add evaluate method
 class Trainer:
 
     def __init__(self, model: nn.Module, optimiser: torch.optim.Optimizer, loss_fn: torch.nn.modules.loss._Loss,
@@ -114,14 +116,15 @@ class Trainer:
                 losses = _estimate_loss()
                 # Print Step, train loss and validation loss
                 if verbose:
-                    print(f'At Iteration: {max(1,i)}/{self.epochs}, Train loss: {losses["train"]}, Val loss: {losses["val"]}')
+                    print(
+                        f'At Iteration: {max(1, i)}/{self.epochs}, Train loss: {losses["train"]}, Val loss: {losses["val"]}')
                     print(f'Time taken for last {self.eval_every} iterations: {(time.time() - last_time):.2f} seconds')
                     last_time = time.time()
                 train_losses.append(losses["train"])
                 val_losses.append(losses["val"])
 
             if self.save_every is not None and i % self.save_every == 0:
-                self.save_model(f'{self.path}/saved_models/{type(self.model).__name__}_iter_{max(1,i)}.pt')
+                self.save_model(f'{self.path}/saved_models/{type(self.model).__name__}_iter_{max(1, i)}.pt')
 
             # Get a batch of data
             xb, yb = _get_batch('train')
@@ -150,7 +153,7 @@ class Trainer:
 
         if plotting:
             saved_path = f'{self.path}/training_logs/{type(self.model).__name__}_losses.png' if save_model else None
-            plot_losses(train_losses, val_losses, model_name=type(self.model).__name__,num_epochs=self.epochs,
+            plot_losses(train_losses, val_losses, model_name=type(self.model).__name__, num_epochs=self.epochs,
                         saved_path=saved_path)
 
         if save_model:
@@ -177,4 +180,3 @@ class Trainer:
             model_path (str): Path to save the model
         """
         torch.save(self.model, model_path)
-

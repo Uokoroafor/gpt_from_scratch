@@ -95,11 +95,12 @@ def text_to_tensor(text: str) -> torch.Tensor:
 
     encoded_sentences = []
     for sentence in sentences:
-        encoded_sentence = [encoder_dict['<sos>']]
+        #encoded_sentence = [encoder_dict['<sos>']]
+        encoded_sentence = []
         encoded_sentence.extend(encode(sentence))  # start with <sos>
         # encoded_sentence = encode(sentence)  # start with <sos>
-        encoded_sentence.extend([encoder_dict['\n']])
-        encoded_sentence.extend([encoder_dict['<eos>']])
+        # encoded_sentence.extend([encoder_dict['\n']])
+        #encoded_sentence.extend([encoder_dict['<eos>']])
 
         encoded_sentences.append(encoded_sentence)
 
@@ -142,6 +143,7 @@ train_data = text_to_tensor(train_data)
 val_data = text_to_tensor(val_data)
 test_data = text_to_tensor(test_data)
 
+
 loss_fn = nn.CrossEntropyLoss(ignore_index=encoder_dict['<pad>'])
 
 model = GPT(
@@ -156,11 +158,7 @@ model = GPT(
     dropout_prob=training_hyperparams['dropout_prob'],
     device=device)
 
-optimiser = torch.optim.Adam(model.parameters(), lr=lr)
-
-# Use a learning rate scheduler
-scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
-    optimiser, mode='min', factor=0.5, patience=1, verbose=True)
+optimiser = torch.optim.Adam(model.parameters(), lr=lr) #, betas=(0.9, 0.98), eps=1e-9,weight_decay=0.1)
 
 # Create a trainer object
 trainer = Trainer(model=model, loss_fn=loss_fn, optimiser=optimiser, training_hyperparameters=training_hyperparams)
@@ -168,10 +166,16 @@ trainer = Trainer(model=model, loss_fn=loss_fn, optimiser=optimiser, training_hy
 # Train the model
 model, _, _ = trainer.train(train_data, val_data, save_model=True, plotting=True, verbose=True)
 
-chars = decode(
-    model.generate(start_token=encoder_dict['<sos>'] * torch.ones((1, 1), dtype=torch.long), max_length=50, k=6,
+sampled_chars = decode(
+    model.generate(start_token=encoder_dict['<sos>'] * torch.ones((1, 1), dtype=torch.long), max_length=100, k=6,
                    temp=1.6)[0].tolist())
 
+greedy_chars = decode(
+    model.generate(start_token=encoder_dict['<sos>'] * torch.ones((1, 1), dtype=torch.long), max_length=100,
+                   sampled=False)[0].tolist())
+
 # Join the characters together and then print the string
-print(f"Generating Characters: {''.join(chars)}")
+print(f"Generating Characters with sampling: {''.join(sampled_chars)}")
+print("-----------------------------------------------------")
+print(f"Generating Characters without sampling: {''.join(greedy_chars)}")
 print("-----------------------------------------------------")
