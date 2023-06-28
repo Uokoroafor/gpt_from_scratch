@@ -35,7 +35,7 @@ class GPTDecoder(nn.Module):
         self.lm_head = nn.Linear(d_model, vocab_size_dec)
 
         # Tie the weights of the embedding and linear layer used in GPT
-        self.lm_head.weight = self.embedding.token_embeddings.weight
+        # self.lm_head.weight = self.embedding.token_embeddings.weight
 
         self.apply(self._init_weights)
 
