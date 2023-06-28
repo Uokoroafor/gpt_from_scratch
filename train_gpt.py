@@ -8,17 +8,18 @@ from utils.train_utils import Trainer
 
 training_hyperparams = {
     'batch_size': 32,
-    'epochs': 5000,
+    'epochs': 1000,
     'learning_rate': 5e-5,
     'max_seq_len': 64,
     'num_heads': 8,
     'num_layers': 4,
-    'd_model': 64,
-    'd_ff': 64 * 4,
+    'd_model': 128,
+    'd_ff': 128 * 4,
     'dropout_prob': 0.2,
     'device': torch.device('cuda' if torch.cuda.is_available() else 'cpu'),
-    'eval_every': 500,
+    'eval_every': 100,
     'eval_iters': 10,
+    'save_every': 100,
 }
 
 print('Using device: ', training_hyperparams['device'])
@@ -46,7 +47,7 @@ with open(data_folder + 'decoded_test_data.txt', 'r') as f:
     test_data = f.read()
 
 
-def text_to_tensor(text: str) -> torch.Tensor:
+def text_to_tensor2(text: str) -> torch.Tensor:
     """Convert a string of text into a tensor of token indices using sent_tokeniser.
     Args:
         text: A string of text.
@@ -63,6 +64,34 @@ def text_to_tensor(text: str) -> torch.Tensor:
         encoded_sentences.append(encoded_sentence)
 
     encoded_sentences.append([encoder_dict['<eos>']])
+
+    # concatenate all encoded sentences
+    encoded_text = [token for sentence in encoded_sentences for token in sentence]
+
+    return torch.tensor(encoded_text, dtype=torch.long)
+
+
+def text_to_tensor(text: str) -> torch.Tensor:
+    """Convert a string of text into a tensor of token indices using sent_tokeniser.
+    Args:
+        text: A string of text.
+    Returns:
+        A torch tensor of token indices.
+    """
+    # Assuming your text data is in the variable 'text'
+    sentences = sent_tokenize(text)  # split the text into sentences
+
+    encoded_sentences = []
+    for sentence in sentences:
+        encoded_sentence = [encoder_dict['<sos>']]
+        encoded_sentence.extend(encode(sentence))  # start with <sos>
+        # encoded_sentence = encode(sentence)  # start with <sos>
+        encoded_sentence.extend([encoder_dict['\n']])
+        encoded_sentence.extend([encoder_dict['<eos>']])
+
+        encoded_sentences.append(encoded_sentence)
+
+    # encoded_sentences.append([encoder_dict['<eos>']])
 
     # concatenate all encoded sentences
     encoded_text = [token for sentence in encoded_sentences for token in sentence]
@@ -101,10 +130,6 @@ train_data = text_to_tensor(train_data)
 val_data = text_to_tensor(val_data)
 test_data = text_to_tensor(test_data)
 
-# x = train_data[:block_size]
-# y = train_data[1:block_size + 1]
-# # pad x with zeros to block_size
-# x = torch.cat([torch.zeros(block_size - len(x), dtype=torch.long), x])
 
 loss_fn = nn.CrossEntropyLoss(ignore_index=encoder_dict['<pad>'])
 

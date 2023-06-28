@@ -3,6 +3,7 @@ from typing import Dict, Optional, Tuple
 import torch
 from torch import nn
 from utils.plot_utils import plot_losses
+from utils.file_utils import create_training_folder, save_losses
 
 
 class Trainer:
@@ -29,6 +30,9 @@ class Trainer:
         self.max_seq_len = None
         self.save_every = None
 
+        # Create a folder to save the model and training losses
+        self.path = create_training_folder()
+
         # Unpack training hyperparameters
         self.set_training_hyperparameters(**training_hyperparameters)
 
@@ -50,6 +54,8 @@ class Trainer:
             plotting (bool, optional): Whether to plot the losses. Defaults to True.
             verbose (Optional[bool], optional): Whether to print the progress of training. Defaults to True.
         """
+
+        # Helper functions
 
         def _get_batch(split: str) -> Tuple[torch.Tensor, torch.Tensor]:
             """Get a batch of data from the train, validation or test set.
@@ -105,11 +111,14 @@ class Trainer:
                 losses = _estimate_loss()
                 # Print Step, train loss and validation loss
                 if verbose:
-                    print(f'At Iteration: {i}, Train loss: {losses["train"]}, Val loss: {losses["val"]}')
+                    print(f'At Iteration: {max(1,i)}/{self.epochs}, Train loss: {losses["train"]}, Val loss: {losses["val"]}')
                     print(f'Time taken for last {self.eval_every} iterations: {(time.time() - last_time):.2f} seconds')
                     last_time = time.time()
                 train_losses.append(losses["train"])
                 val_losses.append(losses["val"])
+
+            if self.save_every is not None and i % self.save_every == 0:
+                self.save_model(f'{self.path}/saved_models/{type(self.model).__name__}_iter_{max(1,i)}.pt')
 
             # Get a batch of data
             xb, yb = _get_batch('train')
@@ -137,15 +146,15 @@ class Trainer:
             print(f'Time taken for training: {hours} hours, {minutes} minutes, {seconds} seconds')
 
         if plotting:
-            plot_losses(train_losses, val_losses, model_name=type(self.model).__name__,num_epochs=self.epochs)
+            saved_path = f'{self.path}/plots/{type(self.model).__name__}_losses.png' if save_model else None
+            plot_losses(train_losses, val_losses, model_name=type(self.model).__name__,num_epochs=self.epochs,
+                        saved_path=saved_path)
 
         if save_model:
             if save_model_path is None:
-                save_model_path = f'saved_models/{type(self.model).__name__}'
-
-            # append timestamp to model name
-            save_model_path += f'_{time.strftime("%Y%m%d_%H%M%S")}.pt'
+                save_model_path = f'{self.path}/saved_models/{type(self.model).__name__}_final.pt'
             self.save_model(save_model_path)
+            save_losses(train_losses, val_losses, self.path)
             if verbose:
                 print('Model saved at:', save_model_path)
 
@@ -165,3 +174,4 @@ class Trainer:
             model_path (str): Path to save the model
         """
         torch.save(self.model, model_path)
+
