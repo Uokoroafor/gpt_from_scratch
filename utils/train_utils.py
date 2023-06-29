@@ -9,10 +9,14 @@ from utils.file_utils import create_training_folder, save_losses, save_config
 # TODO: Add early stopping
 # TODO: Add evaluate method
 class Trainer:
-
-    def __init__(self, model: nn.Module, optimiser: torch.optim.Optimizer, loss_fn: torch.nn.modules.loss._Loss,
-                 training_hyperparameters: Dict,
-                 device: Optional[str] = 'cpu'):
+    def __init__(
+        self,
+        model: nn.Module,
+        optimiser: torch.optim.Optimizer,
+        loss_fn: torch.nn.modules.loss._Loss,
+        training_hyperparameters: Dict,
+        device: Optional[str] = "cpu",
+    ):
         """Constructor class for Trainer
         Args:
             model (nn.Module): Model to train
@@ -39,7 +43,7 @@ class Trainer:
         self.set_training_hyperparameters(**training_hyperparameters)
 
         # Save the training hyperparameters as a  txt file
-        save_config(training_hyperparameters, f'{self.path}/config.txt')
+        save_config(training_hyperparameters, f"{self.path}/config.txt")
 
         # training_hyperparams = {
         #     'batch_size': 32,
@@ -48,8 +52,15 @@ class Trainer:
         #     'eval_every': 100,
         # }
 
-    def train(self, train_data: torch.Tensor, val_data: torch.Tensor, save_model: bool = True,
-              save_model_path: Optional[str] = None, plotting: bool = True, verbose: Optional[bool] = True):
+    def train(
+        self,
+        train_data: torch.Tensor,
+        val_data: torch.Tensor,
+        save_model: bool = True,
+        save_model_path: Optional[str] = None,
+        plotting: bool = True,
+        verbose: Optional[bool] = True,
+    ):
         """Train the model
         Args:
             train_data (torch.Tensor): Training data
@@ -70,16 +81,18 @@ class Trainer:
                 A tuple of tensors containing the input and target data.
             """
 
-            if split == 'train':
+            if split == "train":
                 data = train_data
-            elif split == 'val':
+            elif split == "val":
                 data = val_data
             else:
                 raise ValueError(f"Unknown split: '{split}'")
             ix = torch.randint(len(data) - self.max_seq_len, (self.batch_size,))
-            x = torch.stack([data[i:i + self.max_seq_len] for i in ix])
-            y = torch.stack([data[i + 1:i + self.max_seq_len + 1] for i in ix])
-            x, y = x.to(self.device), y.to(self.device)  # Transfer the data to the GPU if we are using it
+            x = torch.stack([data[i : i + self.max_seq_len] for i in ix])
+            y = torch.stack([data[i + 1 : i + self.max_seq_len + 1] for i in ix])
+            x, y = x.to(self.device), y.to(
+                self.device
+            )  # Transfer the data to the GPU if we are using it
             return x, y
 
         @torch.no_grad()
@@ -91,7 +104,7 @@ class Trainer:
             """
             self.model.eval()  # Set the model to evaluation mode
             out = {}
-            for split in ['train', 'val']:
+            for split in ["train", "val"]:
                 losses = torch.zeros(self.eval_iters)
                 for i in range(self.eval_iters):
                     x, y = _get_batch(split)
@@ -106,7 +119,9 @@ class Trainer:
         val_losses = []
 
         if verbose:
-            print(f"Training {type(self.model).__name__} for {self.epochs} iterations...")
+            print(
+                f"Training {type(self.model).__name__} for {self.epochs} iterations..."
+            )
 
         # Measure the time taken for the training
         start_time = time.time()
@@ -117,17 +132,22 @@ class Trainer:
                 # Print Step, train loss and validation loss
                 if verbose:
                     print(
-                        f'At Iteration: {max(1, i)}/{self.epochs}, Train loss: {losses["train"]}, Val loss: {losses["val"]}')
-                    print(f'Time taken for last {self.eval_every} iterations: {(time.time() - last_time):.2f} seconds')
+                        f'At Iteration: {max(1, i)}/{self.epochs}, Train loss: {losses["train"]}, Val loss: {losses["val"]}'
+                    )
+                    print(
+                        f"Time taken for last {self.eval_every} iterations: {(time.time() - last_time):.2f} seconds"
+                    )
                     last_time = time.time()
                 train_losses.append(losses["train"])
                 val_losses.append(losses["val"])
 
             if self.save_every is not None and i % self.save_every == 0:
-                self.save_model(f'{self.path}/saved_models/{type(self.model).__name__}_iter_{max(1, i)}.pt')
+                self.save_model(
+                    f"{self.path}/saved_models/{type(self.model).__name__}_iter_{max(1, i)}.pt"
+                )
 
             # Get a batch of data
-            xb, yb = _get_batch('train')
+            xb, yb = _get_batch("train")
 
             # Zero the gradients
             self.optimiser.zero_grad()
@@ -149,20 +169,33 @@ class Trainer:
             hours = total_time // 3600
             minutes = (total_time % 3600) // 60
             seconds = total_time % 60
-            print(f'Time taken for training: {hours} hours, {minutes} minutes, {seconds} seconds')
+            print(
+                f"Time taken for training: {hours} hours, {minutes} minutes, {seconds} seconds"
+            )
 
         if plotting:
-            saved_path = f'{self.path}/training_logs/{type(self.model).__name__}_losses.png' if save_model else None
-            plot_losses(train_losses, val_losses, model_name=type(self.model).__name__, num_epochs=self.epochs,
-                        saved_path=saved_path)
+            saved_path = (
+                f"{self.path}/training_logs/{type(self.model).__name__}_losses.png"
+                if save_model
+                else None
+            )
+            plot_losses(
+                train_losses,
+                val_losses,
+                model_name=type(self.model).__name__,
+                num_epochs=self.epochs,
+                saved_path=saved_path,
+            )
 
         if save_model:
             if save_model_path is None:
-                save_model_path = f'{self.path}/saved_models/{type(self.model).__name__}_final.pt'
+                save_model_path = (
+                    f"{self.path}/saved_models/{type(self.model).__name__}_final.pt"
+                )
             self.save_model(save_model_path)
             save_losses(train_losses, val_losses, self.path)
             if verbose:
-                print('Model saved at:', save_model_path)
+                print("Model saved at:", save_model_path)
 
         return self.model, train_losses, val_losses
 

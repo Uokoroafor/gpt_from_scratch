@@ -13,17 +13,17 @@ def create_training_folder(path: Optional[str] = None) -> str:
 
     # Get today's date and time
     # Want the date in the format YY-MM-DD-HH-MM
-    date_time = time.strftime('%y%m%d-%H%M')
+    date_time = time.strftime("%y%m%d-%H%M")
 
     # If the training folder doesn't exist, create it
-    if not os.path.exists('training'):
-        os.makedirs('training')
+    if not os.path.exists("training"):
+        os.makedirs("training")
 
     # Create the path to the training folder
     if path is None:
-        path = f'training/{date_time}'
+        path = f"training/{date_time}"
     else:
-        path = f'{path}/{date_time}'
+        path = f"{path}/{date_time}"
 
     # Create the training folder, if it already exists, add a number to the end
     try:
@@ -32,15 +32,15 @@ def create_training_folder(path: Optional[str] = None) -> str:
         i = 1
         while True:
             try:
-                os.makedirs(f'{path}_{i}')
-                path = f'{path}_{i}'
+                os.makedirs(f"{path}_{i}")
+                path = f"{path}_{i}"
                 break
             except FileExistsError:
                 i += 1
 
     # Also make a folder for the saved models and training logs
-    os.makedirs(f'{path}/saved_models')
-    os.makedirs(f'{path}/training_logs')
+    os.makedirs(f"{path}/saved_models")
+    os.makedirs(f"{path}/training_logs")
 
     return path
 
@@ -53,10 +53,10 @@ def save_losses(train_losses: List[float], val_losses: List[float], path: str) -
         path (str): The path to save the losses to.
     """
     # Save the training and validation losses to a csv file
-    with open(f'{path}/training_logs/losses.csv', 'w') as f:
-        f.write('train_loss,val_loss\n')
+    with open(f"{path}/training_logs/losses.csv", "w") as f:
+        f.write("train_loss,val_loss\n")
         for train_loss, val_loss in zip(train_losses, val_losses):
-            f.write(f'{train_loss},{val_loss}\n')
+            f.write(f"{train_loss},{val_loss}\n")
 
 
 def save_config(config: dict, path: Optional[str] = None) -> None:
@@ -67,12 +67,12 @@ def save_config(config: dict, path: Optional[str] = None) -> None:
     """
     # Save the config to a txt file
     if path is None:
-        save_path = 'config.txt'
+        save_path = "config.txt"
     else:
         save_path = path
-    with open(f'{save_path}', 'w') as f:
+    with open(f"{save_path}", "w") as f:
         for key, value in config.items():
-            f.write(f'{key}: {value}\n')
+            f.write(f"{key}: {value}\n")
 
 
 def load_config(config_path: str) -> Dict[str, Any]:
@@ -84,9 +84,9 @@ def load_config(config_path: str) -> Dict[str, Any]:
     """
     # Load the config from a txt file
     config = {}
-    with open(config_path, 'r') as f:
+    with open(config_path, "r") as f:
         for line in f:
-            key, value = line.split(': ')
+            key, value = line.split(": ")
             config[key] = value.strip()
             # Convert to int or float if possible
             try:

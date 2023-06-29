@@ -8,13 +8,14 @@ import torch.nn as nn
 
 
 class AbstractModelClass(ABC, nn.Module):
-
     def __init__(self):
         """Initialize the model by setting up the various layers."""
         super(AbstractModelClass, self).__init__()
 
     @abstractmethod
-    def forward(self, src: torch.Tensor, trg: Optional[torch.Tensor] = None) -> Tuple[torch.Tensor, torch.Tensor]:
+    def forward(
+        self, src: torch.Tensor, trg: Optional[torch.Tensor] = None
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
         """Perform a forward pass of our model on some input and target text."""
         pass
 
@@ -45,14 +46,16 @@ class AbstractModelClass(ABC, nn.Module):
         # If path exists, append timestamp
 
         if os.path.exists(path):
-            path, ext = path.split('.')[0], path.split('.')[1]
+            path, ext = path.split(".")[0], path.split(".")[1]
             # Then append timestamp
-            path = path + '_' + str(datetime.now().strftime("%y%m%d-%H%M"))
+            path = path + "_" + str(datetime.now().strftime("%y%m%d-%H%M"))
             # Finally add file extension
-            path = path + '.' + ext
+            path = path + "." + ext
 
         return path
 
     def print_param_count(self):
         """Count the number of parameters in the model."""
-        print(f"{self.__class__.__name__} has {sum(p.numel() for p in self.parameters()):,} parameters.")
+        print(
+            f"{self.__class__.__name__} has {sum(p.numel() for p in self.parameters()):,} parameters."
+        )

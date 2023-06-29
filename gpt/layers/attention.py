@@ -1,8 +1,8 @@
-
 from typing import Optional, Tuple
 import torch
 from torch import nn
 import math
+
 
 class Attention(nn.Module):
     def __init__(self):
@@ -11,8 +11,13 @@ class Attention(nn.Module):
         """
         super(Attention, self).__init__()
 
-    def forward(self, query: torch.Tensor, key: torch.Tensor, value: torch.Tensor,
-                mask: Optional[torch.Tensor] = None) -> Tuple[torch.Tensor, torch.Tensor]:
+    def forward(
+        self,
+        query: torch.Tensor,
+        key: torch.Tensor,
+        value: torch.Tensor,
+        mask: Optional[torch.Tensor] = None,
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
         """Forward pass of the attention layer. Computes the attention weights and the attention output
 
         Args:

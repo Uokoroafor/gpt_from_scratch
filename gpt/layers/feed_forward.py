@@ -4,8 +4,9 @@ import torch.nn as nn
 
 
 class FeedForward(nn.Module):
-
-    def __init__(self, d_model: int, d_ff: Optional[int] = None, dropout: Optional[float] = 0.1):
+    def __init__(
+        self, d_model: int, d_ff: Optional[int] = None, dropout: Optional[float] = 0.1
+    ):
         """Constructor class for the Position-wise Feed Forward layer for GPT implementation
 
         Args:

@@ -9,6 +9,7 @@ from my_models.AbstractModelClass import AbstractModelClass
 
 # TODO: Complete Implementation of Full Transformer Model
 
+
 class InputAndPositionalEncoding(nn.Module):
     def __init__(self, vocab_size, embedding_dim, max_seq_len):
         super().__init__()
@@ -25,13 +26,15 @@ class InputAndPositionalEncoding(nn.Module):
         # print('max_seq_len: ', max_seq_len)
 
     def create_positional_encoding(self):
-        """ Create the positional encoding matrix """
+        """Create the positional encoding matrix"""
         # Will eventually use sine and cosine functions but for now just use the torch.arange function
 
-        return nn.Embedding(num_embeddings=self.max_seq_len, embedding_dim=self.embedding_dim)
+        return nn.Embedding(
+            num_embeddings=self.max_seq_len, embedding_dim=self.embedding_dim
+        )
 
     def forward(self, x):
-        """ Forward pass of the input and positional encoding """
+        """Forward pass of the input and positional encoding"""
         # Get the shape of the input
         batch_size, seq_len = x.shape
 
@@ -90,8 +93,16 @@ class InputAndPositionalEncoding(nn.Module):
 
 
 class Transformer(AbstractModelClass):
-    def __init__(self, src_vocab_size, trg_vocab_size, embedding_dim=256, num_layers=2, num_heads=4, dropout_prob=0.2,
-                 max_seq_length=100):
+    def __init__(
+        self,
+        src_vocab_size,
+        trg_vocab_size,
+        embedding_dim=256,
+        num_layers=2,
+        num_heads=4,
+        dropout_prob=0.2,
+        max_seq_length=100,
+    ):
         """
 
         Args:
@@ -112,26 +123,47 @@ class Transformer(AbstractModelClass):
         self.num_heads = num_heads
         self.dropout_prob = dropout_prob
         self.max_seq_length = max_seq_length
-        self.encoder_embedding = InputAndPositionalEncoding(src_vocab_size, embedding_dim, max_seq_length)
-        self.decoder_embedding = InputAndPositionalEncoding(trg_vocab_size, embedding_dim, max_seq_length)
-        self.encoder_blocks = nn.ModuleList([TransformerBlock(embedding_dim=embedding_dim, output_dim=embedding_dim,
-                                                              num_heads=num_heads, dropout_prob=dropout_prob) for _ in
-                                             range(num_layers)])
-        self.decoder_blocks = nn.ModuleList([DecoderTransformerBlock(embedding_dim=embedding_dim,
-                                                                     output_dim=embedding_dim, num_heads=num_heads,
-                                                                     dropout_prob=dropout_prob) for _ in
-                                             range(num_layers)])
+        self.encoder_embedding = InputAndPositionalEncoding(
+            src_vocab_size, embedding_dim, max_seq_length
+        )
+        self.decoder_embedding = InputAndPositionalEncoding(
+            trg_vocab_size, embedding_dim, max_seq_length
+        )
+        self.encoder_blocks = nn.ModuleList(
+            [
+                TransformerBlock(
+                    embedding_dim=embedding_dim,
+                    output_dim=embedding_dim,
+                    num_heads=num_heads,
+                    dropout_prob=dropout_prob,
+                )
+                for _ in range(num_layers)
+            ]
+        )
+        self.decoder_blocks = nn.ModuleList(
+            [
+                DecoderTransformerBlock(
+                    embedding_dim=embedding_dim,
+                    output_dim=embedding_dim,
+                    num_heads=num_heads,
+                    dropout_prob=dropout_prob,
+                )
+                for _ in range(num_layers)
+            ]
+        )
         self.linear = nn.Linear(embedding_dim, trg_vocab_size)
         self.softmax = nn.Softmax(dim=-1)
 
-    def forward(self, src: torch.Tensor, trg: Optional[torch.Tensor] = None) -> Tuple[torch.Tensor, torch.Tensor]:
+    def forward(
+        self, src: torch.Tensor, trg: Optional[torch.Tensor] = None
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
         """Perform a forward pass of our model on some input and target text. This is used during training.
-            Args:
-                src: Source tensor
-                trg: Target tensor
+        Args:
+            src: Source tensor
+            trg: Target tensor
 
-            Returns:
-                The predicted tensor
+        Returns:
+            The predicted tensor
 
         """
         # Get the embedding of the input
@@ -178,7 +210,7 @@ class Transformer(AbstractModelClass):
             src: Source tensor
 
         Returns:
-            The predicted tensor """
+            The predicted tensor"""
         pass
         # TODO: Decide what object should house the method
 
@@ -215,5 +247,6 @@ class Transformer(AbstractModelClass):
         #         break
         # # Return the predicted words
         # return out
+
 
 # TODO: Complete Temperature and Top-k Sampling

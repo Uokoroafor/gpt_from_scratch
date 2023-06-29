@@ -28,5 +28,5 @@ n_layers = 2
 lr = 0.001
 
 # Read in the data
-with open('data/input.txt', 'r') as f:
+with open("data/input.txt", "r") as f:
     text = f.read()

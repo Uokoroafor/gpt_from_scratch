@@ -7,7 +7,13 @@ from gpt.layers.feed_forward import FeedForward
 
 
 class DecoderBlock(nn.Module):
-    def __init__(self, d_model: int, d_ff: int, num_heads: int, dropout_prob: Optional[float] = 0.1):
+    def __init__(
+        self,
+        d_model: int,
+        d_ff: int,
+        num_heads: int,
+        dropout_prob: Optional[float] = 0.1,
+    ):
         """Constructor class for the decoder block of the GPT model
 
         Args:
@@ -23,13 +29,16 @@ class DecoderBlock(nn.Module):
         self.encoder_attention = CausalSelfAttention(d_model, num_heads)
         self.layer_norm2 = LayerNorm(d_model)
 
-        self.feed_forward = FeedForward(d_model=d_model, d_ff=d_ff,
-                                        dropout=dropout_prob)  # Specifying arguments here to avoid ambiguity
+        self.feed_forward = FeedForward(
+            d_model=d_model, d_ff=d_ff, dropout=dropout_prob
+        )  # Specifying arguments here to avoid ambiguity
         self.layer_norm3 = LayerNorm(d_model)
 
         self.dropout = nn.Dropout(dropout_prob)
 
-    def forward(self, trg: torch.Tensor, trg_mask: Optional[torch.Tensor] = None) -> torch.Tensor:
+    def forward(
+        self, trg: torch.Tensor, trg_mask: Optional[torch.Tensor] = None
+    ) -> torch.Tensor:
         """Forward pass of the decoder block using the pre-Norm Architecture from the original paper
 
         Args:

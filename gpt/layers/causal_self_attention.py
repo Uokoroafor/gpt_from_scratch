@@ -15,7 +15,9 @@ class CausalSelfAttention(nn.Module):
         super(CausalSelfAttention, self).__init__()
 
         # Check if the d_model is divisible by the number of heads
-        assert d_model % num_heads == 0, 'd_model must be divisible by the number of heads'
+        assert (
+            d_model % num_heads == 0
+        ), "d_model must be divisible by the number of heads"
 
         # Set the d_model and num_heads
         self.d_model = d_model
@@ -33,7 +35,9 @@ class CausalSelfAttention(nn.Module):
         # Create the attention layer
         self.attention = Attention()
 
-    def forward(self, query: torch.Tensor, key: torch.Tensor, value: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+    def forward(
+        self, query: torch.Tensor, key: torch.Tensor, value: torch.Tensor
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
         """Forward pass of the CausalSelfAttention layer
         Args:
             query (torch.Tensor): Query tensor of shape (batch_size, seq_len, d_model)
@@ -66,7 +70,11 @@ class CausalSelfAttention(nn.Module):
 
         seq_len = query.size(-2)
         mask = (torch.triu(torch.ones(seq_len, seq_len)) == 1).transpose(0, 1)
-        mask = mask.float().masked_fill(mask == 0, float('-inf')).masked_fill(mask == 1, float(0.0))
+        mask = (
+            mask.float()
+            .masked_fill(mask == 0, float("-inf"))
+            .masked_fill(mask == 1, float(0.0))
+        )
         mask = mask.to(query.device)
 
         # Calculate the attention using the query, key and value

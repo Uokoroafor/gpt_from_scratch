@@ -15,8 +15,13 @@ import torch.nn.functional as F
 class Attention(ABC, nn.Module):
     # Abstract class for a head of an attention block
 
-    def __init__(self, embedding_dim: int, output_dim: int, hard: Optional[bool] = False,
-                 dropout_prob: Optional[float] = 0.0):
+    def __init__(
+        self,
+        embedding_dim: int,
+        output_dim: int,
+        hard: Optional[bool] = False,
+        dropout_prob: Optional[float] = 0.0,
+    ):
         """Initialize the attention block.
         Args:
             embedding_dim: The dimension of the embedding.
@@ -24,8 +29,10 @@ class Attention(ABC, nn.Module):
             hard: Whether to use hard attention or not.
         """
         super(Attention, self).__init__()
-        assert embedding_dim % output_dim == 0, f"The embedding dimension {embedding_dim} must be divisible by the " \
-                                                f"output dimension {output_dim}."
+        assert embedding_dim % output_dim == 0, (
+            f"The embedding dimension {embedding_dim} must be divisible by the "
+            f"output dimension {output_dim}."
+        )
         self.embedding_dim = embedding_dim
         self.output_dim = output_dim
         self.hard = hard
@@ -59,9 +66,14 @@ class Attention(ABC, nn.Module):
 
 
 class SelfAttention(Attention):
-
-    def __init__(self, embedding_dim: int, output_dim: int, hard: Optional[bool] = False,
-                 dropout_prob: Optional[float] = 0.0, use_mask: Optional[bool] = False):
+    def __init__(
+        self,
+        embedding_dim: int,
+        output_dim: int,
+        hard: Optional[bool] = False,
+        dropout_prob: Optional[float] = 0.0,
+        use_mask: Optional[bool] = False,
+    ):
         """Initialize the scaled dot product attention block.
         Args:
             embedding_dim: The dimension of the embedding.
@@ -71,7 +83,9 @@ class SelfAttention(Attention):
             use_mask: Whether to use masking or not.
 
         """
-        super(SelfAttention, self).__init__(embedding_dim, output_dim, hard, dropout_prob)
+        super(SelfAttention, self).__init__(
+            embedding_dim, output_dim, hard, dropout_prob
+        )
         self.key = nn.Linear(embedding_dim, output_dim)
         self.query = nn.Linear(embedding_dim, output_dim)
         self.value = nn.Linear(embedding_dim, output_dim)
@@ -101,7 +115,7 @@ class SelfAttention(Attention):
         # Apply masking if needed
         if self.use_mask:
             mask = torch.tril(torch.ones((seq_len, seq_len))).unsqueeze(0).to(x.device)
-            attention = attention.masked_fill(mask == 0, float('-inf'))
+            attention = attention.masked_fill(mask == 0, float("-inf"))
 
         # Apply the max operation
         attention = self.apply_max(attention)
@@ -116,28 +130,36 @@ class SelfAttention(Attention):
 
 
 class CrossAttention(Attention):
-
-    def __init__(self, embedding_dim: int, output_dim: int, hard: Optional[bool] = False,
-                 dropout_prob: Optional[float] = 0.0):
+    def __init__(
+        self,
+        embedding_dim: int,
+        output_dim: int,
+        hard: Optional[bool] = False,
+        dropout_prob: Optional[float] = 0.0,
+    ):
         """Initialize the scaled dot product attention block.
-            Args:
-                embedding_dim: The dimension of the embedding.
-                output_dim: The dimension of the output. Embedding dim must be divisible by output dim.
-                hard: Whether to use hard attention or not.
-            """
-        super(CrossAttention, self).__init__(embedding_dim, output_dim, hard, dropout_prob)
+        Args:
+            embedding_dim: The dimension of the embedding.
+            output_dim: The dimension of the output. Embedding dim must be divisible by output dim.
+            hard: Whether to use hard attention or not.
+        """
+        super(CrossAttention, self).__init__(
+            embedding_dim, output_dim, hard, dropout_prob
+        )
         self.key = nn.Linear(embedding_dim, output_dim)
         self.query = nn.Linear(embedding_dim, output_dim)
         self.value = nn.Linear(embedding_dim, output_dim)
 
-    def forward(self, x: torch.Tensor, y: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+    def forward(
+        self, x: torch.Tensor, y: torch.Tensor
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
         """Perform a forward pass of the cross-attention block.
-            Args:
-                x: The input to the cross-attention block.
-                y: The input to the cross-attention block.
-            Returns:
-                The output and attention tensors.
-            """
+        Args:
+            x: The input to the cross-attention block.
+            y: The input to the cross-attention block.
+        Returns:
+            The output and attention tensors.
+        """
 
         # Get input shape
         batch_size, seq_len, n_channels = x.shape
@@ -169,9 +191,15 @@ class CrossAttention(Attention):
 
 
 class MultiHeadAttention(Attention):
-
-    def __init__(self, embedding_dim: int, output_dim: int, n_heads: int, hard: Optional[bool] = False,
-                 dropout_prob: Optional[float] = 0.0, use_mask: Optional[bool] = False):
+    def __init__(
+        self,
+        embedding_dim: int,
+        output_dim: int,
+        n_heads: int,
+        hard: Optional[bool] = False,
+        dropout_prob: Optional[float] = 0.0,
+        use_mask: Optional[bool] = False,
+    ):
         """Initialize the multi-head self attention block.
         Args:
             embedding_dim: The dimension of the embedding.
@@ -185,8 +213,14 @@ class MultiHeadAttention(Attention):
         self.n_heads = n_heads
         self.head_dim = embedding_dim // n_heads
         self.linear = nn.Linear(self.head_dim * n_heads, output_dim)
-        self.heads = nn.ModuleList([SelfAttention(self.embedding_dim,
-                                                  self.head_dim, self.hard, dropout_prob, use_mask) for _ in range(n_heads)])
+        self.heads = nn.ModuleList(
+            [
+                SelfAttention(
+                    self.embedding_dim, self.head_dim, self.hard, dropout_prob, use_mask
+                )
+                for _ in range(n_heads)
+            ]
+        )
         self.dropout = nn.Dropout(dropout_prob)
 
     def forward(self, x: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
@@ -197,8 +231,9 @@ class MultiHeadAttention(Attention):
             The output and attention tensors."""
 
         # Apply the attention heads
-        output, attention = torch.cat([head(x)[0] for head in self.heads], dim=-1), \
-            torch.cat([head(x)[1] for head in self.heads], dim=-1)
+        output, attention = torch.cat(
+            [head(x)[0] for head in self.heads], dim=-1
+        ), torch.cat([head(x)[1] for head in self.heads], dim=-1)
 
         # Apply the linear layer
         output = self.linear(output)
@@ -212,8 +247,14 @@ class MultiHeadAttention(Attention):
 class MultiHeadCrossAttention(Attention):
     """A multi-head cross attention block."""
 
-    def __init__(self, embedding_dim: int, output_dim: int, n_heads: int, hard: Optional[bool] = False,
-                 dropout_prob: Optional[float] = 0.0):
+    def __init__(
+        self,
+        embedding_dim: int,
+        output_dim: int,
+        n_heads: int,
+        hard: Optional[bool] = False,
+        dropout_prob: Optional[float] = 0.0,
+    ):
         """Initialize the multi-head cross attention block.
         Args:
             embedding_dim: The dimension of the embedding.
@@ -226,11 +267,17 @@ class MultiHeadCrossAttention(Attention):
         self.n_heads = n_heads
         self.head_dim = embedding_dim // n_heads
         self.linear = nn.Linear(self.head_dim * n_heads, output_dim)
-        self.heads = nn.ModuleList([CrossAttention(self.embedding_dim,
-                                                   self.head_dim, self.hard) for _ in range(n_heads)])
+        self.heads = nn.ModuleList(
+            [
+                CrossAttention(self.embedding_dim, self.head_dim, self.hard)
+                for _ in range(n_heads)
+            ]
+        )
         self.dropout = nn.Dropout(dropout_prob)
 
-    def forward(self, x: torch.Tensor, y: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+    def forward(
+        self, x: torch.Tensor, y: torch.Tensor
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
         """Perform a forward pass of the multi-head cross attention block.
         Args:
             x: The input to the multi-head cross attention block.
@@ -239,8 +286,9 @@ class MultiHeadCrossAttention(Attention):
             The output and attention tensors."""
 
         # Apply the attention heads
-        output, attention = torch.cat([head(x, y)[0] for head in self.heads], dim=-1), \
-            torch.cat([head(x, y)[1] for head in self.heads], dim=-1)
+        output, attention = torch.cat(
+            [head(x, y)[0] for head in self.heads], dim=-1
+        ), torch.cat([head(x, y)[1] for head in self.heads], dim=-1)
 
         # Apply the linear layer
         output = self.linear(output)
@@ -254,7 +302,13 @@ class MultiHeadCrossAttention(Attention):
 class FeedForwardNetwork(nn.Module):
     """A feed forward network."""
 
-    def __init__(self, embedding_dim: int, output_dim: int, hidden_dim: int, dropout_prob: Optional[float] = 0.0):
+    def __init__(
+        self,
+        embedding_dim: int,
+        output_dim: int,
+        hidden_dim: int,
+        dropout_prob: Optional[float] = 0.0,
+    ):
         """Initialize the feed forward network.
         Args:
             embedding_dim: The dimension of the embedding.
@@ -285,8 +339,14 @@ class TransformerBlock(nn.Module):
     """A transformer block. This is used as encoder in the encoder-decoder architecture and as decoder in the decoder
     only architecture."""
 
-    def __init__(self, embedding_dim: int, output_dim: int, num_heads: int, hard: Optional[bool] = False,
-                 dropout_prob: Optional[float] = 0.0):
+    def __init__(
+        self,
+        embedding_dim: int,
+        output_dim: int,
+        num_heads: int,
+        hard: Optional[bool] = False,
+        dropout_prob: Optional[float] = 0.0,
+    ):
         """Initialize the transformer block. Here Masked Multi-Head Attention is used.
         Args:
             embedding_dim: The dimension of the embedding.
@@ -296,10 +356,14 @@ class TransformerBlock(nn.Module):
             dropout_prob: The dropout probability.
         """
         super(TransformerBlock, self).__init__()
-        self.attention = MultiHeadAttention(embedding_dim, output_dim, num_heads, hard, dropout_prob)
+        self.attention = MultiHeadAttention(
+            embedding_dim, output_dim, num_heads, hard, dropout_prob
+        )
         self.norm1 = nn.LayerNorm(embedding_dim)
         self.norm2 = nn.LayerNorm(embedding_dim)
-        self.ff = FeedForwardNetwork(embedding_dim, output_dim, 4 * embedding_dim, dropout_prob)
+        self.ff = FeedForwardNetwork(
+            embedding_dim, output_dim, 4 * embedding_dim, dropout_prob
+        )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """Perform a forward pass of the transformer block.
@@ -330,8 +394,14 @@ class DecoderTransformerBlock(nn.Module):
     This has both masked multi-head self-attention and multi-head cross-attention.
     """
 
-    def __init__(self, embedding_dim: int, output_dim: int, num_heads: int, hard: Optional[bool] = False,
-                 dropout_prob: Optional[float] = 0.0):
+    def __init__(
+        self,
+        embedding_dim: int,
+        output_dim: int,
+        num_heads: int,
+        hard: Optional[bool] = False,
+        dropout_prob: Optional[float] = 0.0,
+    ):
         """Initialize the transformer block. Here Masked Multi-Head Attention is used.
         Args:
             embedding_dim: The dimension of the embedding.
@@ -342,13 +412,19 @@ class DecoderTransformerBlock(nn.Module):
         """
         super(DecoderTransformerBlock, self).__init__()
         # Self Attention in the decoder is masked
-        self.self_attention = MultiHeadAttention(embedding_dim, output_dim, num_heads, hard, dropout_prob, use_mask=True)
+        self.self_attention = MultiHeadAttention(
+            embedding_dim, output_dim, num_heads, hard, dropout_prob, use_mask=True
+        )
         # Cross Attention in the decoder is not masked
-        self.cross_attention = MultiHeadCrossAttention(embedding_dim, output_dim, num_heads, hard, dropout_prob)
+        self.cross_attention = MultiHeadCrossAttention(
+            embedding_dim, output_dim, num_heads, hard, dropout_prob
+        )
         self.norm1 = nn.LayerNorm(embedding_dim)
         self.norm2 = nn.LayerNorm(embedding_dim)
         self.norm3 = nn.LayerNorm(embedding_dim)
-        self.ff = FeedForwardNetwork(embedding_dim, output_dim, 4 * embedding_dim, dropout_prob)
+        self.ff = FeedForwardNetwork(
+            embedding_dim, output_dim, 4 * embedding_dim, dropout_prob
+        )
 
     def forward(self, x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
         """Perform a forward pass of the transformer block.
@@ -380,7 +456,7 @@ class DecoderTransformerBlock(nn.Module):
         return x
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     x = torch.rand(2, 10, 128)
     y = torch.rand(2, 10, 128)
     attention = MultiHeadAttention(128, 128, 8)

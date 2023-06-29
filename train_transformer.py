@@ -11,15 +11,19 @@ from utils.bpe import BPE
 from utils.data_utils import read_in_data
 import pickle as pkl
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     torch.manual_seed(6345789)  # Set the random seed for reproducibility
     # Wilson Pickett - 634-5789 https://www.youtube.com/watch?v=TSGuaVAufV0
 
     # Set Hyperparameters
-    batch_size = 64  # This is the size of the batch of data that will be processed at once
+    batch_size = (
+        64  # This is the size of the batch of data that will be processed at once
+    )
     block_size = 64  # This is the size of the context window
     max_iters = 2  # How many iterations to train for
-    eval_every = max(max_iters // 10, 1)  # How often to evaluate the model, using max to avoid 0
+    eval_every = max(
+        max_iters // 10, 1
+    )  # How often to evaluate the model, using max to avoid 0
     embedding_dim = 256  # The size of the embedding dimension
     lr = 3e-4
     eval_iters = 20  # How many iterations to evaluate for
@@ -27,27 +31,27 @@ if __name__ == '__main__':
     num_layers = 2
     num_heads = 4
 
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    print('Using device: ', device)
+    print("Using device: ", device)
 
-    data_folder = 'data/FrenchEnglish/'
+    data_folder = "data/FrenchEnglish/"
 
     # First we read in the data
     # English data
-    char_dict_en, data_en = read_in_data(data_folder + 'text_en_lite')
+    char_dict_en, data_en = read_in_data(data_folder + "text_en_lite")
     # French data
-    char_dict_fr, data_fr = read_in_data(data_folder + 'text_fr_lite')
+    char_dict_fr, data_fr = read_in_data(data_folder + "text_fr_lite")
 
     # The sequence lines are of different lengths, so we need to pad them to the same length.
     # We will pad them to the length of the longest sequence
     # Split the sequences over the new line character
-    data_en = data_en.split('\n')
-    data_fr = data_fr.split('\n')
+    data_en = data_en.split("\n")
+    data_fr = data_fr.split("\n")
 
     # Print the first 10 sequences
-    print('First 10 English sequences: ', data_en[:10])
-    print('First 10 French sequences: ', data_fr[:10])
+    print("First 10 English sequences: ", data_en[:10])
+    print("First 10 French sequences: ", data_fr[:10])
 
     # # Create the encoder and decoder dictionaries and the encode and decode functions
     # encoder_dict_en, decoder_dict_en, encode_en, decode_en = create_simple_encoder_decoder(char_dict_en)
@@ -55,24 +59,32 @@ if __name__ == '__main__':
     # encoder_dict_fr, decoder_dict_fr, encode_fr, decode_fr = create_simple_encoder_decoder(char_dict_fr)
 
     # Create the encoder and decoder dictionaries and the encode and decode functions using BPE
-    with open(data_folder + 'bpe_model_en.pkl', 'rb') as f:
+    with open(data_folder + "bpe_model_en.pkl", "rb") as f:
         bpe_model_en = pkl.load(f)
 
-    with open(data_folder + 'bpe_model_fr.pkl', 'rb') as f:
+    with open(data_folder + "bpe_model_fr.pkl", "rb") as f:
         bpe_model_fr = pkl.load(f)
 
-    encoder_dict_en, decoder_dict_en, encode_en, decode_en = bpe_model_en.lookup_table, bpe_model_en.lookup_table, \
-        bpe_model_en.encode, bpe_model_en.decode
+    encoder_dict_en, decoder_dict_en, encode_en, decode_en = (
+        bpe_model_en.lookup_table,
+        bpe_model_en.lookup_table,
+        bpe_model_en.encode,
+        bpe_model_en.decode,
+    )
 
-    encoder_dict_fr, decoder_dict_fr, encode_fr, decode_fr = bpe_model_fr.lookup_table, bpe_model_fr.lookup_table, \
-        bpe_model_fr.encode, bpe_model_fr.decode
+    encoder_dict_fr, decoder_dict_fr, encode_fr, decode_fr = (
+        bpe_model_fr.lookup_table,
+        bpe_model_fr.lookup_table,
+        bpe_model_fr.encode,
+        bpe_model_fr.decode,
+    )
 
     bpe_model_en.report_size()
     bpe_model_fr.report_size()
 
     # print('English encoder dictionary: ', encoder_dict_en)
     # print('English decoder dictionary: ', decoder_dict_en)
-    print('French encoder dictionary: ', encoder_dict_fr)
+    print("French encoder dictionary: ", encoder_dict_fr)
     # print('French decoder dictionary: ', decoder_dict_fr)
 
     # Encode the data
@@ -92,8 +104,12 @@ if __name__ == '__main__':
     # Add <sos>, <eos> and <pad> tokens to the data
     # <pad> token is 0, <sos> token is 1 and <eos> token is 2
 
-    data_en_encoded = [[1] + seq + [2] + [0] * (max_seq_len - len(seq)) for seq in data_en_encoded]
-    data_fr_encoded = [[1] + seq + [2] + [0] * (max_seq_len - len(seq)) for seq in data_fr_encoded]
+    data_en_encoded = [
+        [1] + seq + [2] + [0] * (max_seq_len - len(seq)) for seq in data_en_encoded
+    ]
+    data_fr_encoded = [
+        [1] + seq + [2] + [0] * (max_seq_len - len(seq)) for seq in data_fr_encoded
+    ]
 
     # Print the encoded data
     # print('Encoded English data: ', data_en_encoded[:10])
@@ -108,13 +124,15 @@ if __name__ == '__main__':
 
     # Train the model
     # Create the model
-    transformer_hyperparams = {'src_vocab_size': len(encoder_dict_en.keys()),
-                               'trg_vocab_size': len(encoder_dict_fr.keys()),
-                               'embedding_dim': embedding_dim,
-                               'num_layers': num_layers,
-                               'num_heads': num_heads,
-                               'dropout_prob': dropout_prob,
-                               'max_seq_length': max_seq_len}
+    transformer_hyperparams = {
+        "src_vocab_size": len(encoder_dict_en.keys()),
+        "trg_vocab_size": len(encoder_dict_fr.keys()),
+        "embedding_dim": embedding_dim,
+        "num_layers": num_layers,
+        "num_heads": num_heads,
+        "dropout_prob": dropout_prob,
+        "max_seq_length": max_seq_len,
+    }
 
     model = Transformer(**transformer_hyperparams).to(device)
     print(transformer_hyperparams)
@@ -126,21 +144,26 @@ if __name__ == '__main__':
     optimiser = torch.optim.Adam(model.parameters(), lr=lr, betas=(0.9, 0.98), eps=1e-9)
 
     # Convert each sequence to a tensor
-    data_en_encoded = [torch.tensor(seq, dtype=torch.long, device=device) for seq in data_en_encoded]
-    data_fr_encoded = [torch.tensor(seq, dtype=torch.long, device=device) for seq in data_fr_encoded]
+    data_en_encoded = [
+        torch.tensor(seq, dtype=torch.long, device=device) for seq in data_en_encoded
+    ]
+    data_fr_encoded = [
+        torch.tensor(seq, dtype=torch.long, device=device) for seq in data_fr_encoded
+    ]
 
     # Create the train and evaluation data
     train_data = list(zip(data_en_encoded, data_fr_encoded))
     random.shuffle(train_data)
-    train_data = train_data[:int(len(train_data) * 0.8)]
-    eval_data = train_data[int(len(train_data) * 0.8):]
+    train_data = train_data[: int(len(train_data) * 0.8)]
+    eval_data = train_data[int(len(train_data) * 0.8) :]
 
-    data_loader = torch.utils.data.DataLoader(train_data, batch_size=batch_size,
-                                              shuffle=True)
+    data_loader = torch.utils.data.DataLoader(
+        train_data, batch_size=batch_size, shuffle=True
+    )
 
-    eval_data_loader = torch.utils.data.DataLoader(eval_data,
-                                                   batch_size=1,
-                                                   shuffle=True)
+    eval_data_loader = torch.utils.data.DataLoader(
+        eval_data, batch_size=1, shuffle=True
+    )
 
     # data_loader = torch.utils.data.DataLoader(list(zip(data_en_encoded, data_fr_encoded)), batch_size=batch_size,
     #                                           shuffle=True)
@@ -159,14 +182,14 @@ if __name__ == '__main__':
     start_time = time.time()
     last_time = start_time
     for i in range(max_iters):
-        print('Iteration: ', i)
+        print("Iteration: ", i)
         # Get the next batch
         batch = next(iter(data_loader))
         # Unpack the batch
         x, y = batch
 
-        print('x: ', x.shape)
-        print('y: ', y.shape)
+        print("x: ", x.shape)
+        print("y: ", y.shape)
 
         # Get the predictions
         y_pred = model(x, y)
@@ -183,7 +206,7 @@ if __name__ == '__main__':
         loss_history.append(loss.item())
         # Print the loss
         if i % 10 == 0:
-            print('Iteration: ', i, ' Loss: ', loss.item())
+            print("Iteration: ", i, " Loss: ", loss.item())
         # Evaluate the model
         if i % eval_every == 0:
             # Set the model to evaluation mode
@@ -205,7 +228,7 @@ if __name__ == '__main__':
                 # Add the loss to the loss history
                 eval_loss_history.append(loss.item())
             # Print the loss
-            print('Evaluation loss: ', sum(eval_loss_history) / len(eval_loss_history))
+            print("Evaluation loss: ", sum(eval_loss_history) / len(eval_loss_history))
             # Save the model every eval_every iterations
 
         if i % eval_every == 0 and i > 0:
@@ -213,7 +236,12 @@ if __name__ == '__main__':
             model.save(f"saved_models/{type(model).__name__}_{i}_iters.pt")
             # Calculate the time taken for the last eval_every iterations
             current_time = time.time()
-            print('Time taken for last', eval_every, 'iterations: ', current_time - last_time)
+            print(
+                "Time taken for last",
+                eval_every,
+                "iterations: ",
+                current_time - last_time,
+            )
             last_time = current_time
 
         # Set the model back to training mode
@@ -221,8 +249,8 @@ if __name__ == '__main__':
         model.train()
 
     # Plot the loss history
-    plt.plot(loss_history, label='Training loss')
-    plt.plot(eval_loss_history, label='Evaluation loss')
+    plt.plot(loss_history, label="Training loss")
+    plt.plot(eval_loss_history, label="Evaluation loss")
     plt.legend()
     plt.show()
 
@@ -253,9 +281,9 @@ if __name__ == '__main__':
         y_pred = torch.argmax(y_pred, dim=-1)
 
         # Print the English sequence
-        print('English: ', decode_en(x.tolist()[0]))
+        print("English: ", decode_en(x.tolist()[0]))
         # Print the French sequence
-        print('French: ', decode_fr(y.tolist()[0]))
+        print("French: ", decode_fr(y.tolist()[0]))
         # Print the predicted sequence
-        print('Predicted: ', decode_fr(y_pred.tolist()[0]))
-        print('')
+        print("Predicted: ", decode_fr(y_pred.tolist()[0]))
+        print("")

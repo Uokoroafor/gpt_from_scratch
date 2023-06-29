@@ -6,12 +6,14 @@ from my_models.my_transformer import Transformer
 from utils.basic_tokeniser import create_simple_encoder_decoder
 from utils.data_utils import read_in_data
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     torch.manual_seed(6345789)  # Set the random seed for reproducibility
     # Wilson Pickett - 634-5789 https://www.youtube.com/watch?v=TSGuaVAufV0
 
     # Set Hyperparameters
-    batch_size = 32  # This is the size of the batch of data that will be processed at once
+    batch_size = (
+        32  # This is the size of the batch of data that will be processed at once
+    )
     block_size = 64  # This is the size of the context window
     max_iters = 200  # How many iterations to train for
     eval_every = max_iters // 10  # How often to evaluate the model
@@ -22,23 +24,23 @@ if __name__ == '__main__':
     num_layers = 2
     num_heads = 4
 
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    print('Using device: ', device)
+    print("Using device: ", device)
 
-    data_folder = 'data/FrenchEnglish/'
+    data_folder = "data/FrenchEnglish/"
 
     # First we read in the data
     # English data
-    char_dict_en, data_en = read_in_data(data_folder + 'text_en_lite')
+    char_dict_en, data_en = read_in_data(data_folder + "text_en_lite")
     # French data
-    char_dict_fr, data_fr = read_in_data(data_folder + 'text_fr_lite')
+    char_dict_fr, data_fr = read_in_data(data_folder + "text_fr_lite")
 
     # The sequence lines are of different lengths, so we need to pad them to the same length.
     # We will pad them to the length of the longest sequence
     # Split the sequences over the new line character
-    data_en = data_en.split('\n')
-    data_fr = data_fr.split('\n')
+    data_en = data_en.split("\n")
+    data_fr = data_fr.split("\n")
 
     # Find the length of the longest sequence
     max_seq_len_en = max([len(seq) for seq in data_en])
@@ -46,13 +48,23 @@ if __name__ == '__main__':
     max_seq_len = max(max_seq_len_en, max_seq_len_fr)
 
     # Print the first 10 sequences
-    print('First 10 English sequences: ', data_en[:10])
-    print('First 10 French sequences: ', data_fr[:10])
+    print("First 10 English sequences: ", data_en[:10])
+    print("First 10 French sequences: ", data_fr[:10])
 
     # Create the encoder and decoder dictionaries and the encode and decode functions
-    encoder_dict_en, decoder_dict_en, encode_en, decode_en = create_simple_encoder_decoder(char_dict_en)
+    (
+        encoder_dict_en,
+        decoder_dict_en,
+        encode_en,
+        decode_en,
+    ) = create_simple_encoder_decoder(char_dict_en)
 
-    encoder_dict_fr, decoder_dict_fr, encode_fr, decode_fr = create_simple_encoder_decoder(char_dict_fr)
+    (
+        encoder_dict_fr,
+        decoder_dict_fr,
+        encode_fr,
+        decode_fr,
+    ) = create_simple_encoder_decoder(char_dict_fr)
 
     # Encode the data
     data_en_encoded = [encode_en(seq) for seq in data_en]
@@ -61,8 +73,12 @@ if __name__ == '__main__':
     # Add <sos>, <eos> and <pad> tokens to the data
     # <pad> token is 0, <sos> token is 1 and <eos> token is 2
 
-    data_en_encoded = [[1] + seq + [2] + [0] * (max_seq_len - len(seq)) for seq in data_en_encoded]
-    data_fr_encoded = [[1] + seq + [2] + [0] * (max_seq_len - len(seq)) for seq in data_fr_encoded]
+    data_en_encoded = [
+        [1] + seq + [2] + [0] * (max_seq_len - len(seq)) for seq in data_en_encoded
+    ]
+    data_fr_encoded = [
+        [1] + seq + [2] + [0] * (max_seq_len - len(seq)) for seq in data_fr_encoded
+    ]
 
     # Print the encoded data
     # print('Encoded English data: ', data_en_encoded[:10])
@@ -77,13 +93,15 @@ if __name__ == '__main__':
 
     # Train the model
     # Create the model
-    transformer_hyperparams = {'src_vocab_size': len(encoder_dict_en.keys()),
-                               'trg_vocab_size': len(encoder_dict_fr.keys()),
-                               'embedding_dim': embedding_dim,
-                               'num_layers': num_layers,
-                               'num_heads': num_heads,
-                               'dropout_prob': dropout_prob,
-                               'max_seq_length': max_seq_len}
+    transformer_hyperparams = {
+        "src_vocab_size": len(encoder_dict_en.keys()),
+        "trg_vocab_size": len(encoder_dict_fr.keys()),
+        "embedding_dim": embedding_dim,
+        "num_layers": num_layers,
+        "num_heads": num_heads,
+        "dropout_prob": dropout_prob,
+        "max_seq_length": max_seq_len,
+    }
 
     model = Transformer(**transformer_hyperparams).to(device)
     #
@@ -94,8 +112,12 @@ if __name__ == '__main__':
     # optimiser = torch.optim.Adam(model.parameters(), lr=lr)
     #
     # # Convert each sequence to a tensor
-    data_en_encoded = [torch.tensor(seq, dtype=torch.long, device=device) for seq in data_en_encoded]
-    data_fr_encoded = [torch.tensor(seq, dtype=torch.long, device=device) for seq in data_fr_encoded]
+    data_en_encoded = [
+        torch.tensor(seq, dtype=torch.long, device=device) for seq in data_en_encoded
+    ]
+    data_fr_encoded = [
+        torch.tensor(seq, dtype=torch.long, device=device) for seq in data_fr_encoded
+    ]
     #
     # # Create the data loader
     # data_loader = torch.utils.data.DataLoader(list(zip(data_en_encoded, data_fr_encoded)),
@@ -176,22 +198,23 @@ if __name__ == '__main__':
     model.eval()
     # Generate some translations
     # 10 random French sentences:
-    fr_seq = list('je suis tres froid.')
-    en_seq = list('i am very cold.')
-
-
+    fr_seq = list("je suis tres froid.")
+    en_seq = list("i am very cold.")
 
     # Encode the French sentence
     fr_seq_encoded = encode_fr(fr_seq)
     # Encode the English sentence
     en_seq_encoded = encode_en(en_seq)
 
-    en_seq_encoded = [[1] + en_seq_encoded + [2] + [0] * (max_seq_len-2 - len(en_seq))]
-    fr_seq_encoded = [[1] + fr_seq_encoded + [2] + [0] * (max_seq_len-2 - len(fr_seq))]
+    en_seq_encoded = [
+        [1] + en_seq_encoded + [2] + [0] * (max_seq_len - 2 - len(en_seq))
+    ]
+    fr_seq_encoded = [
+        [1] + fr_seq_encoded + [2] + [0] * (max_seq_len - 2 - len(fr_seq))
+    ]
     # Convert each sequence to a tensor
     en_seq_encoded = torch.tensor(en_seq_encoded, dtype=torch.long, device=device)
     fr_seq_encoded = torch.tensor(fr_seq_encoded, dtype=torch.long, device=device)
-
 
     for i in range(10):
         # Get a random sequence in English and its translation in French and compare with model output
@@ -208,29 +231,27 @@ if __name__ == '__main__':
         x_ = x.clone()
         y_ = y.clone()
 
-
         x = x.unsqueeze(0)
         y = y.unsqueeze(0)
-        print('x.shape, y.shape:', x.shape, y.shape)
-
+        print("x.shape, y.shape:", x.shape, y.shape)
 
         # Get the model output
         y_pred = model(x)
         # Get the predicted sequence
         y_pred = torch.argmax(y_pred, dim=-1)
-        print('y_pred.shape:', y_pred.shape)
+        print("y_pred.shape:", y_pred.shape)
         # Truncate the sequence to the first EOS token
         x_ = x_[x_ != 0]
         y_ = y_[y_ != 0]
-        y_pred = y_pred[0, :len(y_)]
+        y_pred = y_pred[0, : len(y_)]
 
         # Print the English sequence
-        print('En: ', ''.join(decode_en(x_.tolist())))
+        print("En: ", "".join(decode_en(x_.tolist())))
         # Print the French sequence
-        print('Fr: ', ''.join(decode_fr(y_.tolist())))
+        print("Fr: ", "".join(decode_fr(y_.tolist())))
         # Print the predicted sequence
-        print('Pr: ', ''.join(decode_fr(y_pred.tolist())))
-        print('')
+        print("Pr: ", "".join(decode_fr(y_pred.tolist())))
+        print("")
 
     # Test the encoded sentences
     # print('En: ', ''.join(decode_en(en_seq_encoded.tolist())))
@@ -240,7 +261,7 @@ if __name__ == '__main__':
     # Get the predicted sequence
     y_pred = torch.argmax(y_pred, dim=-1)
     # Truncate the sequence to the first EOS token
-    y_pred = y_pred[0, :torch.sum(fr_seq_encoded != 0)]
+    y_pred = y_pred[0, : torch.sum(fr_seq_encoded != 0)]
     # Print the predicted sequence
-    print('Pr: ', ''.join(decode_fr(y_pred.tolist())))
-    print('')
+    print("Pr: ", "".join(decode_fr(y_pred.tolist())))
+    print("")

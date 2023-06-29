@@ -7,10 +7,20 @@ import torch.distributions as dist
 
 
 class GPT(nn.Module):
-    def __init__(self, trg_pad: int, trg_sos: int, vocab_size_dec: int, d_model: int,
-                 d_ff: int, max_seq_len: int, num_layers: Optional[int] = 6, num_heads: Optional[int] = 8,
-                 dropout_prob: Optional[float] = 0.1, device: Optional[str] = 'cpu'):
-        """ Constructor class for the transformer. It consists of both the encoder and the decoder.
+    def __init__(
+        self,
+        trg_pad: int,
+        trg_sos: int,
+        vocab_size_dec: int,
+        d_model: int,
+        d_ff: int,
+        max_seq_len: int,
+        num_layers: Optional[int] = 6,
+        num_heads: Optional[int] = 8,
+        dropout_prob: Optional[float] = 0.1,
+        device: Optional[str] = "cpu",
+    ):
+        """Constructor class for the transformer. It consists of both the encoder and the decoder.
         Args:
             trg_pad (int): Target padding index
             trg_sos (int): Target start of sentence token
@@ -26,7 +36,15 @@ class GPT(nn.Module):
         super(GPT, self).__init__()
         self.trg_pad = trg_pad
         self.trg_sos = trg_sos
-        self.decoder = GPTDecoder(vocab_size_dec, d_model, max_seq_len, num_layers, num_heads, d_ff, dropout_prob)
+        self.decoder = GPTDecoder(
+            vocab_size_dec,
+            d_model,
+            max_seq_len,
+            num_layers,
+            num_heads,
+            d_ff,
+            dropout_prob,
+        )
         self.device = device
         self.max_seq_len = max_seq_len
 
@@ -52,13 +70,21 @@ class GPT(nn.Module):
         trg_pad_mask = (trg != self.trg_pad).unsqueeze(-2)  # (batch_size, 1, seq_len)
         trg_len = trg.shape[1]
         # What to ignore the future tokens (i.e. tokens that are not yet predicted)
-        trg_sub_mask = torch.tril(torch.ones((trg_len, trg_len), device=self.device)).bool()
+        trg_sub_mask = torch.tril(
+            torch.ones((trg_len, trg_len), device=self.device)
+        ).bool()
         # Final mask ignores both padding and future tokens
         trg_mask = trg_pad_mask & trg_sub_mask
         return trg_mask
 
-    def generate(self, start_token: int, max_length: int, sampled: Optional[bool] = True, k: Optional[int] = 5,
-                 temp: Optional[float] = 1.0) -> torch.Tensor:
+    def generate(
+        self,
+        start_token: int,
+        max_length: int,
+        sampled: Optional[bool] = True,
+        k: Optional[int] = 5,
+        temp: Optional[float] = 1.0,
+    ) -> torch.Tensor:
         """
         Generate a sequence given a start token
         Args:
@@ -71,20 +97,22 @@ class GPT(nn.Module):
         Returns:
             torch.Tensor: Generated sequence
         """
-        generated = torch.tensor([start_token], dtype=torch.long, device=self.device).unsqueeze(0)
-        out = torch.tensor([start_token], dtype=torch.long, device=self.device).unsqueeze(0)
+        generated = torch.tensor(
+            [start_token], dtype=torch.long, device=self.device
+        ).unsqueeze(0)
+        out = torch.tensor(
+            [start_token], dtype=torch.long, device=self.device
+        ).unsqueeze(0)
         with torch.no_grad():
-
             for j in range(max_length):
                 if generated.shape[1] == max_length:
                     break
                 if generated.shape[1] > self.max_seq_len:
                     # If the generated sequence is longer than the maximum length, truncate it
-                    generated = generated[:, -self.max_seq_len:]
+                    generated = generated[:, -self.max_seq_len :]
                 output = self.forward(generated)
 
                 if sampled:
-
                     # apply a temperature to the output logits
                     assert temp > 0.0, "Temperature must be greater than 0.0"
                     # output = output[:, -1, :] / temp
@@ -92,7 +120,7 @@ class GPT(nn.Module):
 
                     # Apply top-k filtering
                     v, _ = torch.topk(output, k)
-                    output[output < v[:, :, [-1]]] = -float('Inf')
+                    output[output < v[:, :, [-1]]] = -float("Inf")
 
                     # apply a softmax to transform the logits to probabilities
                     probabilities = F.softmax(output[:, -1, :], dim=-1)
@@ -104,8 +132,10 @@ class GPT(nn.Module):
                     # Need to make it a 2D tensor
                     next_token = next_token.unsqueeze(1)
 
-                    assert round(probabilities.sum().item(), 2) == 1.0, f"Probabilities do not sum to 1.0," \
-                                                                        f" instead sum to {probabilities.sum().item()}"
+                    assert round(probabilities.sum().item(), 2) == 1.0, (
+                        f"Probabilities do not sum to 1.0,"
+                        f" instead sum to {probabilities.sum().item()}"
+                    )
                     next_token_ = torch.multinomial(probabilities_, num_samples=1)
                 else:
                     next_token = output.argmax(2)[:, -1].unsqueeze(1)
