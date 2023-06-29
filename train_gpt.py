@@ -178,7 +178,7 @@ model, _, _ = trainer.train(
 
 sampled_chars = decode(
     model.generate(
-        start_token=encoder_dict["<sos>"] * torch.ones((1, 1), dtype=torch.long),
+        start_token=encoder_dict["a"] * torch.ones((1, 1), dtype=torch.long),
         max_length=100,
         k=6,
         temp=1.6,
@@ -187,7 +187,7 @@ sampled_chars = decode(
 
 greedy_chars = decode(
     model.generate(
-        start_token=encoder_dict["<sos>"] * torch.ones((1, 1), dtype=torch.long),
+        start_token=encoder_dict["a"] * torch.ones((1, 1), dtype=torch.long),
         max_length=100,
         sampled=False,
     )[0].tolist()

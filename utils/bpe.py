@@ -1,8 +1,8 @@
 # File containing a Byte Pair Encoding Class
-from typing import List, Tuple, Optional
-from collections import defaultdict, Counter
-import re
 import pickle as pkl
+import re
+from collections import Counter
+from typing import List, Tuple, Optional, Dict, Set
 
 
 class BPE:
@@ -15,12 +15,13 @@ class BPE:
     # Default symbols are <sos> for start of sentence and <eos> for end of sentence, <pad> for padding
 
     def __init__(
-        self,
-        data: str,
-        vocab_size: Optional[int] = 100000,
-        sos: Optional[str] = "<sos>",
-        eos: Optional[str] = "<eos>",
-        pad: Optional[str] = "<pad>",
+            self,
+            data: str,
+            vocab_size: Optional[int] = 100000,
+            sos: Optional[str] = "<sos>",
+            eos: Optional[str] = "<eos>",
+            pad: Optional[str] = "<pad>",
+            unk: Optional[str] = "<unk>",
     ):
         """Byte Pair Encoding Class
         Args:
@@ -29,15 +30,18 @@ class BPE:
             sos(str): start of sentence symbol
             eos(str): end of sentence symbol
             pad(str): padding symbol
+            unk(str): unknown symbol
         """
         self.vocab_size = vocab_size
         self.sos = sos
         self.eos = eos
         self.pad = pad
-        self.space = " "
+        self.unknown = unk
+        self.special_tokens = {self.sos, self.eos, self.pad, self.unknown}
         self.lookup_table = None
-        self.data = self.get_words(data)
-        self.tokens = list(set(data))
+        self.reverse_lookup_table = None
+        self.data = self._get_words(data)
+        self.tokens = set(data)
         self.vocab = self.create_initial_vocab()
 
         assert vocab_size > len(
@@ -48,7 +52,7 @@ class BPE:
         ), "Vocab size must be greater than or equal to the number of unique characters in the data"
 
     @staticmethod
-    def get_words(data: str) -> List[List[str]]:
+    def _get_words(data: str) -> List[List[str]]:
         """Get the words from the data
         Args:
             data(str): string to be encoded
@@ -57,19 +61,25 @@ class BPE:
         """
         # Want to split on whitespace and punctuation
         # words = re.findall(r'\w+', data)
-        words = re.findall(r"\w+\S*\s*", data)
+        # words = re.findall(r"\w+\S*\s*", data)
+
+        words = re.findall(r"\S+|\s+", data)
 
         words = [list(word) for word in words]
 
         return words
 
-    def create_initial_vocab(self):
-        """Create the initial vocabulary"""
+    def create_initial_vocab(self) -> Set[str]:
+        """Create the initial vocabulary
+        Returns:
+            vocab(set): set of characters in the data"""
         vocab = self.tokens
-        return vocab
+        return vocab | self.special_tokens
 
     def get_counts(self) -> Counter:
-        """Looks at the pairs of tokens and counts their frequency"""
+        """Looks at the pairs of tokens and counts their frequency
+        Returns:
+            counts(Counter): Counter object containing the counts of pairs of characters"""
         counts = Counter()
         for word in self.data:
             for i in range(len(word) - 1):
@@ -92,7 +102,7 @@ class BPE:
         Args:
             most_frequent_pair(Tuple[str, str]): most frequent pair of characters
         """
-        self.vocab.append("".join(most_frequent_pair))
+        self.vocab.add("".join(most_frequent_pair))
         # Also update the data
         # if char[0], char[1] in data, replace with char[0] + char[1]
         for word in self.data:
@@ -100,8 +110,8 @@ class BPE:
             i = 0
             while i < len(word) - 1:
                 if (
-                    word[i] == most_frequent_pair[0]
-                    and word[i + 1] == most_frequent_pair[1]
+                        word[i] == most_frequent_pair[0]
+                        and word[i + 1] == most_frequent_pair[1]
                 ):
                     word[i] = "".join(most_frequent_pair)
                     del word[i + 1]
@@ -109,20 +119,25 @@ class BPE:
                     i += 1
 
     def train(
-        self, num_iters: Optional[int] = 1000, verbose: Optional[bool] = False
+            self, num_iters: Optional[int] = 1000, verbose: Optional[bool] = False
     ) -> None:
         """Train the BPE model
         Args:
             num_iters(int): number of iterations to train the model
             verbose(bool): whether to print out the number of tokens in the vocab
         """
-        for i in range(num_iters):
+        for _ in range(num_iters):
             counts = self.get_counts()
             most_frequent_pair = self.get_most_frequent_pair(counts)
             self.merge_most_frequent_pair(most_frequent_pair)
+            if len(self.vocab) >= self.vocab_size:
+                break
 
         # Once the model is trained, create a lookup table
         self.lookup_table = self.create_lookup_table()
+
+        # Create a reverse lookup table
+        self.reverse_lookup_table = {v: k for k, v in self.lookup_table.items()}
 
         # Data file is likely to be large, so once the model is trained, we want to delete the data from the object
         self.data = None
@@ -132,7 +147,7 @@ class BPE:
             self.report_size()
 
     @staticmethod
-    def fill_gaps(my_dict: defaultdict):
+    def fill_gaps(my_dict: Dict[str, int]) -> Dict[str, int]:
         """Makes sure the lookup table goes from 0 to vocab_size"""
         keys = list(my_dict.keys())
 
@@ -141,24 +156,26 @@ class BPE:
 
         return my_dict
 
-    def create_lookup_table(self) -> defaultdict:
+    def create_lookup_table(self) -> Dict[str, int]:
         """Create a lookup table for the vocabulary"""
         # pad, sos, eos are the first three entries in the vocab
-        lookup_table = defaultdict(int)
+        lookup_table = dict()
         lookup_table[self.pad] = 0
         lookup_table[self.sos] = 1
         lookup_table[self.eos] = 2
-        lookup_table[self.space] = 3
-
-        # Space is double counted in the vocab, so we want to remove it
-        self.vocab.remove(self.space)
+        lookup_table[self.unknown] = 3
 
         for i, token in enumerate(self.vocab):
-            lookup_table[token] = i + 4
+            lookup_table[token] = i + len(lookup_table)
 
         lookup_table = self.fill_gaps(lookup_table)
 
         return lookup_table
+
+    def reverse_lookup_table(self) -> Dict[int, str]:
+        """Reverses the lookup table so that we can decode the data"""
+        reverse_lookup_table = {v: k for k, v in self.lookup_table.items()}
+        return reverse_lookup_table
 
     def encode(self, data: str) -> List[int]:
         """Encode the data
@@ -174,18 +191,19 @@ class BPE:
         # and not 'l' + 'o' + 'w' + 'l' + 'y'
         # So we want to start with the longest token in the vocab and then work our way down
         # to the shortest token
-        for word in self.get_words(data):
+        for word in self._get_words(data):
             i = 0
             while i < len(word):
+                found_token = False
                 for j in range(len(word), i, -1):
                     token = "".join(word[i:j])
                     if token in self.vocab:
-                        encoded_data.append(self.lookup_table[token])
+                        encoded_data.append(self.lookup_table.get(token, self.lookup_table[self.unknown]))
                         i = j
+                        found_token = True
                         break
-                else:
-                    # If we don't find a match, then just encode the character
-                    encoded_data.append(self.lookup_table[word[i]])
+                if not found_token:
+                    encoded_data.append(self.lookup_table.get(word[i], self.lookup_table[self.unknown]))
                     i += 1
         return encoded_data
 
@@ -198,14 +216,15 @@ class BPE:
         """
         decoded_data = []
         for token in encoded_data:
-            # perform a reverse lookup
-            for key, value in self.lookup_table.items():
-                if value == token:
-                    decoded_data.append(key)
-                    break
+            try:
+                # perform a reverse lookup
+                decoded_data.append(self.reverse_lookup_table[token])
+            except KeyError:
+                # If the token is not in the vocab, then just append the token
+                decoded_data.append(token)
         return decoded_data
 
-    def decode_words(self, encoded_data: List[int]) -> str:
+    def decode_words(self, encoded_data: List[int]) -> List[str]:
         """Decode the encoded data
         Args:
             encoded_data(List[int]): list of integers representing the encoded data
@@ -233,9 +252,18 @@ class BPE:
         """Report the size of the lookup table"""
         print("Number of tokens in vocab: {}".format(len(self.lookup_table)))
 
+    def __repr__(self) -> str:
+        return "BPE(vocab_size={})".format(self.vocab_size)
+
+    def __str__(self) -> str:
+        return "BPE(vocab_size={})".format(self.vocab_size)
+
+    def __len__(self) -> int:
+        return len(self.lookup_table)
+
 
 if __name__ == "__main__":
-    # Generate lorem ipsum for 10 lines
+    # Example Usage
     data = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec a diam lectus. Sed sit amet ipsum mauris. \n"
     data += "Maecenas congue ligula ac quam viverra nec consectetur ante hendrerit. Donec et mollis dolor. \n"
     data += "Praesent et diam eget libero egestas mattis sit amet vitae augue. Nam tincidunt congue enim, \n"
@@ -247,87 +275,87 @@ if __name__ == "__main__":
     # Train the model
     bpe.train(num_iters=10)
 
-    print(bpe.lookup_table)
-
     # Encode the data
     encoded_data = bpe.encode("lorem")
 
     # Decode the data
-    decoded_data = bpe.decode_words(encoded_data)
+    decoded_data = bpe.decode(encoded_data)
+    decoded_words = bpe.decode_words(encoded_data)
 
     # Print the encoded data
     print("encoded_data", encoded_data)
 
     # Print the decoded data
     print("decoded_data", decoded_data)
+    print("decoded_words", decoded_words)
 
-    # Load new data and try encoding and decoding from text file 'data/FrenchEnglish/text_en_lite' and 'data/FrenchEnglish/text_fr_lite'
-    new_data_en = open("../data/FrenchEnglish/text_en_lite", "r").read()
-    new_data_fr = open("../data/FrenchEnglish/text_fr_lite", "r").read()
-
-    # Encode the data
-    # Create a new BPE object
-    bpe_new_en = BPE(new_data_en)
-    # Train the model
-    bpe_new_en.train(num_iters=1000, verbose=True)
-    print(bpe_new_en.lookup_table)
-    # Encode the data
-
-    encoded_data_new = bpe_new_en.encode(
-        "Fruit flies like a banana. That is, they like a banana that is rotten."
-    )
-    # Decode the data
-    decoded_data_new = bpe_new_en.decode(encoded_data_new)
-    # Print the encoded data
-    print("encoded_data_new", encoded_data_new)
-    # Print the decoded data
-    print("decoded_data_new", decoded_data_new)
-
-    # Create a new BPE object
-    bpe_new_fr = BPE(new_data_fr)
-
-    # Train the model
-    bpe_new_fr.train(num_iters=1000, verbose=True)
-
-    print(bpe_new_fr.lookup_table)
-    # Encode the data
-    encoded_data_new = bpe_new_fr.encode(
-        "Les mouches à fruits aiment les bananes. C'est-à-dire qu'elles aiment une banane qui est pourrie."
-    )
-
-    # Decode the data
-    decoded_data_new = bpe_new_fr.decode_words(encoded_data_new)
-
-    # Print the encoded data
-    print("encoded_data_new", encoded_data_new)
-
-    # Print the decoded data
-    print("decoded_data_new", decoded_data_new)
-    #
-    # Save the English and French Encoder and Decoder
-    en_path = "../data/FrenchEnglish/bpe_model_en.pkl"
-    fr_path = "../data/FrenchEnglish/bpe_model_fr.pkl"
-    bpe_new_en.save(en_path)
-    bpe_new_fr.save(fr_path)
-
-    # Load the English and French Encoder and Decoder
-    bpe_new_en2 = pkl.load(open(en_path, "rb"))
-    bpe_new_fr2 = pkl.load(open(fr_path, "rb"))
-
-    # Test that the loaded models work
-    encoded_data_new = bpe_new_en2.encode(
-        "Fruit flies like a banana. \n That is, they like a banana that is rotten."
-    )
-    decoded_data_new = bpe_new_en2.decode_words(encoded_data_new)
-    print("encoded_data_new", encoded_data_new)
-    print("decoded_data_new", decoded_data_new)
-
-    encoded_data_new = bpe_new_fr2.encode(
-        "Les mouches à fruits aiment les bananes. \n C'est-à-dire qu'elles aiment "
-        "une banane qui est pourrie."
-    )
-    decoded_data_new = bpe_new_fr2.decode_words(encoded_data_new)
-    print("encoded_data_new", encoded_data_new)
-    print("decoded_data_new", decoded_data_new)
-
-# TODO: Update the code to handle unknown words
+#     # Load new data and try encoding and decoding from text file 'data/FrenchEnglish/text_en_lite' and 'data/FrenchEnglish/text_fr_lite'
+#     new_data_en = open("../data/FrenchEnglish/text_en_lite", "r",encoding="utf-8").read()
+#     new_data_fr = open("../data/FrenchEnglish/text_fr_lite", "r",encoding="utf-8").read()
+#
+#     # Encode the data
+#     # Create a new BPE object
+#     bpe_new_en = BPE(new_data_en)
+#     # Train the model
+#     bpe_new_en.train(num_iters=10, verbose=True)
+#     print(bpe_new_en.lookup_table)
+#     # Encode the data
+#
+#     encoded_data_new = bpe_new_en.encode(
+#         "Fruit flies like a banana. That is, they like a banana that is rotten."
+#     )
+#     # Decode the data
+#     decoded_data_new = bpe_new_en.decode(encoded_data_new)
+#     # Print the encoded data
+#     print("encoded_data_new", encoded_data_new)
+#     # Print the decoded data
+#     print("decoded_data_new", decoded_data_new)
+#
+#     # Create a new BPE object
+#     bpe_new_fr = BPE(new_data_fr)
+#
+#     # Train the model
+#     bpe_new_fr.train(num_iters=10, verbose=True)
+#
+#     print(bpe_new_fr.lookup_table)
+#     # Encode the data
+#     encoded_data_new = bpe_new_fr.encode(
+#         "Les mouches à fruits aiment les bananes. C'est-à-dire qu'elles aiment une banane qui est pourrie."
+#     )
+#
+#     # Decode the data
+#     decoded_data_new = bpe_new_fr.decode_words(encoded_data_new)
+#
+#     # Print the encoded data
+#     print("encoded_data_new", encoded_data_new)
+#
+#     # Print the decoded data
+#     print("decoded_data_new", decoded_data_new)
+#
+#     # Save the English and French Encoder and Decoder
+#     en_path = "../data/FrenchEnglish/bpe_model_en.pkl"
+#     fr_path = "../data/FrenchEnglish/bpe_model_fr.pkl"
+#     bpe_new_en.save(en_path)
+#     bpe_new_fr.save(fr_path)
+#
+#     # Load the English and French Encoder and Decoder
+#     bpe_new_en2 = pkl.load(open(en_path, "rb"))
+#     bpe_new_fr2 = pkl.load(open(fr_path, "rb"))
+#
+#     # Test that the loaded models work
+#     encoded_data_new = bpe_new_en2.encode(
+#         "Fruit flies like a banana. \n That is, they like a banana that is rotten."
+#     )
+#     decoded_data_new = bpe_new_en2.decode_words(encoded_data_new)
+#     print("encoded_data_new", encoded_data_new)
+#     print("decoded_data_new", decoded_data_new)
+#
+#     encoded_data_new = bpe_new_fr2.encode(
+#         "Les mouches à fruits aiment les bananes. \n C'est-à-dire qu'elles aiment "
+#         "une banane qui est pourrie."
+#     )
+#     decoded_data_new = bpe_new_fr2.decode_words(encoded_data_new)
+#     print("encoded_data_new", encoded_data_new)
+#     print("decoded_data_new", decoded_data_new)
+#
+# # TODO: Update the code to handle unknown words

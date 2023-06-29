@@ -1,21 +1,21 @@
 # Utility file for handling data and building the character and word-based dictionaries as well as the encoder and decoder functions.
 import os
-from typing import Union, Dict, Tuple, Callable, Optional
+from typing import Union, Dict, Tuple, Callable, Optional, List
 import requests as requests
 import torch
-
 from utils.basic_tokeniser import make_char_dict
 
 
 def read_in_data(
     filepath: str, make_dict: Optional[bool] = True
-) -> Union[Tuple[Dict[str, str], str], str]:
+) -> Union[Tuple[Dict[str, List[str]], str], str]:
     """Read in the data from a file and makes the character dictionary.
     Args:
         filepath (str): The path to the file to read in.
         make_dict (Optional[bool], optional): Whether to make the character dictionary. Defaults to True.
     Returns:
-        Dict[str, str]: The character dictionary and the data.
+        Tuple[Dict[str, str],str]: The character dictionary and the data if make_dict is True.
+        str: The data if make_dict is False.
     """
 
     # First read in text file

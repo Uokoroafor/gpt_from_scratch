@@ -25,7 +25,6 @@ class GPTDecoder(nn.Module):
             num_heads (int): Number of heads in the multi-head attention
             d_ff (int): Hidden dimension of the Feed Forward Layer
             dropout_prob (float): Dropout probability
-            pad_idx (int): Index of the padding token
         """
         super(GPTDecoder, self).__init__()
 

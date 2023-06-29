@@ -105,14 +105,13 @@ class Trainer:
             self.model.eval()  # Set the model to evaluation mode
             out = {}
             for split in ["train", "val"]:
-                losses = torch.zeros(self.eval_iters)
+                losses = []
                 for i in range(self.eval_iters):
                     x, y = _get_batch(split)
                     embeds = self.model(trg=x)
                     loss = self.loss_fn(embeds.flatten(end_dim=1), y.flatten())
-                    losses[i] = loss.item()
-                out[split] = losses.mean().item()
-            self.model.train()  # Set the model back to training mode
+                    losses.append(loss.item())
+                out[split] = torch.tensor(losses).mean().item()
             return out
 
         train_losses = []
