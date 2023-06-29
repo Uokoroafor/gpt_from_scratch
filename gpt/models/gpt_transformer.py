@@ -3,6 +3,7 @@ import torch
 from torch import nn
 import torch.nn.functional as F
 from gpt.models.gpt_decoder import GPTDecoder
+import torch.distributions as dist
 
 
 class GPT(nn.Module):
@@ -70,8 +71,10 @@ class GPT(nn.Module):
         Returns:
             torch.Tensor: Generated sequence
         """
+        generated = torch.tensor([start_token], dtype=torch.long, device=self.device).unsqueeze(0)
+        out = torch.tensor([start_token], dtype=torch.long, device=self.device).unsqueeze(0)
         with torch.no_grad():
-            generated = torch.tensor([start_token], dtype=torch.long, device=self.device).unsqueeze(0)
+
             for j in range(max_length):
                 if generated.shape[1] == max_length:
                     break
@@ -92,13 +95,24 @@ class GPT(nn.Module):
                     output[output < v[:, :, [-1]]] = -float('Inf')
 
                     # apply a softmax to transform the logits to probabilities
-                    probabilities = F.softmax(output[:, -1, :], dim=1)
+                    probabilities = F.softmax(output[:, -1, :], dim=-1)
+                    # print(output.shape)
+
+                    probabilities_ = F.softmax(output[:, -1, :], dim=1)
+                    categorical_dist = dist.Categorical(probs=probabilities)
+                    next_token = categorical_dist.sample()
+                    # Need to make it a 2D tensor
+                    next_token = next_token.unsqueeze(1)
 
                     assert round(probabilities.sum().item(), 2) == 1.0, f"Probabilities do not sum to 1.0," \
                                                                         f" instead sum to {probabilities.sum().item()}"
-                    next_token = torch.multinomial(probabilities, num_samples=1)
+                    next_token_ = torch.multinomial(probabilities_, num_samples=1)
                 else:
                     next_token = output.argmax(2)[:, -1].unsqueeze(1)
+                    next_token_ = output.argmax(2)[:, -1].unsqueeze(1)
+
+                # print(f'Next token is {next_token} while Next token_ is {next_token_}')
 
                 generated = torch.cat((generated, next_token), dim=1)
-            return generated
+                out = torch.cat((out, next_token), dim=1)
+            return out

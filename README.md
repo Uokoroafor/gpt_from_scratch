@@ -1,3 +1,4 @@
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 # transformer_from_scratch
 
 This is a PyTorch implementation of a smaller version of the GPT model. It has been inspired by the work of Andrej Karpathy and his nanoGPT [repo](https://github.com/karpathy/nanoGPT/tree/master) and  video [tutorial](https://github.com/karpathy/ng-video-lecture/).
