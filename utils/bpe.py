@@ -182,9 +182,9 @@ class BPE:
         Args:
             data(str): string to be encoded
         Returns:
-            encoded_data(List[int]): list of integers representing the encoded data
+            enc_data(List[int]): list of integers representing the encoded data
         """
-        encoded_data = []
+        enc_data = []
         # Want to encode each word separately and encode using the longest possible token
         # For example, if the word is 'hello', and the vocab is
         # ['lowly'], then we want to encode 'lowly' as 'low' + 'ly'
@@ -198,47 +198,47 @@ class BPE:
                 for j in range(len(word), i, -1):
                     token = "".join(word[i:j])
                     if token in self.vocab:
-                        encoded_data.append(self.lookup_table.get(token, self.lookup_table[self.unknown]))
+                        enc_data.append(self.lookup_table.get(token, self.lookup_table[self.unknown]))
                         i = j
                         found_token = True
                         break
                 if not found_token:
-                    encoded_data.append(self.lookup_table.get(word[i], self.lookup_table[self.unknown]))
+                    enc_data.append(self.lookup_table.get(word[i], self.lookup_table[self.unknown]))
                     i += 1
-        return encoded_data
+        return enc_data
 
-    def decode(self, encoded_data: List[int]) -> str:
+    def decode(self, enc_data: List[int]) ->List[str]:
         """Decode the encoded data
         Args:
-            encoded_data(List[int]): list of integers representing the encoded data
+            enc_data(List[int]): list of integers representing the encoded data
         Returns:
-            decoded_data(str): decoded string
+            dec_data(str): decoded string
         """
-        decoded_data = []
-        for token in encoded_data:
+        dec_data = []
+        for token in enc_data:
             try:
                 # perform a reverse lookup
-                decoded_data.append(self.reverse_lookup_table[token])
+                dec_data.append(self.reverse_lookup_table[token])
             except KeyError:
                 # If the token is not in the vocab, then just append the token
-                decoded_data.append(token)
-        return decoded_data
+                dec_data.append(token)
+        return dec_data
 
-    def decode_words(self, encoded_data: List[int]) -> List[str]:
+    def decode_words(self, enc_data: List[int]) -> str:
         """Decode the encoded data
         Args:
-            encoded_data(List[int]): list of integers representing the encoded data
+            enc_data(List[int]): list of integers representing the encoded data
         Returns:
-            decoded_data(str): decoded string
+            dec_data(str): decoded string
         """
-        decoded_data = []
-        for token in encoded_data:
+        dec_data = []
+        for token in enc_data:
             # perform a reverse lookup
             for key, value in self.lookup_table.items():
                 if value == token:
-                    decoded_data.append(key)
+                    dec_data.append(key)
                     break
-        return "".join(decoded_data)
+        return "".join(dec_data)
 
     def save(self, path: str) -> None:
         """Save the BPE model
@@ -357,5 +357,4 @@ if __name__ == "__main__":
 #     decoded_data_new = bpe_new_fr2.decode_words(encoded_data_new)
 #     print("encoded_data_new", encoded_data_new)
 #     print("decoded_data_new", decoded_data_new)
-#
-# # TODO: Update the code to handle unknown words
+

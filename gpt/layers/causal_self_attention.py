@@ -16,7 +16,7 @@ class CausalSelfAttention(nn.Module):
 
         # Check if the d_model is divisible by the number of heads
         assert (
-            d_model % num_heads == 0
+                d_model % num_heads == 0
         ), "d_model must be divisible by the number of heads"
 
         # Set the d_model and num_heads
@@ -36,13 +36,14 @@ class CausalSelfAttention(nn.Module):
         self.attention = Attention()
 
     def forward(
-        self, query: torch.Tensor, key: torch.Tensor, value: torch.Tensor
+            self, query: torch.Tensor, key: torch.Tensor, value: torch.Tensor, trg_mask: torch.Tensor
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         """Forward pass of the CausalSelfAttention layer
         Args:
             query (torch.Tensor): Query tensor of shape (batch_size, seq_len, d_model)
             key (torch.Tensor): Key tensor of shape (batch_size, seq_len, d_model)
             value (torch.Tensor): Value tensor of shape (batch_size, seq_len, d_model)
+            trg_mask (Optional[torch.Tensor], optional): Mask tensor of shape (batch_size, seq_len, seq_len). Defaults to None.
         Returns:
             torch.Tensor: CausalSelfAttention output of shape (batch_size, seq_len, d_model)
             torch.Tensor: Attention weights of shape (batch_size, num_heads, seq_len, seq_len)
@@ -69,11 +70,19 @@ class CausalSelfAttention(nn.Module):
         value = value.transpose(1, 2)
 
         seq_len = query.size(-2)
-        mask = (torch.triu(torch.ones(seq_len, seq_len)) == 1).transpose(0, 1)
+
+        # Create the mask
+        if trg_mask is None:
+
+            mask = (torch.triu(torch.ones(seq_len, seq_len)) == 1).transpose(0, 1)
+        else:
+            mask = trg_mask
+            # replicate the mask over the number of heads
+            mask = mask.unsqueeze(1).repeat(1, self.num_heads, 1, 1)
+
         mask = (
             mask.float()
-            .masked_fill(mask == 0, float("-inf"))
-            .masked_fill(mask == 1, float(0.0))
+            #.masked_fill(mask == 0, float("-1e-12")) # basically minus infinity
         )
         mask = mask.to(query.device)
 

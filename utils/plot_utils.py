@@ -12,10 +12,12 @@ def plot_losses(
 ) -> None:
     """Plot the training and validation losses
     Args:
+
         train_losses (List[float]): Training losses
         val_losses (List[float]): Validation losses
         model_name (Optional[str], optional): Name of the model. Defaults to None.
         num_epochs (Optional[int], optional): Number of epochs. Defaults to None.
+        saved_path: (Optional[str], optional): Path to save the plot. Defaults to None.
     """
     if num_epochs is not None:
         steps = num_epochs
@@ -24,7 +26,7 @@ def plot_losses(
         steps = len(train_losses)
         x = torch.arange(1, len(train_losses) + 1)
     plt.plot(x, train_losses, label="train")
-    plt.plot(x, val_losses, label="val")
+    plt.plot(x, val_losses, label="val", linestyle="dashed")
     if model_name is not None:
         plt.title(f"Losses for the {model_name} model over {steps} iterations")
     else:

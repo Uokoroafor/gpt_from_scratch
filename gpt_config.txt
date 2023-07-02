@@ -1,6 +1,6 @@
 batch_size: 32
 epochs: 5000
-learning_rate: 1e-5
+learning_rate: 3e-4
 max_seq_len: 64
 num_heads: 4
 num_layers: 4

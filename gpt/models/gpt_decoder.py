@@ -1,19 +1,22 @@
+import math
+
 import torch
 from torch import nn
 from gpt.blocks.decoder_block import DecoderBlock
 from gpt.embeddings.token_positional import TransformerEmbeddings
+from gpt.layers.layer_norm import LayerNorm
 
 
 class GPTDecoder(nn.Module):
     def __init__(
-        self,
-        vocab_size_dec: int,
-        d_model: int,
-        max_seq_len: int,
-        num_layers: int,
-        num_heads: int,
-        d_ff: int,
-        dropout_prob: float,
+            self,
+            vocab_size_dec: int,
+            d_model: int,
+            max_seq_len: int,
+            num_layers: int,
+            num_heads: int,
+            d_ff: int,
+            dropout_prob: float,
     ):
         """Constructor class for the decoder of GPT model which is a decoder-only transformer
 
@@ -51,6 +54,8 @@ class GPTDecoder(nn.Module):
             ]
         )
 
+        self.final_norm = LayerNorm(d_model)
+
         self.lm_head = nn.Linear(d_model, vocab_size_dec)
 
         # Tie the weights of the embedding and linear layer used in GPT
@@ -65,11 +70,14 @@ class GPTDecoder(nn.Module):
             module (nn.Module): Module of the model
         """
         if isinstance(module, (nn.Linear, nn.Embedding)):
-            module.weight.data.normal_(mean=0.0, std=0.02)
+            module.weight.data.normal_(mean=0.0, std=0.02 / math.sqrt(2 * self.num_layers))
             if isinstance(module, nn.Linear) and module.bias is not None:
                 module.bias.data.zero_()
+        elif isinstance(module, nn.LayerNorm):
+            module.bias.data.zero_()
+            module.weight.data.fill_(1.0)
 
-    def forward(self, trg: torch.Tensor, trg_mask: torch.Tensor) -> torch.Tensor:
+    def forward(self, trg: torch.Tensor,trg_mask: torch.Tensor) -> torch.Tensor:
         """Forward pass of the GPT decoder
 
         Args:
@@ -82,12 +90,12 @@ class GPTDecoder(nn.Module):
         # Apply token and positional embeddings
         trg = self.embedding(trg)
 
-        # # Create target mask
-        # trg_mask = self.get_trg_mask(trg)
-
         # Apply decoder blocks
         for decoder_block in self.decoder_blocks:
             trg = decoder_block(trg, trg_mask)
+
+        # Apply final layer norm
+        trg = self.final_norm(trg)
 
         # Apply linear layer
         output = self.lm_head(trg)

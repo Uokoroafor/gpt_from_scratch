@@ -45,6 +45,13 @@ class Trainer:
         # Save the training hyperparameters as a  txt file
         save_config(training_hyperparameters, f"{self.path}/config.txt")
 
+        # Save the model architecture as a txt file
+        with open(f"{self.path}/model.txt", "w") as f:
+            f.write(str(self.model))
+
+        # Save the parameters of the model as a txt file
+        save_config(self.model.count_parameters(), f"{self.path}/model_parameters.txt")
+
         # training_hyperparams = {
         #     'batch_size': 32,
         #     'max_seq_len': 10000,

@@ -11,8 +11,7 @@ def create_training_folder(path: Optional[str] = None) -> str:
         str: The path to the training folder.
     """
 
-    # Get today's date and time
-    # Want the date in the format YY-MM-DD-HH-MM
+    # Get today's date and time in the YY-MM-DD-HH-MM format
     date_time = time.strftime("%y%m%d-%H%M")
 
     # If the training folder doesn't exist, create it

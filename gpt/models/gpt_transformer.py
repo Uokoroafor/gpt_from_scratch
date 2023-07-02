@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Dict
 import torch
 from torch import nn
 import torch.nn.functional as F
@@ -97,6 +97,7 @@ class GPT(nn.Module):
         Returns:
             torch.Tensor: Generated sequence
         """
+        assert max_length > 0, "Maximum length must be greater than 0"
         generated = torch.tensor(
             [start_token], dtype=torch.long, device=self.device
         ).unsqueeze(0)
@@ -115,6 +116,7 @@ class GPT(nn.Module):
                 if sampled:
                     # apply a temperature to the output logits
                     assert temp > 0.0, "Temperature must be greater than 0.0"
+                    assert k > 0, "k, the number of top-k tokens, must be greater than 0"
                     # output = output[:, -1, :] / temp
                     output /= temp
 
@@ -137,8 +139,20 @@ class GPT(nn.Module):
                 else:
                     next_token = output.argmax(2)[:, -1].unsqueeze(1)
 
-                # print(f'Next token is {next_token} while Next token_ is {next_token_}')
-
                 generated = torch.cat((generated, next_token), dim=1)
                 out = torch.cat((out, next_token), dim=1)
             return out
+
+    def count_parameters(self) -> Dict[str, int]:
+        """Counts the parameters of the model and returns a dictionary
+        Returns:
+            Dict[str, int]: Dictionary of the parameter counts
+        """
+        counts = {}
+        for name, module in self.named_modules():
+            if isinstance(module, nn.Module):
+                count = sum(p.numel() for p in module.parameters() if p.requires_grad)
+                counts[name] = count
+        # Change name of the first key to total
+        counts["total"] = counts.pop("")
+        return counts

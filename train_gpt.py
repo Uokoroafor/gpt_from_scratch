@@ -6,7 +6,7 @@ from utils.basic_tokeniser import create_simple_encoder_decoder
 from utils.data_utils import read_in_data
 from utils.train_utils import Trainer
 from utils.file_utils import load_config
-
+from utils.bpe import BPE
 
 # training_hyperparams = {
 #     'batch_size': 32,
@@ -40,15 +40,25 @@ eval_iters = training_hyperparams["eval_every"]
 max_iters = training_hyperparams["epochs"]
 lr = training_hyperparams["learning_rate"]
 
-data_folder = "data/madlibs/"
-# data_folder = 'data/gatsby/'
+# data_folder = "data/madlibs/"
+data_folder = 'data/gatsby/'
 
-# First we read in the data 'data/asimov/asimov_data_1000.txt'
-char_dict, data = read_in_data(data_folder + "dummy_data_1000_lines.txt")
-# char_dict, data = read_in_data(data_folder + 'great_gatsby.txt')
+# # First we read in the data 'data/asimov/asimov_data_1000.txt'
+# char_dict, data = read_in_data(data_folder + "dummy_data_1000_lines.txt")
+# # char_dict, data = read_in_data(data_folder + 'great_gatsby.txt')
+#
+# # Create the encoder and decoder dictionaries and the encode and decode functions
+# encoder_dict, decoder_dict, encode, decode = create_simple_encoder_decoder(char_dict)
+
+# Use BPE
+# data = read_in_data(data_folder + "dummy_data_1000_lines.txt", make_dict=False)
+data = read_in_data(data_folder + 'great_gatsby.txt', make_dict=False)
+bpe = BPE(data)
+# Train for 10 iterations
+bpe.train(50)
 
 # Create the encoder and decoder dictionaries and the encode and decode functions
-encoder_dict, decoder_dict, encode, decode = create_simple_encoder_decoder(char_dict)
+encoder_dict, decoder_dict, encode, decode = bpe.lookup_table, bpe.reverse_lookup_table, bpe.encode, bpe.decode
 
 # Read in the data
 with open(data_folder + "decoded_train_data.txt", "r") as f:
@@ -137,12 +147,9 @@ def text_to_tensor_(text: str) -> torch.Tensor:
     return torch.tensor(encoded_text, dtype=torch.long)
 
 
-# train_data_ = text_to_tensor_(train_data)
-
 train_data = text_to_tensor(train_data)
 val_data = text_to_tensor(val_data)
 test_data = text_to_tensor(test_data)
-
 
 loss_fn = nn.CrossEntropyLoss(ignore_index=encoder_dict["<pad>"])
 
@@ -160,8 +167,8 @@ model = GPT(
 )
 
 optimiser = torch.optim.Adam(
-    model.parameters(), lr=lr
-)  # , betas=(0.9, 0.98), eps=1e-9,weight_decay=0.1)
+    model.parameters(), lr=lr) #, betas=(0.9, 0.95), eps=1e-9, weight_decay=0.1)
+
 
 # Create a trainer object
 trainer = Trainer(
@@ -178,7 +185,7 @@ model, _, _ = trainer.train(
 
 sampled_chars = decode(
     model.generate(
-        start_token=encoder_dict["a"] * torch.ones((1, 1), dtype=torch.long),
+        start_token=encoder_dict["<sos>"] * torch.ones((1, 1), dtype=torch.long),
         max_length=100,
         k=6,
         temp=1.6,
@@ -187,14 +194,16 @@ sampled_chars = decode(
 
 greedy_chars = decode(
     model.generate(
-        start_token=encoder_dict["a"] * torch.ones((1, 1), dtype=torch.long),
+        start_token=encoder_dict["<sos>"] * torch.ones((1, 1), dtype=torch.long),
         max_length=100,
         sampled=False,
     )[0].tolist()
 )
 
 # Join the characters together and then print the string
+print(sampled_chars)
 print(f"Generating Characters with sampling: {''.join(sampled_chars)}")
 print("-----------------------------------------------------")
+print(greedy_chars)
 print(f"Generating Characters without sampling: {''.join(greedy_chars)}")
 print("-----------------------------------------------------")
