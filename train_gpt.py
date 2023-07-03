@@ -44,7 +44,7 @@ lr = training_hyperparams["learning_rate"]
 data_folder = 'data/gatsby/'
 file_path = 'great_gatsby.txt'
 
-use_bpe = True
+use_bpe = True # Set to True to use BPE, False to use a simple character encoder/decoder
 
 if use_bpe:
     data = read_in_data(data_folder + file_path, make_dict=False)
