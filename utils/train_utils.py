@@ -4,6 +4,7 @@ import torch
 from torch import nn
 from utils.plot_utils import plot_losses
 from utils.file_utils import create_training_folder, save_losses, save_config
+import pickle
 
 
 # TODO: Add early stopping
@@ -15,7 +16,7 @@ class Trainer:
             optimiser: torch.optim.Optimizer,
             loss_fn: torch.nn.modules.loss._Loss,
             training_hyperparameters: Dict,
-            device: Optional[str] = "cpu",
+            encoding_utils: Dict,
     ):
         """Constructor class for Trainer
         Args:
@@ -23,12 +24,15 @@ class Trainer:
             optimiser (torch.optim.Optimizer): Optimiser to use for training
             loss_fn (torch.nn.modules.loss._Loss): Loss function to use for training
             training_hyperparameters (Dict): Dictionary containing training hyperparameters
-            device (Optional[str], optional): Device to use for training. Defaults to 'cpu'.
+            encoding_utils (Dict): Dictionary containing encoder/decoder dictionaries and functions
         """
         self.model = model
         self.optimiser = optimiser
         self.loss_fn = loss_fn
-        self.device = device
+        self.encoding_utils = encoding_utils
+
+        # Preallocate variables defined in set_training_hyperparameters
+        self.device = None
         self.epochs = None
         self.batch_size = None
         self.eval_every = None
@@ -51,6 +55,11 @@ class Trainer:
 
         # Save the parameters of the model as a txt file
         save_config(self.model.count_parameters(), f"{self.path}/model_parameters.txt")
+
+        # Save the encoding_utils as a pickle file
+        filename = f"{self.path}/encoding_utils.pkl"
+        with open(filename, 'wb') as file:
+            pickle.dump(self.encoding_utils, file)
 
     def train(
             self,
@@ -131,11 +140,24 @@ class Trainer:
                 # Print Step, train loss and validation loss
                 if verbose:
                     print(
-                        f'At Iteration: {max(1, i)}/{self.epochs}, Train loss: {losses["train"]}, Val loss: {losses["val"]}'
+                        f'At Iteration: {max(1, i)}/{self.epochs}, Train loss: {losses["train"]}, '
+                        f'Val loss: {losses["val"]}'
                     )
                     print(
                         f"Time taken for last {self.eval_every} iterations: {(time.time() - last_time):.2f} seconds"
                     )
+
+                    # Generate a sample from the model
+                    decode = self.encoding_utils["decode_fn"]
+                    chars = decode(
+                        self.model.generate(
+                            start_token=self.model.trg_sos * torch.ones((1, 1), dtype=torch.long),
+                            max_length=100,
+                            sampled=False,
+                        )[0].tolist()
+                    )
+                    print(f"Generating Characters without sampling: {''.join(chars)} \n\n")
+
                     last_time = time.time()
                 train_losses.append(losses["train"])
                 val_losses.append(losses["val"])

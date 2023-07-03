@@ -62,14 +62,14 @@ else:
     encoder_dict, decoder_dict, encode, decode = create_simple_encoder_decoder(char_dict)
 
 
-# encoding_dict = dict(enc_dict=encoder_dict, dec_dict=decoder_dict, encode_fn=encode, decode_fn=decode)
+encoding_utils = dict(enc_dict=encoder_dict, dec_dict=decoder_dict, encode_fn=encode, decode_fn=decode)
 
 # Read in the data
-with open(data_folder + "decoded_train_data.txt", "r") as f:
+with open(data_folder + "decoded_train_data.txt", "r", encoding="utf-8") as f:
     train_data = f.read()
-with open(data_folder + "decoded_val_data.txt", "r") as f:
+with open(data_folder + "decoded_val_data.txt", "r", encoding="utf-8") as f:
     val_data = f.read()
-with open(data_folder + "decoded_test_data.txt", "r") as f:
+with open(data_folder + "decoded_test_data.txt", "r", encoding="utf-8") as f:
     test_data = f.read()
 
 
@@ -180,17 +180,18 @@ trainer = Trainer(
     loss_fn=loss_fn,
     optimiser=optimiser,
     training_hyperparameters=training_hyperparams,
+    encoding_utils=encoding_utils,
 )
 
 # Train the model
 model, _, _ = trainer.train(
-    train_data, val_data, save_model=True, plotting=True, verbose=True
+    train_data, val_data, save_model=True, plotting=True, verbose=True,
 )
 
 
 sampled_chars = decode(
     model.generate(
-        start_token=encoder_dict["<sos>"] * torch.ones((1, 1), dtype=torch.long),
+        start_token=model.trg_sos * torch.ones((1, 1), dtype=torch.long),
         max_length=100,
         k=6,
         temp=1.6,
@@ -199,7 +200,7 @@ sampled_chars = decode(
 
 greedy_chars = decode(
     model.generate(
-        start_token=encoder_dict["<sos>"] * torch.ones((1, 1), dtype=torch.long),
+        start_token=model.trg_sos * torch.ones((1, 1), dtype=torch.long),
         max_length=100,
         sampled=False,
     )[0].tolist()
