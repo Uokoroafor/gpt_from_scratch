@@ -152,11 +152,11 @@ class Trainer:
                     chars = decode(
                         self.model.generate(
                             start_token=self.model.trg_sos * torch.ones((1, 1), dtype=torch.long),
-                            max_length=100,
+                            max_length=30,
                             sampled=False,
                         )[0].tolist()
                     )
-                    print(f"Generating Characters without sampling: {''.join(chars)} \n\n")
+                    print(f"Generating 30 characters without sampling: {''.join(chars)} \n")
 
                     last_time = time.time()
                 train_losses.append(losses["train"])
