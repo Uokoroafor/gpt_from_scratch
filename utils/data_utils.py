@@ -1,4 +1,5 @@
-# Utility file for handling data and building the character and word-based dictionaries as well as the encoder and decoder functions.
+# Utility file for handling data and building the character
+# and word-based dictionaries as well as the encoder and decoder functions.
 import os
 from typing import Union, Dict, Tuple, Callable, Optional, List
 import requests as requests

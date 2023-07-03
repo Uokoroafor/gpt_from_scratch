@@ -8,6 +8,7 @@ from utils.train_utils import Trainer
 from utils.file_utils import load_config
 from utils.bpe import BPE
 
+# # Define the training hyperparameters for the model either manually or by loading them from a txt file
 # training_hyperparams = {
 #     'batch_size': 32,
 #     'epochs': 1000,
@@ -27,7 +28,7 @@ from utils.bpe import BPE
 # # Save the training hyperparameters as a  txt file
 # save_config(training_hyperparams, 'gpt_config.txt')
 training_hyperparams = load_config("gpt_config.txt")
-# print(training_hyperparams)
+
 
 torch.manual_seed(6345789)  # Set the random seed for reproducibility
 # Wilson Pickett - 634-5789 https://www.youtube.com/watch?v=TSGuaVAufV0
@@ -59,6 +60,9 @@ else:
     char_dict, data = read_in_data(data_folder + file_path)
     # Create the encoder and decoder dictionaries and the encode and decode functions
     encoder_dict, decoder_dict, encode, decode = create_simple_encoder_decoder(char_dict)
+
+
+# encoding_dict = dict(enc_dict=encoder_dict, dec_dict=decoder_dict, encode_fn=encode, decode_fn=decode)
 
 # Read in the data
 with open(data_folder + "decoded_train_data.txt", "r") as f:
@@ -167,7 +171,7 @@ model = GPT(
 )
 
 optimiser = torch.optim.Adam(
-    model.parameters(), lr=lr) #, betas=(0.9, 0.95), eps=1e-9, weight_decay=0.1)
+    model.parameters(), lr=lr)
 
 
 # Create a trainer object
@@ -183,7 +187,6 @@ model, _, _ = trainer.train(
     train_data, val_data, save_model=True, plotting=True, verbose=True
 )
 
-# TODO: Save the tokenizer as well for later use
 
 sampled_chars = decode(
     model.generate(
