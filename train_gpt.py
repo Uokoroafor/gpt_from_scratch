@@ -8,7 +8,6 @@ from utils.train_utils import Trainer
 from utils.file_utils import load_config
 from utils.bpe import BPE
 
-# # Define the training hyperparameters for the model either manually or by loading them from a txt file
 # training_hyperparams = {
 #     'batch_size': 32,
 #     'epochs': 1000,
