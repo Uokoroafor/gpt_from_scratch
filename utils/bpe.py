@@ -207,37 +207,39 @@ class BPE:
                     i += 1
         return enc_data
 
-    def decode(self, enc_data: List[int]) ->List[str]:
+    def decode(self, enc_data: List[int], ignore_special_tokens: Optional[bool] = False) -> List[str]:
         """Decode the encoded data
         Args:
             enc_data(List[int]): list of integers representing the encoded data
+            ignore_special_tokens(bool): whether to ignore the special tokens
         Returns:
-            dec_data(str): decoded string
+            dec_data(str): List of decoded tokens
         """
         dec_data = []
         for token in enc_data:
             try:
                 # perform a reverse lookup
-                dec_data.append(self.reverse_lookup_table[token])
+                word = self.reverse_lookup_table[token]
+                if ignore_special_tokens:
+                    if word not in [self.pad, self.sos, self.eos]:
+                        dec_data.append(word)
+                else:
+                    dec_data.append(word)
+
             except KeyError:
                 # If the token is not in the vocab, then just append the token
                 dec_data.append(token)
         return dec_data
 
-    def decode_words(self, enc_data: List[int]) -> str:
+    def decode_words(self, enc_data: List[int], ignore_special_tokens: Optional[bool] = True) -> str:
         """Decode the encoded data
         Args:
             enc_data(List[int]): list of integers representing the encoded data
+            ignore_special_tokens(bool): whether to ignore the special tokens
         Returns:
-            dec_data(str): decoded string
+            dec_data(str): joined string of decoded tokens
         """
-        dec_data = []
-        for token in enc_data:
-            # perform a reverse lookup
-            for key, value in self.lookup_table.items():
-                if value == token:
-                    dec_data.append(key)
-                    break
+        dec_data = self.decode(enc_data, ignore_special_tokens)
         return "".join(dec_data)
 
     def save(self, path: str) -> None:
@@ -272,11 +274,12 @@ if __name__ == "__main__":
 
     # Create the BPE object
     bpe = BPE(data)
+
     # Train the model
-    bpe.train(num_iters=10)
+    bpe.train(num_iters=40)
 
     # Encode the data
-    encoded_data = bpe.encode("lorem")
+    encoded_data = bpe.encode("color coordination is the best")
 
     # Decode the data
     decoded_data = bpe.decode(encoded_data)
@@ -289,72 +292,4 @@ if __name__ == "__main__":
     print("decoded_data", decoded_data)
     print("decoded_words", decoded_words)
 
-#     # Load new data and try encoding and decoding from text file 'data/FrenchEnglish/text_en_lite' and 'data/FrenchEnglish/text_fr_lite'
-#     new_data_en = open("../data/FrenchEnglish/text_en_lite", "r",encoding="utf-8").read()
-#     new_data_fr = open("../data/FrenchEnglish/text_fr_lite", "r",encoding="utf-8").read()
-#
-#     # Encode the data
-#     # Create a new BPE object
-#     bpe_new_en = BPE(new_data_en)
-#     # Train the model
-#     bpe_new_en.train(num_iters=10, verbose=True)
-#     print(bpe_new_en.lookup_table)
-#     # Encode the data
-#
-#     encoded_data_new = bpe_new_en.encode(
-#         "Fruit flies like a banana. That is, they like a banana that is rotten."
-#     )
-#     # Decode the data
-#     decoded_data_new = bpe_new_en.decode(encoded_data_new)
-#     # Print the encoded data
-#     print("encoded_data_new", encoded_data_new)
-#     # Print the decoded data
-#     print("decoded_data_new", decoded_data_new)
-#
-#     # Create a new BPE object
-#     bpe_new_fr = BPE(new_data_fr)
-#
-#     # Train the model
-#     bpe_new_fr.train(num_iters=10, verbose=True)
-#
-#     print(bpe_new_fr.lookup_table)
-#     # Encode the data
-#     encoded_data_new = bpe_new_fr.encode(
-#         "Les mouches à fruits aiment les bananes. C'est-à-dire qu'elles aiment une banane qui est pourrie."
-#     )
-#
-#     # Decode the data
-#     decoded_data_new = bpe_new_fr.decode_words(encoded_data_new)
-#
-#     # Print the encoded data
-#     print("encoded_data_new", encoded_data_new)
-#
-#     # Print the decoded data
-#     print("decoded_data_new", decoded_data_new)
-#
-#     # Save the English and French Encoder and Decoder
-#     en_path = "../data/FrenchEnglish/bpe_model_en.pkl"
-#     fr_path = "../data/FrenchEnglish/bpe_model_fr.pkl"
-#     bpe_new_en.save(en_path)
-#     bpe_new_fr.save(fr_path)
-#
-#     # Load the English and French Encoder and Decoder
-#     bpe_new_en2 = pkl.load(open(en_path, "rb"))
-#     bpe_new_fr2 = pkl.load(open(fr_path, "rb"))
-#
-#     # Test that the loaded models work
-#     encoded_data_new = bpe_new_en2.encode(
-#         "Fruit flies like a banana. \n That is, they like a banana that is rotten."
-#     )
-#     decoded_data_new = bpe_new_en2.decode_words(encoded_data_new)
-#     print("encoded_data_new", encoded_data_new)
-#     print("decoded_data_new", decoded_data_new)
-#
-#     encoded_data_new = bpe_new_fr2.encode(
-#         "Les mouches à fruits aiment les bananes. \n C'est-à-dire qu'elles aiment "
-#         "une banane qui est pourrie."
-#     )
-#     decoded_data_new = bpe_new_fr2.decode_words(encoded_data_new)
-#     print("encoded_data_new", encoded_data_new)
-#     print("decoded_data_new", decoded_data_new)
 

@@ -42,23 +42,23 @@ lr = training_hyperparams["learning_rate"]
 
 # data_folder = "data/madlibs/"
 data_folder = 'data/gatsby/'
+file_path = 'great_gatsby.txt'
 
-# # First we read in the data 'data/asimov/asimov_data_1000.txt'
-# char_dict, data = read_in_data(data_folder + "dummy_data_1000_lines.txt")
-# # char_dict, data = read_in_data(data_folder + 'great_gatsby.txt')
-#
-# # Create the encoder and decoder dictionaries and the encode and decode functions
-# encoder_dict, decoder_dict, encode, decode = create_simple_encoder_decoder(char_dict)
+use_bpe = True
 
-# Use BPE
-# data = read_in_data(data_folder + "dummy_data_1000_lines.txt", make_dict=False)
-data = read_in_data(data_folder + 'great_gatsby.txt', make_dict=False)
-bpe = BPE(data)
-# Train for 10 iterations
-bpe.train(50)
+if use_bpe:
+    data = read_in_data(data_folder + file_path, make_dict=False)
+    bpe = BPE(data)
+    # Train for 50 iterations
+    bpe.train(50)
+    # Create the encoder and decoder dictionaries and the encode and decode functions
+    encoder_dict, decoder_dict, encode, decode = bpe.lookup_table, bpe.reverse_lookup_table, bpe.encode, bpe.decode
 
-# Create the encoder and decoder dictionaries and the encode and decode functions
-encoder_dict, decoder_dict, encode, decode = bpe.lookup_table, bpe.reverse_lookup_table, bpe.encode, bpe.decode
+else:
+    # Read in the data
+    char_dict, data = read_in_data(data_folder + file_path)
+    # Create the encoder and decoder dictionaries and the encode and decode functions
+    encoder_dict, decoder_dict, encode, decode = create_simple_encoder_decoder(char_dict)
 
 # Read in the data
 with open(data_folder + "decoded_train_data.txt", "r") as f:
@@ -105,12 +105,12 @@ def text_to_tensor(text: str) -> torch.Tensor:
 
     encoded_sentences = []
     for sentence in sentences:
-        # encoded_sentence = [encoder_dict['<sos>']]
-        encoded_sentence = []
+        encoded_sentence = [encoder_dict['<sos>']]
         encoded_sentence.extend(encode(sentence))  # start with <sos>
         # encoded_sentence = encode(sentence)  # start with <sos>
-        # encoded_sentence.extend([encoder_dict['\n']])
-        # encoded_sentence.extend([encoder_dict['<eos>']])
+
+        encoded_sentence.extend([encoder_dict['<eos>']])
+        encoded_sentence.extend([encoder_dict['\n']])
 
         encoded_sentences.append(encoded_sentence)
 
@@ -182,6 +182,8 @@ trainer = Trainer(
 model, _, _ = trainer.train(
     train_data, val_data, save_model=True, plotting=True, verbose=True
 )
+
+# TODO: Save the tokenizer as well for later use
 
 sampled_chars = decode(
     model.generate(

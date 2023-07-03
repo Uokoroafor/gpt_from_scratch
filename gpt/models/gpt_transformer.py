@@ -152,7 +152,10 @@ class GPT(nn.Module):
         for name, module in self.named_modules():
             if isinstance(module, nn.Module):
                 count = sum(p.numel() for p in module.parameters() if p.requires_grad)
+
+                # format the counts to have commas for thousands
+                count = "{:,}".format(count)
                 counts[name] = count
-        # Change name of the first key to total
-        counts["total"] = counts.pop("")
+        # Change name of the first key to total and format the value to integer
+        counts["total"] = int(counts.pop("").replace(",", ""))
         return counts

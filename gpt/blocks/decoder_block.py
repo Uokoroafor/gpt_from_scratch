@@ -40,6 +40,7 @@ class DecoderBlock(nn.Module):
 
         Args:
             trg (torch.Tensor): Target tensor of shape (batch_size, seq_len, embedding_dim)
+            trg_mask (torch.Tensor): Target mask tensor of shape (batch_size, seq_len, seq_len)
 
         Returns:
             torch.Tensor: Output tensor of shape (batch_size, seq_len, embedding_dim)

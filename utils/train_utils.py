@@ -10,12 +10,12 @@ from utils.file_utils import create_training_folder, save_losses, save_config
 # TODO: Add evaluate method
 class Trainer:
     def __init__(
-        self,
-        model: nn.Module,
-        optimiser: torch.optim.Optimizer,
-        loss_fn: torch.nn.modules.loss._Loss,
-        training_hyperparameters: Dict,
-        device: Optional[str] = "cpu",
+            self,
+            model: nn.Module,
+            optimiser: torch.optim.Optimizer,
+            loss_fn: torch.nn.modules.loss._Loss,
+            training_hyperparameters: Dict,
+            device: Optional[str] = "cpu",
     ):
         """Constructor class for Trainer
         Args:
@@ -52,21 +52,14 @@ class Trainer:
         # Save the parameters of the model as a txt file
         save_config(self.model.count_parameters(), f"{self.path}/model_parameters.txt")
 
-        # training_hyperparams = {
-        #     'batch_size': 32,
-        #     'max_seq_len': 10000,
-        #     'epochs': 1000,
-        #     'eval_every': 100,
-        # }
-
     def train(
-        self,
-        train_data: torch.Tensor,
-        val_data: torch.Tensor,
-        save_model: bool = True,
-        save_model_path: Optional[str] = None,
-        plotting: bool = True,
-        verbose: Optional[bool] = True,
+            self,
+            train_data: torch.Tensor,
+            val_data: torch.Tensor,
+            save_model: bool = True,
+            save_model_path: Optional[str] = None,
+            plotting: bool = True,
+            verbose: Optional[bool] = True,
     ):
         """Train the model
         Args:
@@ -95,8 +88,8 @@ class Trainer:
             else:
                 raise ValueError(f"Unknown split: '{split}'")
             ix = torch.randint(len(data) - self.max_seq_len, (self.batch_size,))
-            x = torch.stack([data[i : i + self.max_seq_len] for i in ix])
-            y = torch.stack([data[i + 1 : i + self.max_seq_len + 1] for i in ix])
+            x = torch.stack([data[i: i + self.max_seq_len] for i in ix])
+            y = torch.stack([data[i + 1: i + self.max_seq_len + 1] for i in ix])
             x, y = x.to(self.device), y.to(
                 self.device
             )  # Transfer the data to the GPU if we are using it
@@ -176,7 +169,7 @@ class Trainer:
             minutes = (total_time % 3600) // 60
             seconds = total_time % 60
             print(
-                f"Time taken for training: {hours} hours, {minutes} minutes, {seconds} seconds"
+                f"Time taken for training: {hours} hour(s), {minutes} minute(s), {seconds} second(s)"
             )
 
         if plotting:

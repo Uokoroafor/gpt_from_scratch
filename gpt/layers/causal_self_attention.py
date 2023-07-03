@@ -82,7 +82,6 @@ class CausalSelfAttention(nn.Module):
 
         mask = (
             mask.float()
-            #.masked_fill(mask == 0, float("-1e-12")) # basically minus infinity
         )
         mask = mask.to(query.device)
 
