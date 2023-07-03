@@ -20,7 +20,7 @@ def read_in_data(
     """
 
     # First read in text file
-    with open(filepath, "r") as f:
+    with open(filepath, "r", encoding="utf-8") as f:
         data = f.read()
 
     if not make_dict:
