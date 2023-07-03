@@ -3,7 +3,9 @@
 from typing import Union, List, Dict, Tuple, Callable, Optional
 
 
-def make_char_dict(char_list: Union[List[str], str], allow_uppers: Optional[bool] = False) -> Dict[str, List[str]]:
+def make_char_dict(
+    char_list: Union[List[str], str], allow_uppers: Optional[bool] = False
+) -> Dict[str, List[str]]:
     """Make a dictionary of character types and their corresponding characters.
 
     Args:
@@ -29,19 +31,28 @@ def make_char_dict(char_list: Union[List[str], str], allow_uppers: Optional[bool
     spaces = list(set([char for char in char_list if char.isspace()]))
 
     # Include the newline character if not already included
-    new_line = ['\n']
+    new_line = ["\n"]
 
-    char_dict = dict(letters=letters, numbers=numbers, punctuation=punctuation, spaces=spaces, new_line=new_line)
+    char_dict = dict(
+        letters=letters,
+        numbers=numbers,
+        punctuation=punctuation,
+        spaces=spaces,
+        new_line=new_line,
+    )
 
-    print('Corpus has {} unique letter(s), {} unique numbers(s) and {} unique punctuation(s)'.format(len(letters),
-                                                                                                     len(numbers),
-                                                                                                     len(punctuation)))
-    print('Corpus has {} unique characters.'.format(len(set(char_list))))
+    print(
+        "Corpus has {} unique letter(s), {} unique numbers(s) and {} unique punctuation(s)".format(
+            len(letters), len(numbers), len(punctuation)
+        )
+    )
+    print("Corpus has {} unique characters.".format(len(set(char_list))))
     return char_dict
 
 
-def create_simple_encoder_decoder(char_dict: Dict[str, List[str]], add_specials: Optional[bool] = True) -> \
-        Tuple[Dict[str, int], Dict[int, str], Callable, Callable]:
+def create_simple_encoder_decoder(
+    char_dict: Dict[str, List[str]], add_specials: Optional[bool] = True
+) -> Tuple[Dict[str, int], Dict[int, str], Callable, Callable]:
     """This will be a character encoder and decoder for a simple character level language model based on the
     character dictionary.
 
@@ -58,12 +69,12 @@ def create_simple_encoder_decoder(char_dict: Dict[str, List[str]], add_specials:
 
     # Add the special tokens if specified
     if add_specials:
-        encoder_dic['<pad>'] = 0
-        decoder_dic[0] = '<pad>'
-        encoder_dic['<sos>'] = 1
-        decoder_dic[1] = '<sos>'
-        encoder_dic['<eos>'] = 2
-        decoder_dic[2] = '<eos>'
+        encoder_dic["<pad>"] = 0
+        decoder_dic[0] = "<pad>"
+        encoder_dic["<sos>"] = 1
+        decoder_dic[1] = "<sos>"
+        encoder_dic["<eos>"] = 2
+        decoder_dic[2] = "<eos>"
 
     # Encode based on the position in the dictionary
     # List all the character values in the dict
@@ -110,16 +121,18 @@ def create_simple_encoder_decoder(char_dict: Dict[str, List[str]], add_specials:
     return encoder_dic, decoder_dic, encode_func, decode_func
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # Read in the data
     from utils.data_utils import read_in_data
 
-    char_dict, data = read_in_data('../data/asimov/asimov123.txt')
+    char_dict, data = read_in_data("../data/asimov/asimov123.txt")
 
     # Create the encoder and decoder dictionaries
-    encoder_dict, decoder_dict, encode, decode = create_simple_encoder_decoder(char_dict)
+    encoder_dict, decoder_dict, encode, decode = create_simple_encoder_decoder(
+        char_dict
+    )
 
     # Test the encode and decode functions:
-    print('Original data: ', data[:100])
-    print('Encoded data: ', encode(data[:100]))
-    print('Decoded data: ', decode(encode(data[:100])))
+    print("Original data: ", data[:100])
+    print("Encoded data: ", encode(data[:100]))
+    print("Decoded data: ", decode(encode(data[:100])))

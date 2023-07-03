@@ -10,9 +10,13 @@ class BigramModel(AbstractModelClass):
     def __init__(self, vocab_size: int, embedding_dim: int):
         """Initialize the Bigram model by setting up the various layers."""
         super(BigramModel, self).__init__()
-        self.embeddings = nn.Embedding(vocab_size, embedding_dim)  # The Token Embedding Table
+        self.embeddings = nn.Embedding(
+            vocab_size, embedding_dim
+        )  # The Token Embedding Table
 
-    def forward(self, src: torch.Tensor, trg: torch.Tensor = None) -> Tuple[torch.Tensor, torch.Tensor]:
+    def forward(
+        self, src: torch.Tensor, trg: torch.Tensor = None
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
         """Perform a forward pass of our model on some input and target text."""
         embeds = self.embeddings(src)
 
@@ -21,8 +25,9 @@ class BigramModel(AbstractModelClass):
             loss = None
         else:
             B, T, C = embeds.shape  # Batch by Time by Channels
-            embeds = embeds.view(B * T,
-                                 C)  # Need to reshape the input so that the Channel dimension is second (2D array)
+            embeds = embeds.view(
+                B * T, C
+            )  # Need to reshape the input so that the Channel dimension is second (2D array)
             trg = trg.view(B * T)  # Need to reshape the target so that it is a 1D array
             loss = F.cross_entropy(embeds, trg)
             # How well are we predicting the next character based on the current character?
@@ -37,7 +42,7 @@ class BigramModel(AbstractModelClass):
         Returns:
             A list of integers representing the generated text.
 
-            """
+        """
         for _ in range(length):
             # Make a prediction from the current index (Forward pass)
             embeds, loss = self.forward(idx)
@@ -57,19 +62,26 @@ class BigramModel(AbstractModelClass):
 
 
 class BigramModelWithAttention(BigramModel):
-
-    def __init__(self, vocab_size: int, embedding_dim: int, block_size: int, num_heads: Optional[int] = 4):
+    def __init__(
+        self,
+        vocab_size: int,
+        embedding_dim: int,
+        block_size: int,
+        num_heads: Optional[int] = 4,
+    ):
         """Initialize the Bigram model by setting up the various layers.
         Args:
 
-            """
+        """
         super(BigramModelWithAttention, self).__init__(vocab_size, embedding_dim)
         # self.attention = SelfAttention(embedding_dim, embedding_dim)
         self.attention = MultiHeadAttention(embedding_dim, embedding_dim, num_heads)
         self.linear = nn.Linear(embedding_dim, vocab_size)
         self.block_size = block_size
 
-    def forward(self, src: torch.Tensor, trg: torch.Tensor = None) -> Tuple[torch.Tensor, torch.Tensor]:
+    def forward(
+        self, src: torch.Tensor, trg: torch.Tensor = None
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
         """Perform a forward pass of our model on some input and target text."""
         embeds = self.embeddings(src)
         embeds, _ = self.attention(embeds)
@@ -94,11 +106,11 @@ class BigramModelWithAttention(BigramModel):
         Returns:
             A list of integers representing the generated text.
 
-            """
+        """
         for _ in range(length):
             # Make a prediction from the current index (Forward pass)
             # Now feed the block into the model
-            idx_block = idx[:, -self.block_size:]
+            idx_block = idx[:, -self.block_size :]
 
             embeds, loss = self.forward(idx_block)
 
@@ -117,13 +129,22 @@ class BigramModelWithAttention(BigramModel):
 
 
 class BigramModelWithAandPE(BigramModelWithAttention):
-
-    def __init__(self, vocab_size: int, embedding_dim: int, block_size: int, num_heads: Optional[int] = 4):
+    def __init__(
+        self,
+        vocab_size: int,
+        embedding_dim: int,
+        block_size: int,
+        num_heads: Optional[int] = 4,
+    ):
         """Initialize the Bigram model by setting up the various layers."""
-        super(BigramModelWithAandPE, self).__init__(vocab_size, embedding_dim, block_size, num_heads)
+        super(BigramModelWithAandPE, self).__init__(
+            vocab_size, embedding_dim, block_size, num_heads
+        )
         self.positional_encoding = nn.Embedding(block_size, embedding_dim)
 
-    def forward(self, src: torch.Tensor, trg: torch.Tensor = None) -> Tuple[torch.Tensor, torch.Tensor]:
+    def forward(
+        self, src: torch.Tensor, trg: torch.Tensor = None
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
         """Perform a forward pass of our model on some input and target text."""
         B, T = src.shape
         embeds = self.embeddings(src)
@@ -145,13 +166,22 @@ class BigramModelWithAandPE(BigramModelWithAttention):
 
 
 class BigramModelWithAandPEandLN(BigramModelWithAandPE):
-
-    def __init__(self, vocab_size: int, embedding_dim: int, block_size: int, num_heads: Optional[int] = 4):
+    def __init__(
+        self,
+        vocab_size: int,
+        embedding_dim: int,
+        block_size: int,
+        num_heads: Optional[int] = 4,
+    ):
         """Initialize the Bigram model by setting up the various layers."""
-        super(BigramModelWithAandPEandLN, self).__init__(vocab_size, embedding_dim, block_size, num_heads)
+        super(BigramModelWithAandPEandLN, self).__init__(
+            vocab_size, embedding_dim, block_size, num_heads
+        )
         self.layer_norm = nn.LayerNorm(embedding_dim)
 
-    def forward(self, src: torch.Tensor, trg: torch.Tensor = None) -> Tuple[torch.Tensor, torch.Tensor]:
+    def forward(
+        self, src: torch.Tensor, trg: torch.Tensor = None
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
         """Perform a forward pass of our model on some input and target text."""
         B, T = src.shape
         embeds = self.embeddings(src)
@@ -174,17 +204,26 @@ class BigramModelWithAandPEandLN(BigramModelWithAandPE):
 
 
 class BigramModelWithAandPEandLNandFFN(BigramModelWithAandPEandLN):
-
-    def __init__(self, vocab_size: int, embedding_dim: int, block_size: int, num_heads: Optional[int] = 4):
+    def __init__(
+        self,
+        vocab_size: int,
+        embedding_dim: int,
+        block_size: int,
+        num_heads: Optional[int] = 4,
+    ):
         """Initialize the Bigram model by setting up the various layers."""
-        super(BigramModelWithAandPEandLNandFFN, self).__init__(vocab_size, embedding_dim, block_size, num_heads)
+        super(BigramModelWithAandPEandLNandFFN, self).__init__(
+            vocab_size, embedding_dim, block_size, num_heads
+        )
         self.ffn = nn.Sequential(
             nn.Linear(embedding_dim, 4 * embedding_dim),
             nn.ReLU(),
-            nn.Linear(4 * embedding_dim, embedding_dim)
+            nn.Linear(4 * embedding_dim, embedding_dim),
         )
 
-    def forward(self, src: torch.Tensor, trg: torch.Tensor = None) -> Tuple[torch.Tensor, torch.Tensor]:
+    def forward(
+        self, src: torch.Tensor, trg: torch.Tensor = None
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
         """Perform a forward pass of our model on some input and target text."""
         B, T = src.shape
         embeds = self.embeddings(src)
@@ -208,9 +247,14 @@ class BigramModelWithAandPEandLNandFFN(BigramModelWithAandPEandLN):
 
 
 class BigramModelWithAandPEandLNandFFNandDO(BigramModelWithAandPEandLNandFFN):
-
-    def __init__(self, vocab_size: int, embedding_dim: int, block_size: int, num_heads: Optional[int] = 4,
-                 dropout_prob: Optional[float] = 0.0):
+    def __init__(
+        self,
+        vocab_size: int,
+        embedding_dim: int,
+        block_size: int,
+        num_heads: Optional[int] = 4,
+        dropout_prob: Optional[float] = 0.0,
+    ):
         """Initialize the Bigram model by setting up the various layers.
         Args:
             vocab_size: The size of the vocabulary.
@@ -219,12 +263,17 @@ class BigramModelWithAandPEandLNandFFNandDO(BigramModelWithAandPEandLNandFFN):
             num_heads: The number of heads to use in the attention layer.
             dropout_prob: The probability of dropout.
         """
-        super(BigramModelWithAandPEandLNandFFNandDO, self).__init__(vocab_size, embedding_dim, block_size,
-                                                                    num_heads)
+        super(BigramModelWithAandPEandLNandFFNandDO, self).__init__(
+            vocab_size, embedding_dim, block_size, num_heads
+        )
         self.dropout = nn.Dropout(dropout_prob)
-        self.attention = MultiHeadAttention(embedding_dim, embedding_dim, num_heads, dropout_prob)
+        self.attention = MultiHeadAttention(
+            embedding_dim, embedding_dim, num_heads, dropout_prob
+        )
 
-    def forward(self, src: torch.Tensor, trg: torch.Tensor = None) -> Tuple[torch.Tensor, torch.Tensor]:
+    def forward(
+        self, src: torch.Tensor, trg: torch.Tensor = None
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
         """Perform a forward pass of our model on some input and target text."""
         B, T = src.shape
         embeds = self.embeddings(src)
@@ -249,9 +298,15 @@ class BigramModelWithAandPEandLNandFFNandDO(BigramModelWithAandPEandLNandFFN):
 
 
 class BigramWithTransformerBlocks(BigramModelWithAandPEandLNandFFNandDO):
-
-    def __init__(self, vocab_size: int, embedding_dim: int, block_size: int, num_heads: Optional[int] = 4,
-                 dropout_prob: Optional[float] = 0.0, num_blocks: Optional[int] = 1):
+    def __init__(
+        self,
+        vocab_size: int,
+        embedding_dim: int,
+        block_size: int,
+        num_heads: Optional[int] = 4,
+        dropout_prob: Optional[float] = 0.0,
+        num_blocks: Optional[int] = 1,
+    ):
         """Initialize the Bigram model by setting up the various layers.
         Args:
             vocab_size: The size of the vocabulary.
@@ -261,13 +316,24 @@ class BigramWithTransformerBlocks(BigramModelWithAandPEandLNandFFNandDO):
             dropout_prob: The probability of dropout.
             num_blocks: The number of transformer blocks to use.
         """
-        super(BigramWithTransformerBlocks, self).__init__(vocab_size, embedding_dim, block_size, num_heads,
-                                                          dropout_prob)
+        super(BigramWithTransformerBlocks, self).__init__(
+            vocab_size, embedding_dim, block_size, num_heads, dropout_prob
+        )
         self.blocks = nn.ModuleList(
-            [TransformerBlock(embedding_dim=embedding_dim, output_dim=embedding_dim, num_heads=num_heads,
-                              dropout_prob=dropout_prob) for _ in range(num_blocks)])
+            [
+                TransformerBlock(
+                    embedding_dim=embedding_dim,
+                    output_dim=embedding_dim,
+                    num_heads=num_heads,
+                    dropout_prob=dropout_prob,
+                )
+                for _ in range(num_blocks)
+            ]
+        )
 
-    def forward(self, src: torch.Tensor, trg: torch.Tensor = None) -> Tuple[torch.Tensor, torch.Tensor]:
+    def forward(
+        self, src: torch.Tensor, trg: torch.Tensor = None
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
         """Perform a forward pass of our model on some input and target text."""
         B, T = src.shape
         embeds = self.embeddings(src)
