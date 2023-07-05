@@ -1,9 +1,8 @@
 import torch
-from nltk.tokenize import sent_tokenize, word_tokenize
 from torch import nn
 from gpt.models.gpt_transformer import GPT
-from utils.basic_tokeniser import create_simple_encoder_decoder
-from utils.data_utils import read_in_data
+from utils.basic_tokeniser import BasicTokeniser
+from utils.data_utils import read_in_data, text_to_tensor
 from utils.train_utils import Trainer
 from utils.file_utils import load_config
 from utils.bpe import BPE
@@ -26,10 +25,12 @@ from utils.bpe import BPE
 
 # # Save the training hyperparameters as a  txt file
 # save_config(training_hyperparams, 'gpt_config.txt')
+
+# Load the training hyperparameters from the txt file
 training_hyperparams = load_config("gpt_config.txt")
 
-
-torch.manual_seed(6345789)  # Set the random seed for reproducibility
+# Set the random seed for reproducibility
+torch.manual_seed(6345789)
 # Wilson Pickett - 634-5789 https://www.youtube.com/watch?v=TSGuaVAufV0
 
 print("Using device: ", training_hyperparams["device"])
@@ -44,22 +45,25 @@ lr = training_hyperparams["learning_rate"]
 data_folder = 'data/gatsby/'
 file_path = 'great_gatsby.txt'
 
-use_bpe = True # Set to True to use BPE, False to use a simple character encoder/decoder
+use_bpe = False  # Set to True to use BPE, False to use a character encoder/decoder
 
+# Read in the data
+data = read_in_data(data_folder + file_path, make_dict=False)
+
+# Create the tokeniser
 if use_bpe:
-    data = read_in_data(data_folder + file_path, make_dict=False)
     bpe = BPE(data)
     # Train for 50 iterations
     bpe.train(50)
-    # Create the encoder and decoder dictionaries and the encode and decode functions
-    encoder_dict, decoder_dict, encode, decode = bpe.lookup_table, bpe.reverse_lookup_table, bpe.encode, bpe.decode
-
+    gpt_tokeniser = bpe
 else:
-    # Read in the data
-    char_dict, data = read_in_data(data_folder + file_path)
-    # Create the encoder and decoder dictionaries and the encode and decode functions
-    encoder_dict, decoder_dict, encode, decode = create_simple_encoder_decoder(char_dict)
+    # Use BasicTokeniser for char-level encoding
+    basic_tokeniser = BasicTokeniser(data)
+    gpt_tokeniser = basic_tokeniser
 
+# Create the encoder and decoder dictionaries and the encode and decode functions
+encoder_dict, decoder_dict, encode, decode = gpt_tokeniser.lookup_table, gpt_tokeniser.reverse_lookup_table, \
+    gpt_tokeniser.encode, gpt_tokeniser.decode
 
 encoding_utils = dict(enc_dict=encoder_dict, dec_dict=decoder_dict, encode_fn=encode, decode_fn=decode)
 
@@ -71,90 +75,12 @@ with open(data_folder + "decoded_val_data.txt", "r", encoding="utf-8") as f:
 with open(data_folder + "decoded_test_data.txt", "r", encoding="utf-8") as f:
     test_data = f.read()
 
+train_data = text_to_tensor(train_data, gpt_tokeniser)
+val_data = text_to_tensor(val_data, gpt_tokeniser)
+test_data = text_to_tensor(test_data, gpt_tokeniser)
 
-def text_to_tensor2(text: str) -> torch.Tensor:
-    """Convert a string of text into a tensor of token indices using sent_tokeniser.
-    Args:
-        text: A string of text.
-    Returns:
-        A torch tensor of token indices.
-    """
-    # Assuming your text data is in the variable 'text'
-    sentences = sent_tokenize(text)  # split the text into sentences
-
-    encoded_sentences = [[encoder_dict["<sos>"]]]
-    for sentence in sentences:
-        encoded_sentence = encode(sentence)  # start with <sos>
-        # encoded_sentence.append(encoder_dict['\n'])  # pad with <pad> tokens
-        encoded_sentences.append(encoded_sentence)
-
-    encoded_sentences.append([encoder_dict["<eos>"]])
-
-    # concatenate all encoded sentences
-    encoded_text = [token for sentence in encoded_sentences for token in sentence]
-
-    return torch.tensor(encoded_text, dtype=torch.long)
-
-
-def text_to_tensor(text: str) -> torch.Tensor:
-    """Convert a string of text into a tensor of token indices using sent_tokeniser.
-    Args:
-        text: A string of text.
-    Returns:
-        A torch tensor of token indices.
-    """
-    # Assuming your text data is in the variable 'text'
-    sentences = sent_tokenize(text)  # split the text into sentences
-
-    encoded_sentences = []
-    for sentence in sentences:
-        encoded_sentence = [encoder_dict['<sos>']]
-        encoded_sentence.extend(encode(sentence))  # start with <sos>
-        # encoded_sentence = encode(sentence)  # start with <sos>
-
-        encoded_sentence.extend([encoder_dict['<eos>']])
-        encoded_sentence.extend([encoder_dict['\n']])
-
-        encoded_sentences.append(encoded_sentence)
-
-    # encoded_sentences.append([encoder_dict['<eos>']])
-
-    # concatenate all encoded sentences
-    encoded_text = [token for sentence in encoded_sentences for token in sentence]
-
-    return torch.tensor(encoded_text, dtype=torch.long)
-
-
-def text_to_tensor_(text: str) -> torch.Tensor:
-    """Convert a string of text into a tensor of token indices using word_tokeniser.
-    Args:
-        text: A string of text.
-        Returns:
-            A torch tensor of token indices.
-    """
-    # First replace spaces with <space> tokens
-    text_processed = text.replace(" ", " _space_ ")
-    # Then replace newlines with <newline> tokens
-    text_processed = text_processed.replace("\n", " _newline_ ")
-    # Then split into words
-    words = word_tokenize(text_processed)
-    # Then replace the <space> and <newline> tokens with spaces and newlines
-    words = [word.replace("_space_", " ").replace("_newline_", "\n") for word in words]
-    # Then encode the words. Start with <sos> and end with <eos>
-    encoded_text = [encoder_dict["<sos>"]]
-    for word in words:
-        encoded_word = encode(word)
-        encoded_text.extend(encoded_word)
-    encoded_text.append(encoder_dict["<eos>"])
-
-    return torch.tensor(encoded_text, dtype=torch.long)
-
-
-train_data = text_to_tensor(train_data)
-val_data = text_to_tensor(val_data)
-test_data = text_to_tensor(test_data)
-
-loss_fn = nn.CrossEntropyLoss(ignore_index=encoder_dict["<pad>"])
+# Create the model, loss function and optimiser
+loss_fn = nn.CrossEntropyLoss(ignore_index=encoder_dict[gpt_tokeniser.pad])
 
 model = GPT(
     trg_pad=encoder_dict["<pad>"],
@@ -169,9 +95,7 @@ model = GPT(
     device=device,
 )
 
-optimiser = torch.optim.Adam(
-    model.parameters(), lr=lr)
-
+optimiser = torch.optim.Adam(model.parameters(), lr=lr)
 
 # Create a trainer object
 trainer = Trainer(
@@ -186,7 +110,6 @@ trainer = Trainer(
 model, _, _ = trainer.train(
     train_data, val_data, save_model=True, plotting=True, verbose=True,
 )
-
 
 sampled_chars = decode(
     model.generate(

@@ -279,7 +279,7 @@ if __name__ == "__main__":
     bpe.train(num_iters=40)
 
     # Encode the data
-    encoded_data = bpe.encode("color coordination is the best")
+    encoded_data = bpe.encode("colour coordination is the best")
 
     # Decode the data
     decoded_data = bpe.decode(encoded_data)

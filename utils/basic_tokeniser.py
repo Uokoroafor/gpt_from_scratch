@@ -1,16 +1,47 @@
 # Utility file for handling data and building the character and word-based dictionaries as well as the encoder and
 # decoder functions.
 from typing import Union, List, Dict, Tuple, Callable, Optional
+from utils.bpe import BPE
 
 
+class BasicTokeniser(BPE):
+
+    def __init__(self,
+                 data: str,
+                 vocab_size: Optional[int] = 100000,
+                 sos: Optional[str] = "<sos>",
+                 eos: Optional[str] = "<eos>",
+                 pad: Optional[str] = "<pad>",
+                 unk: Optional[str] = "<unk>", ):
+        """Constructor class for a character level Tokeniser. Basically the BPE class but without the BPE training.
+        Args:
+            data (str): String of data to build the tokeniser on.
+            vocab_size (Optional[int], optional): Maximum size of the vocabulary. Defaults to 100000.
+            sos (Optional[str], optional): Start of sentence token. Defaults to "<sos>".
+            eos (Optional[str], optional): End of sentence token. Defaults to "<eos>".
+            pad (Optional[str], optional): Padding token. Defaults to "<pad>".
+            unk (Optional[str], optional): Unknown token. Defaults to "<unk>".
+            """
+        super().__init__(data=data, vocab_size=vocab_size, sos=sos, eos=eos, pad=pad, unk=unk)
+        # Create the dictionaries and the encode and decode functions
+        super().train(0)
+
+    def train(self, *args, **kwargs):
+        # Once trained, make self.train a no-op
+        print("This is a basic tokeniser. It does not need to be trained.")
+        pass
+
+
+# The methods below will likely be deprecated in the future
 def make_char_dict(
-    char_list: Union[List[str], str], allow_uppers: Optional[bool] = False
+        char_list: Union[List[str], str], allow_uppers: Optional[bool] = False, verbose: Optional[bool] = False
 ) -> Dict[str, List[str]]:
     """Make a dictionary of character types and their corresponding characters.
 
     Args:
         char_list (Union[List[str], str]): List of characters or string of characters.
         allow_uppers (Optional[bool], optional): Whether to allow uppercase letters. Defaults to False.
+        verbose (Optional[bool], optional): Whether to print out the number of unique characters. Defaults to False.
 
     Returns:
         Dict[str, List[str]]: Dictionary of character types and their corresponding characters.
@@ -40,18 +71,18 @@ def make_char_dict(
         spaces=spaces,
         new_line=new_line,
     )
-
-    print(
-        "Corpus has {} unique letter(s), {} unique numbers(s) and {} unique punctuation(s)".format(
-            len(letters), len(numbers), len(punctuation)
+    if verbose:
+        print(
+            "Corpus has {} unique letter(s), {} unique numbers(s) and {} unique punctuation(s)".format(
+                len(letters), len(numbers), len(punctuation)
+            )
         )
-    )
-    print("Corpus has {} unique characters.".format(len(set(char_list))))
+        print("Corpus has {} unique characters.".format(len(set(char_list))))
     return char_dict
 
 
 def create_simple_encoder_decoder(
-    char_dict: Dict[str, List[str]], add_specials: Optional[bool] = True
+        char_dict: Dict[str, List[str]], add_specials: Optional[bool] = True
 ) -> Tuple[Dict[str, int], Dict[int, str], Callable, Callable]:
     """This will be a character encoder and decoder for a simple character level language model based on the
     character dictionary.
@@ -136,3 +167,24 @@ if __name__ == "__main__":
     print("Original data: ", data[:100])
     print("Encoded data: ", encode(data[:100]))
     print("Decoded data: ", decode(encode(data[:100])))
+
+    # Example Usage
+    data = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec a diam lectus. Sed sit amet ipsum mauris. \n"
+    data += "Maecenas congue ligula ac quam viverra nec consectetur ante hendrerit. Donec et mollis dolor. \n"
+    data += "Praesent et diam eget libero egestas mattis sit amet vitae augue. Nam tincidunt congue enim, \n"
+    data += "ut porta lorem lacinia consectetur. Donec ut libero sed arcu vehicula ultricies a non tortor. \n"
+    data += "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aenean ut gravida lorem."
+
+    # Create the BasicTokeniser Object
+    basic_tokeniser = BasicTokeniser(data=data, vocab_size=1000)
+
+    # Encode the data
+    encoded_data = basic_tokeniser.encode("colour coordination is the best")
+
+    # Decode the data
+    decoded_data = basic_tokeniser.decode(encoded_data)
+
+    # Print the results
+    print("Original data: ", data[:100])
+    print("Encoded data: ", encoded_data)
+    print("Decoded data: ", decoded_data)
