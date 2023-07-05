@@ -69,19 +69,21 @@ class Trainer:
             save_model_path: Optional[str] = None,
             plotting: bool = True,
             verbose: Optional[bool] = True,
+            early_stopping: bool = False,
     ):
         """Train the model
         Args:
             train_data (torch.Tensor): Training data
             val_data (torch.Tensor): Validation data
-            save_model (bool, optional): Whether to save the model. Defaults to True.
+            save_model (bool, optional): Whether to save the model(s) and save the best model. Defaults to True.
             save_model_path (Optional[str], optional): Path to save the model. Defaults to None.
             plotting (bool, optional): Whether to plot the losses. Defaults to True.
             verbose (Optional[bool], optional): Whether to print the progress of training. Defaults to True.
+            early_stopping (bool, optional): Whether to use early stopping. Defaults to False.
+
         """
 
         # Helper functions
-
         def _get_batch(split: str) -> Tuple[torch.Tensor, torch.Tensor]:
             """Get a batch of data from the train, validation or test set.
             Args:
@@ -125,6 +127,8 @@ class Trainer:
 
         train_losses = []
         val_losses = []
+        lowest_val_loss = float("inf")
+        best_model = None
 
         if verbose:
             print(
@@ -140,8 +144,8 @@ class Trainer:
                 # Print Step, train loss and validation loss
                 if verbose:
                     print(
-                        f'At Iteration: {max(1, i)}/{self.epochs}, Train loss: {losses["train"]}, '
-                        f'Val loss: {losses["val"]}'
+                        f'At Iteration: {max(1, i)}/{self.epochs}, Train loss: {losses["train"]: .4f}, '
+                        f'Val loss: {losses["val"]: .4f}'
                     )
                     print(
                         f"Time taken for last {self.eval_every} iterations: {(time.time() - last_time):.2f} seconds"
@@ -161,6 +165,17 @@ class Trainer:
                     last_time = time.time()
                 train_losses.append(losses["train"])
                 val_losses.append(losses["val"])
+
+                # Save the model if the validation loss is the lowest so far
+                if save_model and losses["val"] < lowest_val_loss:
+                    # Update the lowest validation loss
+                    lowest_val_loss = losses["val"]
+                    # Save the model state dict
+                    best_model = self.model.state_dict()
+
+                if early_stopping and i > 0 and val_losses[-1] > val_losses[-2]:
+                    print(f"Stopping early after {i} iterations")
+                    break
 
             if self.save_every is not None and i % self.save_every == 0:
                 self.save_model(
@@ -209,14 +224,21 @@ class Trainer:
             )
 
         if save_model:
+            # Save the last model
+            last_model_path = (
+                    f"{self.path}/saved_models/{type(self.model).__name__}_iter_{max(1, i)}.pt"
+                )
+            self.save_model(last_model_path)
             if save_model_path is None:
                 save_model_path = (
-                    f"{self.path}/saved_models/{type(self.model).__name__}_final.pt"
+                    f"{self.path}/saved_models/{type(self.model).__name__}_best.pt"
                 )
+            # Save the best model
+            self.model.load_state_dict(best_model)
             self.save_model(save_model_path)
             save_losses(train_losses, val_losses, self.path)
             if verbose:
-                print("Model saved at:", save_model_path)
+                print("Best model saved at:", save_model_path)
 
         return self.model, train_losses, val_losses
 

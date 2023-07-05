@@ -108,7 +108,7 @@ trainer = Trainer(
 
 # Train the model
 model, _, _ = trainer.train(
-    train_data, val_data, save_model=True, plotting=True, verbose=True,
+    train_data, val_data, save_model=True, plotting=True, verbose=True,early_stopping=True
 )
 
 sampled_chars = decode(
