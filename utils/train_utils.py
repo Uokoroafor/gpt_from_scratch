@@ -7,8 +7,8 @@ from utils.file_utils import create_training_folder, save_losses, save_config
 import pickle
 
 
-# TODO: Add early stopping
 # TODO: Add evaluate method
+# TODO: Add Logging
 class Trainer:
     def __init__(
             self,
@@ -30,6 +30,7 @@ class Trainer:
         self.optimiser = optimiser
         self.loss_fn = loss_fn
         self.encoding_utils = encoding_utils
+        self.best_model_dict = None
 
         # Preallocate variables defined in set_training_hyperparameters
         self.device = None
@@ -44,7 +45,7 @@ class Trainer:
         self.path = create_training_folder()
 
         # Unpack training hyperparameters
-        self.set_training_hyperparameters(**training_hyperparameters)
+        self._set_training_hyperparameters(**training_hyperparameters)
 
         # Save the training hyperparameters as a  txt file
         save_config(training_hyperparameters, f"{self.path}/config.txt")
@@ -128,7 +129,6 @@ class Trainer:
         train_losses = []
         val_losses = []
         lowest_val_loss = float("inf")
-        best_model = None
 
         if verbose:
             print(
@@ -138,7 +138,8 @@ class Trainer:
         # Measure the time taken for the training
         start_time = time.time()
         last_time = start_time
-        for i in range(self.epochs):
+        for i in range(self.epochs+1):
+            # Running for one extra epoch to get the final validation loss
             if i % self.eval_every == 0:
                 losses = _estimate_loss()
                 # Print Step, train loss and validation loss
@@ -166,12 +167,8 @@ class Trainer:
                 train_losses.append(losses["train"])
                 val_losses.append(losses["val"])
 
-                # Save the model if the validation loss is the lowest so far
-                if save_model and losses["val"] < lowest_val_loss:
-                    # Update the lowest validation loss
-                    lowest_val_loss = losses["val"]
-                    # Save the model state dict
-                    best_model = self.model.state_dict()
+                # Update the best model state dict and lowest validation loss
+                lowest_val_loss = self.update_best_model_dict(losses["val"], lowest_val_loss)
 
                 if early_stopping and i > 0 and val_losses[-1] > val_losses[-2]:
                     print(f"Stopping early after {i} iterations")
@@ -181,6 +178,9 @@ class Trainer:
                 self.save_model(
                     f"{self.path}/saved_models/{type(self.model).__name__}_iter_{max(1, i)}.pt"
                 )
+
+            if i == self.epochs:
+                break
 
             # Get a batch of data
             xb, yb = _get_batch("train")
@@ -193,7 +193,7 @@ class Trainer:
 
             loss = self.loss_fn(embeds.view(-1, embeds.size(-1)), yb.view(-1))
 
-            # Backpropagate the loss (Backward pass)
+            # Back propagate the loss (Backward pass)
             loss.backward()
 
             # Take a step with the optimiser
@@ -224,25 +224,22 @@ class Trainer:
             )
 
         if save_model:
-            # Save the last model
-            last_model_path = (
-                    f"{self.path}/saved_models/{type(self.model).__name__}_iter_{max(1, i)}.pt"
-                )
-            self.save_model(last_model_path)
-            if save_model_path is None:
-                save_model_path = (
-                    f"{self.path}/saved_models/{type(self.model).__name__}_best.pt"
-                )
-            # Save the best model
-            self.model.load_state_dict(best_model)
-            self.save_model(save_model_path)
+            # Load and save the best model
+            self.model.load_state_dict(self.best_model_dict)
+            self.save_best_model(save_model_path)
+
+            # Save the losses
             save_losses(train_losses, val_losses, self.path)
             if verbose:
                 print("Best model saved at:", save_model_path)
 
+        else:
+            # If we are not saving the model, load the best model
+            self.model.load_state_dict(self.best_model_dict)
+
         return self.model, train_losses, val_losses
 
-    def set_training_hyperparameters(self, **kwargs):
+    def _set_training_hyperparameters(self, **kwargs):
         """Set training hyperparameters
         Args:
             **kwargs: Training hyperparameters
@@ -256,3 +253,27 @@ class Trainer:
             model_path (str): Path to save the model
         """
         torch.save(self.model, model_path)
+
+    def save_best_model(self, best_model_path: Optional[str]):
+        """Save the best model
+        Args:
+            best_model_path (Optional[str]): Path to save the best model
+        """
+        if best_model_path is None:
+            best_model_path = (
+                f"{self.path}/saved_models/{type(self.model).__name__}_best.pt"
+            )
+        self.save_model(best_model_path)
+
+    def update_best_model_dict(self, loss_val: float, lowest_val_loss: float) -> float:
+        """Update the best model dictionary if the validation loss is the lowest so far
+        Args:
+            loss_val (float): Dictionary containing the training and validation losses
+            lowest_val_loss (float): Lowest validation loss so far
+        """
+        if loss_val < lowest_val_loss:
+            # Update the lowest validation loss
+            lowest_val_loss = loss_val
+            # Save the model state dict
+            self.best_model_dict = self.model.state_dict()
+        return lowest_val_loss
