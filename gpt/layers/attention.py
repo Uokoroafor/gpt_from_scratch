@@ -39,7 +39,9 @@ class Attention(nn.Module):
 
         # Apply the mask if it exists
         if mask is not None:
-            scores = scores.masked_fill(mask == 0, -1e9) # Large negative value in lieu of -inf for numerical stability
+            scores = scores.masked_fill(
+                mask == 0, -1e9
+            )  # Large negative value in lieu of -inf for numerical stability
 
         # Apply the softmax to get the attention weights
         attention_weights = torch.softmax(scores, dim=-1)

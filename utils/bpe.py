@@ -15,13 +15,13 @@ class BPE:
     # Default symbols are <sos> for start of sentence and <eos> for end of sentence, <pad> for padding
 
     def __init__(
-            self,
-            data: str,
-            vocab_size: Optional[int] = 100000,
-            sos: Optional[str] = "<sos>",
-            eos: Optional[str] = "<eos>",
-            pad: Optional[str] = "<pad>",
-            unk: Optional[str] = "<unk>",
+        self,
+        data: str,
+        vocab_size: Optional[int] = 100000,
+        sos: Optional[str] = "<sos>",
+        eos: Optional[str] = "<eos>",
+        pad: Optional[str] = "<pad>",
+        unk: Optional[str] = "<unk>",
     ):
         """Byte Pair Encoding Class
         Args:
@@ -79,7 +79,8 @@ class BPE:
     def get_counts(self) -> Counter:
         """Looks at the pairs of tokens and counts their frequency
         Returns:
-            counts(Counter): Counter object containing the counts of pairs of characters"""
+            counts(Counter): Counter object containing the counts of pairs of characters
+        """
         counts = Counter()
         for word in self.data:
             for i in range(len(word) - 1):
@@ -110,8 +111,8 @@ class BPE:
             i = 0
             while i < len(word) - 1:
                 if (
-                        word[i] == most_frequent_pair[0]
-                        and word[i + 1] == most_frequent_pair[1]
+                    word[i] == most_frequent_pair[0]
+                    and word[i + 1] == most_frequent_pair[1]
                 ):
                     word[i] = "".join(most_frequent_pair)
                     del word[i + 1]
@@ -119,7 +120,7 @@ class BPE:
                     i += 1
 
     def train(
-            self, num_iters: Optional[int] = 1000, verbose: Optional[bool] = False
+        self, num_iters: Optional[int] = 1000, verbose: Optional[bool] = False
     ) -> None:
         """Train the BPE model
         Args:
@@ -198,16 +199,24 @@ class BPE:
                 for j in range(len(word), i, -1):
                     token = "".join(word[i:j])
                     if token in self.vocab:
-                        enc_data.append(self.lookup_table.get(token, self.lookup_table[self.unknown]))
+                        enc_data.append(
+                            self.lookup_table.get(
+                                token, self.lookup_table[self.unknown]
+                            )
+                        )
                         i = j
                         found_token = True
                         break
                 if not found_token:
-                    enc_data.append(self.lookup_table.get(word[i], self.lookup_table[self.unknown]))
+                    enc_data.append(
+                        self.lookup_table.get(word[i], self.lookup_table[self.unknown])
+                    )
                     i += 1
         return enc_data
 
-    def decode(self, enc_data: List[int], ignore_special_tokens: Optional[bool] = False) -> List[str]:
+    def decode(
+        self, enc_data: List[int], ignore_special_tokens: Optional[bool] = False
+    ) -> List[str]:
         """Decode the encoded data
         Args:
             enc_data(List[int]): list of integers representing the encoded data
@@ -231,7 +240,9 @@ class BPE:
                 dec_data.append(token)
         return dec_data
 
-    def decode_words(self, enc_data: List[int], ignore_special_tokens: Optional[bool] = True) -> str:
+    def decode_words(
+        self, enc_data: List[int], ignore_special_tokens: Optional[bool] = True
+    ) -> str:
         """Decode the encoded data
         Args:
             enc_data(List[int]): list of integers representing the encoded data
@@ -291,5 +302,3 @@ if __name__ == "__main__":
     # Print the decoded data
     print("decoded_data", decoded_data)
     print("decoded_words", decoded_words)
-
-

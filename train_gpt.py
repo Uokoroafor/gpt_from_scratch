@@ -42,8 +42,8 @@ max_iters = training_hyperparams["epochs"]
 lr = training_hyperparams["learning_rate"]
 
 # data_folder = "data/madlibs/"
-data_folder = 'data/gatsby/'
-file_path = 'great_gatsby.txt'
+data_folder = "data/gatsby/"
+file_path = "great_gatsby.txt"
 
 use_bpe = False  # Set to True to use BPE, False to use a character encoder/decoder
 
@@ -62,10 +62,16 @@ else:
     gpt_tokeniser = basic_tokeniser
 
 # Create the encoder and decoder dictionaries and the encode and decode functions
-encoder_dict, decoder_dict, encode, decode = gpt_tokeniser.lookup_table, gpt_tokeniser.reverse_lookup_table, \
-    gpt_tokeniser.encode, gpt_tokeniser.decode
+encoder_dict, decoder_dict, encode, decode = (
+    gpt_tokeniser.lookup_table,
+    gpt_tokeniser.reverse_lookup_table,
+    gpt_tokeniser.encode,
+    gpt_tokeniser.decode,
+)
 
-encoding_utils = dict(enc_dict=encoder_dict, dec_dict=decoder_dict, encode_fn=encode, decode_fn=decode)
+encoding_utils = dict(
+    enc_dict=encoder_dict, dec_dict=decoder_dict, encode_fn=encode, decode_fn=decode
+)
 
 # Read in the data
 with open(data_folder + "decoded_train_data.txt", "r", encoding="utf-8") as f:
@@ -108,7 +114,12 @@ trainer = Trainer(
 
 # Train the model
 model, _, _ = trainer.train(
-    train_data, val_data, save_model=True, plotting=True, verbose=True,early_stopping=True
+    train_data,
+    val_data,
+    save_model=True,
+    plotting=True,
+    verbose=True,
+    early_stopping=True,
 )
 
 sampled_chars = decode(

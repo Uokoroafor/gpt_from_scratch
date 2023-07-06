@@ -9,7 +9,7 @@ from nltk.tokenize import sent_tokenize, word_tokenize
 
 
 def read_in_data(
-        filepath: str, make_dict: Optional[bool] = True
+    filepath: str, make_dict: Optional[bool] = True
 ) -> Union[Tuple[Dict[str, List[str]], str], str]:
     """Read in the data from a file and makes the character dictionary.
     Args:
@@ -123,7 +123,9 @@ def get_numerics_from_string(string: str) -> int:
     return numerics
 
 
-def text_to_tensor(text: str, tokeniser: Any, add_sos_eos: Optional[bool] = True) -> torch.Tensor:
+def text_to_tensor(
+    text: str, tokeniser: Any, add_sos_eos: Optional[bool] = True
+) -> torch.Tensor:
     """Convert a string of text into a tensor of token indices using sent_tokeniser.
     Args:
         text: A string of text.

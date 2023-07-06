@@ -11,12 +11,12 @@ import pickle
 # TODO: Add Logging
 class Trainer:
     def __init__(
-            self,
-            model: nn.Module,
-            optimiser: torch.optim.Optimizer,
-            loss_fn: torch.nn.modules.loss._Loss,
-            training_hyperparameters: Dict,
-            encoding_utils: Dict,
+        self,
+        model: nn.Module,
+        optimiser: torch.optim.Optimizer,
+        loss_fn: torch.nn.modules.loss._Loss,
+        training_hyperparameters: Dict,
+        encoding_utils: Dict,
     ):
         """Constructor class for Trainer
         Args:
@@ -59,18 +59,18 @@ class Trainer:
 
         # Save the encoding_utils as a pickle file
         filename = f"{self.path}/encoding_utils.pkl"
-        with open(filename, 'wb') as file:
+        with open(filename, "wb") as file:
             pickle.dump(self.encoding_utils, file)
 
     def train(
-            self,
-            train_data: torch.Tensor,
-            val_data: torch.Tensor,
-            save_model: bool = True,
-            save_model_path: Optional[str] = None,
-            plotting: bool = True,
-            verbose: Optional[bool] = True,
-            early_stopping: bool = False,
+        self,
+        train_data: torch.Tensor,
+        val_data: torch.Tensor,
+        save_model: bool = True,
+        save_model_path: Optional[str] = None,
+        plotting: bool = True,
+        verbose: Optional[bool] = True,
+        early_stopping: bool = False,
     ):
         """Train the model
         Args:
@@ -100,8 +100,8 @@ class Trainer:
             else:
                 raise ValueError(f"Unknown split: '{split}'")
             ix = torch.randint(len(data) - self.max_seq_len, (self.batch_size,))
-            x = torch.stack([data[i: i + self.max_seq_len] for i in ix])
-            y = torch.stack([data[i + 1: i + self.max_seq_len + 1] for i in ix])
+            x = torch.stack([data[i : i + self.max_seq_len] for i in ix])
+            y = torch.stack([data[i + 1 : i + self.max_seq_len + 1] for i in ix])
             x, y = x.to(self.device), y.to(
                 self.device
             )  # Transfer the data to the GPU if we are using it
@@ -138,7 +138,7 @@ class Trainer:
         # Measure the time taken for the training
         start_time = time.time()
         last_time = start_time
-        for i in range(self.epochs+1):
+        for i in range(self.epochs + 1):
             # Running for one extra epoch to get the final validation loss
             if i % self.eval_every == 0:
                 losses = _estimate_loss()
@@ -156,19 +156,24 @@ class Trainer:
                     decode = self.encoding_utils["decode_fn"]
                     chars = decode(
                         self.model.generate(
-                            start_token=self.model.trg_sos * torch.ones((1, 1), dtype=torch.long),
+                            start_token=self.model.trg_sos
+                            * torch.ones((1, 1), dtype=torch.long),
                             max_length=30,
                             sampled=False,
                         )[0].tolist()
                     )
-                    print(f"Generating 30 characters without sampling: {''.join(chars)} \n")
+                    print(
+                        f"Generating 30 characters without sampling: {''.join(chars)} \n"
+                    )
 
                     last_time = time.time()
                 train_losses.append(losses["train"])
                 val_losses.append(losses["val"])
 
                 # Update the best model state dict and lowest validation loss
-                lowest_val_loss = self.update_best_model_dict(losses["val"], lowest_val_loss)
+                lowest_val_loss = self.update_best_model_dict(
+                    losses["val"], lowest_val_loss
+                )
 
                 if early_stopping and i > 0 and val_losses[-1] > val_losses[-2]:
                     print(f"Stopping early after {i} iterations")
