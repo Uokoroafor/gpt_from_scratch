@@ -196,7 +196,7 @@ class Trainer:
 
         return self.model, train_losses, val_losses
 
-    def evaluate(self, test_data: torch.Tensor, verbose: bool = True, num_iters: Optional[int] = None):
+    def evaluate(self, test_data: torch.Tensor, verbose: bool = True, num_iters: Optional[int] = None) -> float:
         """Evaluate the model
         Args:
             test_data (torch.Tensor): Test data
