@@ -8,7 +8,6 @@ from utils.time_utils import EpochTimer
 from utils.logging_utils import TrainingLogger
 
 
-# TODO: Add evaluate method
 class Trainer:
     def __init__(
             self,
@@ -97,99 +96,104 @@ class Trainer:
         logger.log_info(
             f"Training {type(self.model).__name__} for {self.epochs} iterations"
         )
-        timer = EpochTimer()
-        timer.start()
-        decode = self.encoding_utils["decode_fn"]
 
-        for i in range(self.epochs + 1):
-            # Running for one extra epoch to get the final validation loss
-            if i % self.eval_every == 0:
-                losses = self._estimate_loss()
-                logger.log_info(
-                    f'At Iteration: {max(1, i)}/{self.epochs}, Train loss: {losses["train"]: .4f}, '
-                    f'Val loss: {losses["val"]: .4f}')
+        try:
+            timer = EpochTimer()
+            timer.start()
+            decode = self.encoding_utils["decode_fn"]
 
-                timer.lap()
-                logger.log_info(
-                    timer.print_last_epoch_time(label=f"Time taken for last {self.eval_every} iterations: "))
-                if verbose:
-                    # Generate a sample from the model
-                    chars = decode(
-                        self.model.generate(
-                            start_token=self.model.trg_sos
-                                        * torch.ones((1, 1), dtype=torch.long),
-                            max_length=30,
-                            sampled=False,
-                        )[0].tolist()
-                    )
-                    logger.log_info(f"Generating 30 characters without sampling: {''.join(chars)}")
-
-                train_losses.append(losses["train"])
-                val_losses.append(losses["val"])
-
-                # Update the best model state dict and lowest validation loss
-                lowest_val_loss = self.update_best_model_dict(
-                    losses["val"], lowest_val_loss
-                )
-
-                if early_stopping and i > 0 and val_losses[-1] > val_losses[-2]:
+            for i in range(self.epochs + 1):
+                # Running for one extra epoch to get the final validation loss
+                if i % self.eval_every == 0:
+                    losses = self._estimate_loss()
                     logger.log_info(
-                        f"Stopping early after {i} iterations")
+                        f'At Iteration: {max(1, i)}/{self.epochs}, Train loss: {losses["train"]: .4f}, '
+                        f'Val loss: {losses["val"]: .4f}')
+
+                    timer.lap()
+                    logger.log_info(
+                        timer.print_last_epoch_time(label=f"Time taken for last {self.eval_every} iterations: "))
+                    if verbose:
+                        # Generate a sample from the model
+                        chars = decode(
+                            self.model.generate(
+                                start_token=self.model.trg_sos
+                                            * torch.ones((1, 1), dtype=torch.long),
+                                max_length=30,
+                                sampled=False,
+                            )[0].tolist()
+                        )
+                        logger.log_info(f"Generating 30 characters without sampling: {''.join(chars)}")
+
+                    train_losses.append(losses["train"])
+                    val_losses.append(losses["val"])
+
+                    # Update the best model state dict and lowest validation loss
+                    lowest_val_loss = self.update_best_model_dict(
+                        losses["val"], lowest_val_loss
+                    )
+
+                    if early_stopping and i > 0 and val_losses[-1] > val_losses[-2]:
+                        logger.log_info(
+                            f"Stopping early after {i} iterations")
+                        break
+
+                if self.save_every is not None and i % self.save_every == 0:
+                    self.save_model(
+                        f"{self.path}/saved_models/{type(self.model).__name__}_iter_{max(1, i)}.pt")
+
+                if i == self.epochs:
                     break
 
-            if self.save_every is not None and i % self.save_every == 0:
-                self.save_model(
-                    f"{self.path}/saved_models/{type(self.model).__name__}_iter_{max(1, i)}.pt")
+                # Get a batch of data
+                xb, yb = self._get_batch("train")
 
-            if i == self.epochs:
-                break
+                # Zero the gradients
+                self.optimiser.zero_grad()
 
-            # Get a batch of data
-            xb, yb = self._get_batch("train")
+                # Get the embeddings and the loss (Forward pass)
+                embeds = self.model(trg=xb)
 
-            # Zero the gradients
-            self.optimiser.zero_grad()
+                loss = self.loss_fn(embeds.view(-1, embeds.size(-1)), yb.view(-1))
 
-            # Get the embeddings and the loss (Forward pass)
-            embeds = self.model(trg=xb)
+                # Back propagate the loss (Backward pass)
+                loss.backward()
 
-            loss = self.loss_fn(embeds.view(-1, embeds.size(-1)), yb.view(-1))
+                # Take a step with the optimiser
+                self.optimiser.step()
 
-            # Back propagate the loss (Backward pass)
-            loss.backward()
+            timer.lap()
+            logger.log_info(timer.print_total_time(label="Total time taken: "))
 
-            # Take a step with the optimiser
-            self.optimiser.step()
+            if plotting:
+                plot_save_path = (
+                    f"{self.path}/training_logs/{type(self.model).__name__}_losses.png"
+                    if save_model
+                    else None)
 
-        timer.lap()
-        logger.log_info(timer.print_total_time(label="Total time taken: "))
+                plot_losses(
+                    train_losses,
+                    val_losses,
+                    model_name=type(self.model).__name__,
+                    num_epochs=self.epochs,
+                    saved_path=plot_save_path, )
 
-        if plotting:
-            plot_save_path = (
-                f"{self.path}/training_logs/{type(self.model).__name__}_losses.png"
-                if save_model
-                else None)
+            if save_model:
+                # Load and save the best model
+                self.model.load_state_dict(self.best_model_dict)
+                save_model_path = self.save_best_model(save_model_path)
+                logger.log_info(f"Saved best model at: {save_model_path}")
 
-            plot_losses(
-                train_losses,
-                val_losses,
-                model_name=type(self.model).__name__,
-                num_epochs=self.epochs,
-                saved_path=plot_save_path, )
+                # Save the losses
+                save_losses(train_losses, val_losses, self.path)
+                logger.log_info(f"Saved losses at: {self.path}/training_logs/losses.csv")
 
-        if save_model:
-            # Load and save the best model
-            self.model.load_state_dict(self.best_model_dict)
-            save_model_path = self.save_best_model(save_model_path)
-            logger.log_info(f"Saved best model at: {save_model_path}")
-
-            # Save the losses
-            save_losses(train_losses, val_losses, self.path)
-            logger.log_info(f"Saved losses at: {self.path}/training_logs/losses.csv")
-
-        else:
-            # If we are not saving the model, load the best model
-            self.model.load_state_dict(self.best_model_dict)
+            else:
+                # If we are not saving the model, load the best model
+                self.model.load_state_dict(self.best_model_dict)
+        except Exception as e:
+            logger.log_error(f"Error while training: {str(e)}")
+            raise e
 
         return self.model, train_losses, val_losses
 
