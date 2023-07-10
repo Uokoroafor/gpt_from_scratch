@@ -48,6 +48,9 @@ class Trainer:
         # Unpack training hyperparameters
         self._set_training_hyperparameters(**training_hyperparameters)
 
+        # Move the model to the device
+        self.model.to(self.device)
+
         # Save the training hyperparameters as a  txt file
         save_config(training_hyperparameters, f"{self.path}/config.txt")
 
@@ -132,7 +135,7 @@ class Trainer:
                         losses["val"], lowest_val_loss
                     )
 
-                    if early_stopping and i > 0 and val_losses[-1] > val_losses[-2]:
+                    if early_stopping and i > 0 and val_losses[-1] > val_losses[-2] > val_losses[-3]:
                         logger.log_info(
                             f"Stopping early after {i} iterations")
                         break
@@ -164,19 +167,6 @@ class Trainer:
             timer.lap()
             logger.log_info(timer.print_total_time(label="Total time taken: "))
 
-            if plotting:
-                plot_save_path = (
-                    f"{self.path}/training_logs/{type(self.model).__name__}_losses.png"
-                    if save_model
-                    else None)
-
-                plot_losses(
-                    train_losses,
-                    val_losses,
-                    model_name=type(self.model).__name__,
-                    num_epochs=self.epochs,
-                    saved_path=plot_save_path, )
-
             if save_model:
                 # Load and save the best model
                 self.model.load_state_dict(self.best_model_dict)
@@ -190,9 +180,25 @@ class Trainer:
             else:
                 # If we are not saving the model, load the best model
                 self.model.load_state_dict(self.best_model_dict)
+
+            if plotting:
+                plot_save_path = (
+                    f"{self.path}/training_logs/{type(self.model).__name__}_losses.png"
+                    if save_model
+                    else None)
+
+                plot_losses(
+                    train_losses,
+                    val_losses,
+                    model_name=type(self.model).__name__,
+                    num_epochs=self.epochs,
+                    saved_path=plot_save_path, )
         except Exception as e:
             logger.log_error(f"Error while training: {str(e)}")
             raise e
+
+        except KeyboardInterrupt:
+            logger.log_info("Training interrupted by the user")
 
         return self.model, train_losses, val_losses
 

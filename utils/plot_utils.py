@@ -21,7 +21,9 @@ def plot_losses(
     """
     if num_epochs is not None:
         steps = num_epochs
-        x = torch.arange(1, num_epochs + 1, num_epochs // len(train_losses))
+        x = torch.arange(0, num_epochs + 1, num_epochs // (len(train_losses)-1))
+        # Make the x-axis start at 1
+        x[0] = 1
     else:
         steps = len(train_losses)
         x = torch.arange(1, len(train_losses) + 1)
