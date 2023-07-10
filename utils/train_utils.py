@@ -117,8 +117,7 @@ class Trainer:
                         # Generate a sample from the model
                         chars = decode(
                             self.model.generate(
-                                start_token=self.model.trg_sos
-                                            * torch.ones((1, 1), dtype=torch.long),
+                                start_token=self.model.trg_sos * torch.ones((1, 1), dtype=torch.long),
                                 max_length=30,
                                 sampled=False,
                             )[0].tolist()
@@ -202,7 +201,8 @@ class Trainer:
         Args:
             test_data (torch.Tensor): Test data
             verbose (bool, optional): Whether to print the progress of evaluation. Defaults to True.
-            num_iters (Optional[int], optional): Number of iterations to evaluate. Defaults to None (Evaluate on the entire test data).
+            num_iters (Optional[int], optional): Number of iterations to evaluate. Defaults to None
+            (Evaluate on the entire test data).
         Returns:
             float: Test loss
         """
@@ -258,7 +258,8 @@ class Trainer:
             self.best_model_dict = self.model.state_dict()
         return lowest_val_loss
 
-    def _get_batch(self, split: Optional[str] = None, data: Optional[torch.Tensor] = None) -> Tuple[torch.Tensor, torch.Tensor]:
+    def _get_batch(self, split: Optional[str] = None, data: Optional[torch.Tensor] = None) -> Tuple[
+        torch.Tensor, torch.Tensor]:
         """Get a batch of data from the train, validation or a provided data tensor
         Args:
             split (Optional[str], optional): Split to get the data from. Defaults to None.
