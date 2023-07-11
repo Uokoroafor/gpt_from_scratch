@@ -34,7 +34,7 @@ class Attention(nn.Module):
         batch_size, num_heads, seq_len, d_k = query.shape
 
         # Compute the attention weights
-        scores = torch.matmul(query, key.transpose(-2, -1)) / math.sqrt(d_k + 1e-12)
+        scores = torch.matmul(query, key.transpose(-2, -1)) / math.sqrt(d_k) + 1e-12
         # Adding a small constant for numerical stability
 
         # Apply the mask if it exists
