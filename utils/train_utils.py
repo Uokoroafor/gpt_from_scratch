@@ -46,7 +46,7 @@ class Trainer:
         self.path = create_training_folder()
 
         # Unpack training hyperparameters
-        self._set_training_hyperparameters(**training_hyperparameters)
+        self.set_training_hyperparameters(**training_hyperparameters)
 
         # Move the model to the device
         self.model.to(self.device)
@@ -108,7 +108,7 @@ class Trainer:
             for i in range(self.epochs + 1):
                 # Running for one extra epoch to get the final validation loss
                 if i % self.eval_every == 0:
-                    losses = self._estimate_loss()
+                    losses = self.estimate_loss()
                     logger.log_info(
                         f'At Iteration: {max(1, i)}/{self.epochs}, Train loss: {losses["train"]: .4f}, '
                         f'Val loss: {losses["val"]: .4f}')
@@ -148,7 +148,7 @@ class Trainer:
                     break
 
                 # Get a batch of data
-                xb, yb = self._get_batch("train")
+                xb, yb = self.get_batch("train")
 
                 # Zero the gradients
                 self.optimiser.zero_grad()
@@ -215,17 +215,17 @@ class Trainer:
 
         self.model.eval()
         if num_iters is None:
-            test_loss = self._calculate_test_loss(test_data)
+            test_loss = self.calculate_test_loss(test_data)
             if verbose:
                 print(f"Test loss: {test_loss: .4f}")
         else:
-            test_loss = self._estimate_test_loss(test_data, num_iters=num_iters)
+            test_loss = self.estimate_test_loss(test_data, num_iters=num_iters)
             if verbose:
                 print(f"Test loss: {test_loss: .4f}")
         return test_loss
 
-    def _set_training_hyperparameters(self, **kwargs):
-        """Set training hyperparameters
+    def set_training_hyperparameters(self, **kwargs):
+        """Set the training hyperparameters which are passed as keyword arguments
         Args:
             **kwargs: Training hyperparameters
         """
@@ -264,7 +264,7 @@ class Trainer:
             self.best_model_dict = self.model.state_dict()
         return lowest_val_loss
 
-    def _get_batch(self, split: Optional[str] = None, data: Optional[torch.Tensor] = None) -> Tuple[
+    def get_batch(self, split: Optional[str] = None, data: Optional[torch.Tensor] = None) -> Tuple[
         torch.Tensor, torch.Tensor]:
         """Get a batch of data from the train, validation or a provided data tensor
         Args:
@@ -292,7 +292,7 @@ class Trainer:
         return x, y
 
     @torch.no_grad()
-    def _estimate_loss(self) -> Dict[str, float]:
+    def estimate_loss(self) -> Dict[str, float]:
         """Estimate the loss for the data
 
         Returns:
@@ -303,14 +303,14 @@ class Trainer:
         for split in ["train", "val"]:
             losses = []
             for i in range(self.eval_iters):
-                x, y = self._get_batch(split)
+                x, y = self.get_batch(split)
                 embeds = self.model(trg=x)
                 loss = self.loss_fn(embeds.flatten(end_dim=1), y.flatten())
                 losses.append(loss.item())
             out[split] = torch.tensor(losses).mean().item()
         return out
 
-    def _calculate_test_loss(self, test_data: torch.Tensor) -> float:
+    def calculate_test_loss(self, test_data: torch.Tensor) -> float:
         """Calculate the loss on the full test data (without sampling)
         Args:
             test_data (torch.Tensor): Test data
@@ -321,7 +321,7 @@ class Trainer:
         test_loss = self.loss_fn(self.model(test_data).view(-1, test_data.size(-1)), test_data.view(-1))
         return test_loss.item()
 
-    def _estimate_test_loss(self, test_data: torch.Tensor, num_iters: int = 100) -> float:
+    def estimate_test_loss(self, test_data: torch.Tensor, num_iters: int = 100) -> float:
         """Estimate the loss on the test data by sampling a number of batches
         Args:
             test_data (torch.Tensor): Test data
@@ -332,7 +332,7 @@ class Trainer:
         self.model.eval()
         losses = []
         for _ in range(num_iters):
-            x, y = self._get_batch(data=test_data)
+            x, y = self.get_batch(data=test_data)
             embeds = self.model(trg=x)
             loss = self.loss_fn(embeds.flatten(end_dim=1), y.flatten())
             losses.append(loss.item())
