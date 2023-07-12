@@ -1,9 +1,10 @@
 from typing import Optional
 import torch
+from torch import nn
 from gpt.models.gpt_encoder import GPTEncoder
 
 
-class DecodeOnlyTransformer:
+class DecodeOnlyTransformer(nn.Module):
     def __init__(self,
                  src_pad: int,
                  src_sos: int,
@@ -32,7 +33,7 @@ class DecodeOnlyTransformer:
             dropout_prob (float): Dropout probability
             device (str): Device - 'cpu' or 'cuda'
             """
-
+        super(DecodeOnlyTransformer, self).__init__()
         self.src_pad = src_pad
         self.src_sos = src_sos
         self.vocab_size_enc = vocab_size_enc
