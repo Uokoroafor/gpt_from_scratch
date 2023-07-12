@@ -9,7 +9,7 @@ from nltk.tokenize import sent_tokenize, word_tokenize
 
 
 def read_in_data(
-    filepath: str, make_dict: Optional[bool] = True
+        filepath: str, make_dict: Optional[bool] = True
 ) -> Union[Tuple[Dict[str, List[str]], str], str]:
     """Read in the data from a file and makes the character dictionary.
     Args:
@@ -123,8 +123,8 @@ def get_numerics_from_string(string: str) -> int:
     return numerics
 
 
-def text_to_tensor(
-    text: str, tokeniser: Any, add_sos_eos: Optional[bool] = True
+def text_to_tensor_(
+        text: str, tokeniser: Any, add_sos_eos: Optional[bool] = True
 ) -> torch.Tensor:
     """Convert a string of text into a tensor of token indices using sent_tokeniser.
     Args:
@@ -156,5 +156,33 @@ def text_to_tensor(
 
     # concatenate all encoded sentences
     encoded_text = [token for sentence in encoded_sentences for token in sentence]
+
+    return torch.tensor(encoded_text, dtype=torch.long)
+
+
+def text_to_tensor(
+        text: str, tokeniser: Any, add_sos_eos: Optional[bool] = True) -> torch.Tensor:
+    """Convert a string of text into a tensor of token indices using sent_tokeniser.
+    Args:
+        text: A string of text.
+        tokeniser: A tokeniser object - it must have a lookup_table attribute and an encode method.
+        add_sos_eos: Whether to add <sos> and <eos> tokens to the start and end of the text.
+
+    Returns:
+        A torch tensor of token indices.
+    """
+    encode_fn = tokeniser.encode
+    encoder_dict = tokeniser.lookup_table
+    sos = encoder_dict[tokeniser.sos]  # get the index of the <sos> token
+    eos = encoder_dict[tokeniser.eos]  # get the index of the <eos> token
+
+    encoded_text = []
+    if add_sos_eos:
+        encoded_text.append(sos)
+
+    encoded_text.extend(encode_fn(text))  # encode the entire text
+
+    if add_sos_eos:
+        encoded_text.append(eos)
 
     return torch.tensor(encoded_text, dtype=torch.long)
