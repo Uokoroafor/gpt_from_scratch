@@ -33,6 +33,9 @@ training_hyperparams = load_config("gpt_config.txt")
 torch.manual_seed(6345789)
 # Wilson Pickett - 634-5789 https://www.youtube.com/watch?v=TSGuaVAufV0
 
+# update device if cuda isn't available
+if not torch.cuda.is_available():
+    training_hyperparams["device"] = torch.device("cpu")
 print("Using device: ", training_hyperparams["device"])
 device = training_hyperparams["device"]
 block_size = training_hyperparams["max_seq_len"]
@@ -54,12 +57,11 @@ data = read_in_data(data_folder + file_path, make_dict=False)
 if use_bpe:
     bpe = BPE(data)
     # Train for 50 iterations
-    bpe.train(50)
+    bpe.train(510)
     gpt_tokeniser = bpe
 else:
     # Use BasicTokeniser for char-level encoding
-    basic_tokeniser = BasicTokeniser(data)
-    gpt_tokeniser = basic_tokeniser
+    gpt_tokeniser = BasicTokeniser(data)
 
 # Create the encoder and decoder dictionaries and the encode and decode functions
 encoder_dict, decoder_dict, encode, decode = (
@@ -68,6 +70,8 @@ encoder_dict, decoder_dict, encode, decode = (
     gpt_tokeniser.encode,
     gpt_tokeniser.decode,
 )
+
+gpt_tokeniser.report_size()
 
 encoding_utils = dict(
     enc_dict=encoder_dict, dec_dict=decoder_dict, encode_fn=encode, decode_fn=decode

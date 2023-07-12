@@ -264,8 +264,8 @@ class Trainer:
             self.best_model_dict = self.model.state_dict()
         return lowest_val_loss
 
-    def get_batch(self, split: Optional[str] = None, data: Optional[torch.Tensor] = None) -> Tuple[
-        torch.Tensor, torch.Tensor]:
+    def get_batch(self, split: Optional[str] = None, data: Optional[torch.Tensor] = None) -> \
+            Tuple[torch.Tensor, torch.Tensor]:
         """Get a batch of data from the train, validation or a provided data tensor
         Args:
             split (Optional[str], optional): Split to get the data from. Defaults to None.
