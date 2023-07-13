@@ -155,8 +155,8 @@ def train(model, data_loader, loss_fn, optimizer, device):
 
         optimizer.zero_grad()
 
-        outputs = model(inputs)
-        loss = loss_fn(outputs.view(-1, outputs.size(-1)), targets.view(-1))
+        outputs = model(inputs).squeeze(1)
+        loss = loss_fn(outputs, targets)
 
         loss.backward()
         optimizer.step()
@@ -196,8 +196,8 @@ for epoch in range(max_iters):
                 inputs = inputs.to(device)
                 targets = targets.to(device)
 
-                outputs = model(inputs)
-                loss = loss_fn(outputs.view(-1, outputs.size(-1)), targets.view(-1))
+                outputs = model(inputs).squeeze(1)
+                loss = loss_fn(outputs, targets)
 
                 val_loss += loss.item()
 
@@ -236,8 +236,8 @@ with torch.no_grad():
         inputs = inputs.to(device)
         target = target.to(device)
 
-        output = model(inputs)
-        loss = loss_fn(output.view(-1, output.size(-1)), target.view(-1))
+        output = model(inputs).squeeze(1)
+        loss = loss_fn(output, target)
 
         test_loss += loss.item()
         predictions.extend(output.view(-1).tolist())
