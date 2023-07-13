@@ -67,9 +67,14 @@ val_data = pd.read_csv(data_folder + 'val_same.csv')
 test_data = pd.read_csv(data_folder + 'test_diff.csv')
 
 # Find the longest question in the training data. This will be used to set the max sequence length
-max_seq_len = max(max(train_data['question'].apply(lambda x: len(x))), max(val_data['question'].apply(lambda x: len(x))))
+max_seq_len = max(max(train_data['question'].apply(lambda x: len(x))),
+                  max(val_data['question'].apply(lambda x: len(x))),
+                  max(test_data['question'].apply(lambda x: len(x))))
 
-max_ans_len = max(max(train_data['answer'].apply(lambda x: len(str(x)))), max(val_data['answer'].apply(lambda x: len(str(x)))))
+max_ans_len = max(max(train_data['answer'].apply(lambda x: len(str(x)))),
+                  max(val_data['answer'].apply(lambda x: len(str(x)))),
+                  max(test_data['answer'].apply(lambda x: len(str(x)))))
+
 # Convert the data to tensors
 # Encode each question and answer.
 train_x = []
