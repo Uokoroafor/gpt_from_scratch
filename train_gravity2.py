@@ -260,7 +260,8 @@ with torch.no_grad():
 
     # Plot the predictions vs targets
     plt.figure(figsize=(12, 8))
-    plt.scatter(targets, predictions)
+    plt.scatter(targets, predictions, alpha=0.5)
+    plt.plot(targets, targets, c="r")
     plt.xlabel("Targets")
     plt.ylabel("Predictions")
     plt.title("Targets vs Predictions")
