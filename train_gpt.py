@@ -3,7 +3,7 @@ from torch import nn
 from gpt.models.gpt_transformer import GPT
 from utils.basic_tokeniser import BasicTokeniser
 from utils.data_utils import read_in_data, text_to_tensor
-from utils.train_utils import Trainer
+from utils.train_utils import Trainer, set_seed
 from utils.file_utils import load_config
 from utils.bpe import BPE
 
@@ -30,7 +30,8 @@ from utils.bpe import BPE
 training_hyperparams = load_config("gpt_config.txt")
 
 # Set the random seed for reproducibility
-torch.manual_seed(6345789)
+# torch.manual_seed(6345789)
+set_seed(6345789)
 # Wilson Pickett - 634-5789 https://www.youtube.com/watch?v=TSGuaVAufV0
 
 # update device if cuda isn't available

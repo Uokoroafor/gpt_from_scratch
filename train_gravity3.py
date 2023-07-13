@@ -31,7 +31,7 @@ lr = training_hyperparams["learning_rate"]
 
 # data_folder = "data/madlibs/"
 data_folder = "data/gravity/"
-file_path = "examples_same_steps.txt"
+file_path = "examples_diff_steps.txt"
 
 use_bpe = False  # Set to True to use BPE, False to use a character encoder/decoder
 
@@ -62,14 +62,16 @@ encoding_utils = dict(
 )
 
 # Read in the data as pandas dataframes
-train_data = pd.read_csv(data_folder + 'train_same.csv')
-val_data = pd.read_csv(data_folder + 'val_same.csv')
+train_data = pd.read_csv(data_folder + 'train_diff.csv')
+val_data = pd.read_csv(data_folder + 'val_diff.csv')
 test_data = pd.read_csv(data_folder + 'test_diff.csv')
 
 # Find the longest question in the training data. This will be used to set the max sequence length
-max_seq_len = max(max(train_data['question'].apply(lambda x: len(x))), max(val_data['question'].apply(lambda x: len(x))))
+max_seq_len = max(max(train_data['question'].apply(lambda x: len(x))),
+                  max(val_data['question'].apply(lambda x: len(x))))
 
-max_ans_len = max(max(train_data['answer'].apply(lambda x: len(str(x)))), max(val_data['answer'].apply(lambda x: len(str(x)))))
+max_ans_len = max(max(train_data['answer'].apply(lambda x: len(str(x)))),
+                  max(val_data['answer'].apply(lambda x: len(str(x)))))
 # Convert the data to tensors
 # Encode each question and answer.
 train_x = []
@@ -80,7 +82,6 @@ for i in range(len(train_data)):
     # pad the question with the pad token if they are shorter than the max_seq_len
     if len(train_x[-1]) < max_seq_len:
         train_x[-1] = train_x[-1] + [encoder_dict['<pad>']] * (max_seq_len - len(train_x[-1]))
-
 
 val_x = []
 val_y = []
@@ -100,7 +101,6 @@ for i in range(len(test_data)):
     if len(test_x[-1]) < max_seq_len:
         test_x[-1] = test_x[-1] + [encoder_dict['<pad>']] * (max_seq_len - len(test_x[-1]))
 
-
 train_x = torch.tensor(train_x)
 train_y = torch.tensor(train_y).float()
 val_x = torch.tensor(val_x)
@@ -119,7 +119,6 @@ test_loader = torch.utils.data.DataLoader(test_data, batch_size=batch_size, shuf
 
 # update block size to be the max sequence length
 block_size = max_seq_len
-
 
 # Create the model, loss function and optimiser
 
@@ -184,7 +183,7 @@ counter = 0
 # Training loop
 for epoch in range(max_iters):
     train_loss = train(model, train_loader, loss_fn, optimizer, device)
-    print(f'Epoch [{epoch+1}/{max_iters}] - Train Loss: {train_loss:.4f}')
+    print(f'Epoch [{epoch + 1}/{max_iters}] - Train Loss: {train_loss:.4f}')
     if (epoch + 1) % eval_iters == 0:
         # Perform evaluation on the validation set
         model.eval()
@@ -207,7 +206,7 @@ for epoch in range(max_iters):
         train_losses.append(train_loss)
 
         # Print training and validation loss
-        print(f"Epoch [{epoch+1}/{max_iters}] - Train Loss: {train_loss:.4f}, Est Val Loss: {val_loss:.4f}")
+        print(f"Epoch [{epoch + 1}/{max_iters}] - Train Loss: {train_loss:.4f}, Est Val Loss: {val_loss:.4f}")
 
         # Save the model if the validation loss is the best we've seen so far
         if val_loss < best_val_loss:
@@ -218,9 +217,8 @@ for epoch in range(max_iters):
         else:
             counter += 1
             if counter > 2:
-                print(f"Stopping early at epoch {epoch+1}")
+                print(f"Stopping early at epoch {epoch + 1}")
                 break
-
 
 # Plot the losses
 plt.plot(train_losses, label="Training loss")
@@ -253,5 +251,5 @@ with torch.no_grad():
     plt.xlabel("Targets")
     plt.ylabel("Predictions")
     plt.title("Targets vs Predictions")
-    plt.savefig("targets_vs_predictions_same.png")
+    plt.savefig("targets_vs_predictions_diff.png")
     plt.show()

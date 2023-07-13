@@ -6,7 +6,7 @@ from utils.file_utils import create_training_folder, save_losses, save_config
 from utils.plot_utils import plot_losses
 from utils.time_utils import EpochTimer
 from utils.logging_utils import TrainingLogger
-
+import sys
 
 class Trainer:
     def __init__(
@@ -337,3 +337,20 @@ class Trainer:
             loss = self.loss_fn(embeds.flatten(end_dim=1), y.flatten())
             losses.append(loss.item())
         return torch.tensor(losses).mean().item()
+
+
+def set_seed(seed: Optional[int] = 0):
+    """Set the random seed for reproducibility
+    Args:
+        seed (Optional[int], optional): Random seed. Defaults to 0.
+    """
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+
+    if 'numpy' in sys.modules:
+        sys.modules['numpy'].random.seed(seed)
+
+    if 'random' in sys.modules:
+        sys.modules['random'].seed(seed)
