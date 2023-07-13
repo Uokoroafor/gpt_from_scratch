@@ -184,7 +184,7 @@ counter = 0
 # Training loop
 for epoch in range(max_iters):
     train_loss = train(model, train_loader, loss_fn, optimizer, device)
-    print(f'Epoch [{epoch+1}/{max_iters}] - Train Loss: {train_loss:.4f}')
+    # print(f'Epoch [{epoch+1}/{max_iters}] - Train Loss: {train_loss:.4f}')
     if (epoch + 1) % eval_iters == 0:
         # Perform evaluation on the validation set
         model.eval()
