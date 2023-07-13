@@ -223,9 +223,14 @@ for epoch in range(max_iters):
 
 
 # Plot the losses
+plt.figure(figsize=(12, 8))
 plt.plot(train_losses, label="Training loss")
 plt.plot(val_losses, label="Validation loss")
+plt.xlabel("Epoch")
+plt.ylabel("Loss")
 plt.legend()
+plt.title("Training and Validation Losses")
+plt.savefig("gravity_gpt_losses_same.png")
 plt.show()
 
 # Evaluate the model on the test set and plot the results and print the metrics
@@ -249,6 +254,7 @@ with torch.no_grad():
     print(f"Test Loss: {test_loss:.4f}")
 
     # Plot the predictions vs targets
+    plt.figure(figsize=(12, 8))
     plt.scatter(targets, predictions)
     plt.xlabel("Targets")
     plt.ylabel("Predictions")

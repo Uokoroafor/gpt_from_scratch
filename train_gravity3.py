@@ -221,9 +221,14 @@ for epoch in range(max_iters):
                 break
 
 # Plot the losses
+plt.figure(figsize=(12, 8))
 plt.plot(train_losses, label="Training loss")
 plt.plot(val_losses, label="Validation loss")
+plt.xlabel("Epoch")
+plt.ylabel("Loss")
 plt.legend()
+plt.title("Training and Validation Losses")
+plt.savefig("gravity_gpt_losses_diff.png")
 plt.show()
 
 # Evaluate the model on the test set and plot the results and print the metrics
