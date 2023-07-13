@@ -101,6 +101,7 @@ for i in range(len(test_data)):
     if len(test_x[-1]) < max_seq_len:
         test_x[-1] = test_x[-1] + [encoder_dict['<pad>']] * (max_seq_len - len(test_x[-1]))
 
+
 train_x = torch.tensor(train_x)
 train_y = torch.tensor(train_y).float()
 val_x = torch.tensor(val_x)
@@ -251,10 +252,13 @@ with torch.no_grad():
     test_loss /= len(test_loader)
     print(f"Test Loss: {test_loss:.4f}")
 
-    # Plot the predictions vs targets
-    plt.scatter(targets, predictions)
+    # Plot the predictions vs targets with a diagonal line
+    plt.figure(figsize=(12, 8))
+    plt.scatter(targets, predictions, alpha=0.5)
+    plt.plot(targets, targets, c="r")
     plt.xlabel("Targets")
     plt.ylabel("Predictions")
     plt.title("Targets vs Predictions")
-    plt.savefig("targets_vs_predictions_diff.png")
+    plt.savefig("gravity_gpt_targets_vs_predictions_diff.png")
     plt.show()
+
