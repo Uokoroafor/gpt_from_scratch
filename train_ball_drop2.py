@@ -31,7 +31,7 @@ lr = training_hyperparams["learning_rate"]
 
 # data_folder = "data/madlibs/"
 data_folder = "data/gravity/"
-file_path = "examples_ball_drop.txt"
+file_path = "examples_ball_drop_desc.txt"
 
 use_bpe = False  # Set to True to use BPE, False to use a character encoder/decoder
 
@@ -62,9 +62,9 @@ encoding_utils = dict(
 )
 
 # Read in the data as pandas dataframes
-train_data = pd.read_csv(data_folder + 'train_ball_drop.csv')
-val_data = pd.read_csv(data_folder + 'val_ball_drop.csv')
-test_data = pd.read_csv(data_folder + 'test_ball_drop.csv')
+train_data = pd.read_csv(data_folder + 'train_ball_drop_desc.csv')
+val_data = pd.read_csv(data_folder + 'val_ball_drop_desc.csv')
+test_data = pd.read_csv(data_folder + 'test_ball_drop_desc.csv')
 
 # Encode the answer
 
@@ -239,7 +239,7 @@ for epoch in range(max_iters):
         # Save the model if the validation loss is the best we've seen so far
         if val_loss < best_val_loss:
             best_val_loss = val_loss
-            torch.save(model, "ball_drop_gpt.pt")
+            torch.save(model, "ball_drop_gpt_desc.pt")
             counter = 0
 
         else:
@@ -256,7 +256,7 @@ plt.xlabel("Epoch")
 plt.ylabel("Loss")
 plt.legend()
 plt.title("Training and Validation Losses")
-plt.savefig("ball_drop_gpt_losses.png")
+plt.savefig("ball_drop_gpt_losses_desc.png")
 plt.show()
 
 # Evaluate the model on the test set and plot the results and print the metrics
