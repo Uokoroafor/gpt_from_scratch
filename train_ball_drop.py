@@ -62,9 +62,9 @@ encoding_utils = dict(
 )
 
 # Read in the data as pandas dataframes
-train_data = pd.read_csv(data_folder + 'train_diff.csv')
-val_data = pd.read_csv(data_folder + 'val_diff.csv')
-test_data = pd.read_csv(data_folder + 'test_diff.csv')
+train_data = pd.read_csv(data_folder + 'train_ball_drop.csv')
+val_data = pd.read_csv(data_folder + 'val_ball_drop.csv')
+test_data = pd.read_csv(data_folder + 'test_ball_drop.csv')
 
 # Encode the answer
 
