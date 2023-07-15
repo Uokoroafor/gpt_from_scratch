@@ -31,7 +31,7 @@ lr = training_hyperparams["learning_rate"]
 
 # data_folder = "data/madlibs/"
 data_folder = "data/gravity/"
-file_path = "data/gravity/examples_ball_drop.txt"
+file_path = "examples_ball_drop.txt"
 
 use_bpe = False  # Set to True to use BPE, False to use a character encoder/decoder
 
