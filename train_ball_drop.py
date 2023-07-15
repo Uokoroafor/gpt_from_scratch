@@ -111,16 +111,23 @@ for i in range(len(test_data)):
 
 def convert_to_cat(x):
     if x == 'same':
-        return 0
+        return [1, 0, 0]
     elif x == 'ball_1':
-        return 1
+        return [0, 1, 0]
     else:
-        return 2
+        return [0, 0, 1]
 
 
 train_y = [convert_to_cat(x) for x in train_y]
 val_y = [convert_to_cat(x) for x in val_y]
 test_y = [convert_to_cat(x) for x in test_y]
+
+# print a subset of test data
+for i in range(10):
+    print('Printing a subset of the test data')
+    print("Question: ", decode(test_x[i]))
+    print("Answer: ", test_y[i])
+    print()
 
 train_x = torch.tensor(train_x)
 train_y = torch.tensor(train_y).float()
