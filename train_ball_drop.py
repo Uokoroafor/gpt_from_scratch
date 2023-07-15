@@ -14,7 +14,7 @@ from utils.train_utils import set_seed
 # save_config(training_hyperparams, 'gpt_config.txt')
 
 # Load the training hyperparameters from the txt file
-training_hyperparams = load_config("gravity_config.txt")
+training_hyperparams = load_config("ball_drop_config.txt")
 
 # Set the random seed for reproducibility
 # torch.manual_seed(6345789)
