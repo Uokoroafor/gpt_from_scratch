@@ -267,7 +267,6 @@ with torch.no_grad():
     targets = []
     confusion_matrix = torch.zeros(3, 3)
     for batch_idx, (inputs, target) in enumerate(test_loader):
-        # data is categorical
         inputs = inputs.to(device)
         target = target.to(device)
 
@@ -275,22 +274,27 @@ with torch.no_grad():
         loss = loss_fn(output, target)
         test_loss += loss.item()
 
-        # get the predicted class
-        pred = output.argmax(1, keepdim=True)
-        trg = target.argmax(1, keepdim=True)
-        predictions.append(pred)
-        targets.append(trg)
-        # update the confusion matrix
-        for t, p in zip(target.view(-1), pred.view(-1)):
+        # Append predictions and targets to the respective lists
+        predictions.append(output.argmax(dim=1))
+        targets.append(target.argmax(dim=1))
+
+        # Update the confusion matrix
+        for t, p in zip(target.view(-1), output.argmax(dim=1).view(-1)):
             confusion_matrix[t.long(), p.long()] += 1
 
     test_loss /= len(test_loader)
     print(f"Test Loss: {test_loss:.4f}")
-    # calculate the accuracy from the confusion matrix
+
+    # Concatenate predictions and targets into a single tensor
+    predictions = torch.cat(predictions)
+    targets = torch.cat(targets)
+
+    # Calculate accuracy from the confusion matrix
     accuracy = confusion_matrix.diag() / confusion_matrix.sum(1)
     print(f"Accuracy: {accuracy}")
-    # print the confusion matrix
-    print(f"Confusion Matrix: \n{confusion_matrix}")
+
+    # Print the confusion matrix
+    print(f"Confusion Matrix:\n{confusion_matrix}")
 
 
 
