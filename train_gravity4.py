@@ -69,7 +69,6 @@ sos_tok = [encoder_dict['<sos>']]
 eos_tok = [encoder_dict['<eos>']]
 pad_tok = [encoder_dict['<pad>']]
 
-print(type(sos_tok))
 
 # Find the longest question in the training data. This will be used to set the max sequence length
 max_seq_len = max(max(train_data['question'].apply(lambda x: len(x))), max(val_data['question'].apply(lambda x: len(x))))
@@ -223,6 +222,9 @@ for epoch in range(max_iters):
                 targets = targets.to(device)
 
                 outputs = model(inputs)
+                print('outputs: ', outputs.shape)
+                print('targets: ', targets.shape)
+
                 loss = loss_fn(outputs.view(-1, outputs.size(-1)), targets.view(-1))
 
                 val_loss += loss.item()
