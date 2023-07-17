@@ -30,7 +30,7 @@ lr = training_hyperparams["learning_rate"]
 
 # data_folder = "data/madlibs/"
 data_folder = "data/gravity/"
-file_path = "examples_ball_drop_min.txt"
+file_path = "examples_diff_steps_min.txt"
 
 use_bpe = False  # Set to True to use BPE, False to use a character encoder/decoder
 
@@ -61,9 +61,9 @@ encoding_utils = dict(
 )
 
 # Read in the data as pandas dataframes
-train_data = pd.read_csv(data_folder + 'train_ball_drop_min.csv')
-val_data = pd.read_csv(data_folder + 'val_ball_drop_min.csv')
-test_data = pd.read_csv(data_folder + 'test_ball_drop_min.csv')
+train_data = pd.read_csv(data_folder + 'train_diff_min.csv')
+val_data = pd.read_csv(data_folder + 'val_diff_min.csv')
+test_data = pd.read_csv(data_folder + 'test_diff_min.csv')
 
 sos_tok = [encoder_dict['<sos>']]
 eos_tok = [encoder_dict['<eos>']]
@@ -241,7 +241,7 @@ for epoch in range(max_iters):
         # Save the model if the validation loss is the best we've seen so far
         if val_loss < best_val_loss:
             best_val_loss = val_loss
-            torch.save(model, "gravity_gpt.pt")
+            torch.save(model, "gravity_gpt_diff_min.pt")
             counter = 0
 
         else:
@@ -275,7 +275,7 @@ with torch.no_grad():
         predictions.extend(output.view(-1).tolist())
         targets.extend(target.view(-1).tolist())
         if batch_idx % (len(test_loader) // 200) == 0:
-            with open("ball_drop_min_examples.txt","a") as f:
+            with open("gravity_diff_min_examples.txt","a") as f:
                 f.write('Question is ' + ''.join(decode(inputs[0].tolist(),True))+'\n')
                 f.write('Target is ' + ''.join(decode(target[0].tolist()))+'\n')
                 pred= ''.join(decode(outpt.argmax(-1).tolist()))
