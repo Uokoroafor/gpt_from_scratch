@@ -96,7 +96,7 @@ for i in range(len(train_data)):
     if len(train_x[-1]) < max_seq_len:
         train_x[-1] = train_x[-1] + [encoder_dict['<pad>']] * (max_seq_len - len(train_x[-1]))
     if len(train_y[-1]) < max_seq_len:
-        train_y[-1] = sos_tok + train_y[-1] + eos_tok + [encoder_dict['<pad>']] * (max_seq_len - len(train_y[-1]))
+        train_y[-1] = sos_tok + train_y[-1] + eos_tok + [encoder_dict['<pad>']] * (max_seq_len - len(train_y[-1])-2)
 
 val_x = []
 val_y = []
@@ -109,7 +109,7 @@ for i in range(len(val_data)):
     if len(val_x[-1]) < max_seq_len:
         val_x[-1] = val_x[-1] + [encoder_dict['<pad>']] * (max_seq_len - len(val_x[-1]))
     if len(val_y[-1]) < max_seq_len:
-        val_y[-1] = sos_tok + val_y[-1] + eos_tok + [encoder_dict['<pad>']] * (max_seq_len - len(val_y[-1]))
+        val_y[-1] = sos_tok + val_y[-1] + eos_tok + [encoder_dict['<pad>']] * (max_seq_len - len(val_y[-1])-2)
 
 
 test_x = []
@@ -123,7 +123,7 @@ for i in range(len(test_data)):
     if len(test_x[-1]) < max_seq_len:
         test_x[-1] = test_x[-1] + [encoder_dict['<pad>']] * (max_seq_len - len(test_x[-1]))
     if len(test_y[-1]) < max_seq_len:
-        test_y[-1] = sos_tok + test_y[-1] + eos_tok + [encoder_dict['<pad>']] * (max_seq_len - len(test_y[-1]))
+        test_y[-1] = sos_tok + test_y[-1] + eos_tok + [encoder_dict['<pad>']] * (max_seq_len - len(test_y[-1])-2)
 
 train_x = torch.tensor(train_x)
 train_y = torch.tensor(train_y)
