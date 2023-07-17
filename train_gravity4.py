@@ -181,9 +181,9 @@ def train(model, data_loader, loss_fn, optimizer, device):
         optimizer.zero_grad()
 
         outputs = model(inputs)
-        print('outputs: ', outputs.shape)
-        print('targets: ', targets.shape)
-        loss = loss_fn(outputs, targets)
+        # print('outputs: ', outputs.shape)
+        # print('targets: ', targets.shape)
+        loss = loss_fn(outputs.view(-1, outputs.size(-1)), targets.view(-1))
 
         loss.backward()
         optimizer.step()
@@ -224,8 +224,8 @@ for epoch in range(max_iters):
                 targets = targets.to(device)
 
                 outputs = model(inputs)
-                print('outputs: ', outputs.shape)
-                print('targets: ', targets.shape)
+                # print('outputs: ', outputs.shape)
+                # print('targets: ', targets.shape)
 
                 loss = loss_fn(outputs.view(-1, outputs.size(-1)), targets.view(-1))
 
