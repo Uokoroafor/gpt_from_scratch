@@ -8,6 +8,7 @@ from utils.time_utils import EpochTimer
 from utils.logging_utils import TrainingLogger
 import sys
 
+
 class Trainer:
     def __init__(
             self,
@@ -17,7 +18,7 @@ class Trainer:
             training_hyperparameters: Dict,
             encoding_utils: Dict,
     ):
-        """Constructor class for Trainer
+        """Constructor class for Trainer used to train a transformer model for language modelling
         Args:
             model (nn.Module): Model to train
             optimiser (torch.optim.Optimizer): Optimiser to use for training
