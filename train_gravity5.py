@@ -274,7 +274,7 @@ with torch.no_grad():
         test_loss += loss.item()
         predictions.extend(output.view(-1).tolist())
         targets.extend(target.view(-1).tolist())
-        if batch_idx % (len(test_loader) // 200) == 0:
+        if batch_idx % (len(test_loader) // 100) == 0:
             with open("gravity_same_min_examples.txt","a") as f:
                 f.write('Question is ' + ''.join(decode(inputs[0].tolist(),True))+'\n')
                 f.write('Target is ' + ''.join(decode(target[0].tolist()))+'\n')
