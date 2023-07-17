@@ -183,7 +183,7 @@ def train(model, data_loader, loss_fn, optimizer, device):
         outputs = model(inputs)
         print('outputs: ', outputs.shape)
         print('targets: ', targets.shape)
-        loss = loss_fn(outputs.view(-1, outputs.size(-1)), targets.view(-1))
+        loss = loss_fn(outputs, targets)
 
         loss.backward()
         optimizer.step()
