@@ -107,6 +107,9 @@ model = GPT(
 )
 
 optimiser = torch.optim.Adam(model.parameters(), lr=lr)
+# TODO: Add scheduler and gradient clipping
+# TODO: Add weight decay
+# TODO: Include scheduler params in config file
 
 # Create a trainer object
 trainer = Trainer(

@@ -17,6 +17,7 @@ class Trainer:
             loss_fn: torch.nn.modules.loss._Loss,
             training_hyperparameters: Dict,
             encoding_utils: Dict,
+            scheduler: Optional[torch.optim.lr_scheduler._LRScheduler] = None,
     ):
         """Constructor class for Trainer used to train a transformer model for language modelling
         Args:
@@ -25,6 +26,7 @@ class Trainer:
             loss_fn (torch.nn.modules.loss._Loss): Loss function to use for training
             training_hyperparameters (Dict): Dictionary containing training hyperparameters
             encoding_utils (Dict): Dictionary containing encoder/decoder dictionaries and functions
+            scheduler (Optional[torch.optim.lr_scheduler._LRScheduler], optional): Learning rate scheduler. Defaults to None.
         """
         self.train_data = None
         self.val_data = None
@@ -32,6 +34,7 @@ class Trainer:
         self.optimiser = optimiser
         self.loss_fn = loss_fn
         self.encoding_utils = encoding_utils
+        self.scheduler = scheduler
         self.best_model_dict = None
 
         # Preallocate variables defined in set_training_hyperparameters
@@ -164,6 +167,9 @@ class Trainer:
 
                 # Take a step with the optimiser
                 self.optimiser.step()
+
+                if self.scheduler is not None:
+                    self.scheduler.step()
 
             timer.lap()
             logger.log_info(timer.print_total_time(label="Total time taken: "))

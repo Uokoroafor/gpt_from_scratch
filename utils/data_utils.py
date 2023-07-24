@@ -4,8 +4,8 @@ import os
 from typing import Union, Dict, Tuple, Callable, Optional, List, Any
 import requests as requests
 import torch
+from nltk.tokenize import sent_tokenize
 from utils.basic_tokeniser import make_char_dict
-from nltk.tokenize import sent_tokenize, word_tokenize
 
 
 def read_in_data(
@@ -126,7 +126,7 @@ def get_numerics_from_string(string: str) -> int:
 def text_to_tensor_(
         text: str, tokeniser: Any, add_sos_eos: Optional[bool] = True
 ) -> torch.Tensor:
-    """Convert a string of text into a tensor of token indices using sent_tokeniser.
+    """Convert a string of text into a tensor of token indices using sent_tokeniser. This version adds <sos> and <eos> tokens to the start and end of each sentence. It also adds a <newline> token to the end of each sentence.
     Args:
         text: A string of text.
         tokeniser: A tokeniser object - it must have a lookup_table attribute and an encode method.
