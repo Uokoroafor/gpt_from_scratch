@@ -1,17 +1,14 @@
+import matplotlib.pyplot as plt
+import pandas as pd
 import torch
 from torch import nn
 from gpt.models.do_transformer import DecodeOnlyTransformer
 from utils.basic_tokeniser import BasicTokeniser
-from utils.data_utils import read_in_data, text_to_tensor
-from utils.train_utils import Trainer
-from utils.file_utils import load_config
 from utils.bpe import BPE
-import pandas as pd
-import matplotlib.pyplot as plt
-
+from utils.data_utils import read_in_data
+from utils.file_utils import load_config
 
 # # Save the training hyperparameters as a  txt file
-# save_config(training_hyperparams, 'gpt_config.txt')
 
 # Load the training hyperparameters from the txt file
 training_hyperparams = load_config("sinusoidal_config.txt")
@@ -31,7 +28,7 @@ lr = training_hyperparams["learning_rate"]
 # data_folder = "data/madlibs/"
 data_folder = "data/sinusoidal_functions/"
 file_path = "sinusoidal_numbers.txt"
-function = "sin"
+function_name = "sin"
 
 use_bpe = False  # Set to True to use BPE, False to use a character encoder/decoder
 
@@ -61,21 +58,21 @@ encoding_utils = dict(
     enc_dict=encoder_dict, dec_dict=decoder_dict, encode_fn=encode, decode_fn=decode
 )
 
-
 # Read in the data as pandas dataframes
-train_data = pd.read_csv(data_folder + f'train_{function}.csv')
-val_data = pd.read_csv(data_folder + f'val_{function}.csv')
-test_data = pd.read_csv(data_folder + f'test_{function}.csv')
+train_data = pd.read_csv(data_folder + f'train_{function_name}.csv', dtype=str)
+val_data = pd.read_csv(data_folder + f'val_{function_name}.csv', dtype=str)
+test_data = pd.read_csv(data_folder + f'test_{function_name}.csv', dtype=str)
 
 sos_tok = [encoder_dict['<sos>']]
 eos_tok = [encoder_dict['<eos>']]
 pad_tok = [encoder_dict['<pad>']]
 
-
 # Find the longest question in the training data. This will be used to set the max sequence length
-max_seq_len = max(max(train_data['question'].apply(lambda x: len(x))), max(val_data['question'].apply(lambda x: len(x))))
+max_seq_len = max(max(train_data['question'].apply(lambda x: len(x))),
+                  max(val_data['question'].apply(lambda x: len(x))))
 
-max_ans_len = 2+max(max(train_data['answer'].apply(lambda x: len(str(x)))), max(val_data['answer'].apply(lambda x: len(str(x)))))
+max_ans_len = 2 + max(max(train_data['answer'].apply(lambda x: len(str(x)))),
+                      max(val_data['answer'].apply(lambda x: len(str(x)))))
 
 max_seq_len = max(max_seq_len, max_ans_len)
 
@@ -89,8 +86,6 @@ for i in range(len(train_data)):
     train_x.append(encode(train_data['question'][i]))
     # prepend and append sos and eos tokens to the answer
 
-
-
     # convert float to string
     train_data['answer'][i] = str(train_data['answer'][i])
     train_y.append(encode(train_data['answer'][i]))
@@ -98,7 +93,7 @@ for i in range(len(train_data)):
     if len(train_x[-1]) < max_seq_len:
         train_x[-1] = train_x[-1] + [encoder_dict['<pad>']] * (max_seq_len - len(train_x[-1]))
     if len(train_y[-1]) < max_seq_len:
-        train_y[-1] = sos_tok + train_y[-1] + eos_tok + [encoder_dict['<pad>']] * (max_seq_len - len(train_y[-1])-2)
+        train_y[-1] = sos_tok + train_y[-1] + eos_tok + [encoder_dict['<pad>']] * (max_seq_len - len(train_y[-1]) - 2)
 
 val_x = []
 val_y = []
@@ -111,8 +106,7 @@ for i in range(len(val_data)):
     if len(val_x[-1]) < max_seq_len:
         val_x[-1] = val_x[-1] + [encoder_dict['<pad>']] * (max_seq_len - len(val_x[-1]))
     if len(val_y[-1]) < max_seq_len:
-        val_y[-1] = sos_tok + val_y[-1] + eos_tok + [encoder_dict['<pad>']] * (max_seq_len - len(val_y[-1])-2)
-
+        val_y[-1] = sos_tok + val_y[-1] + eos_tok + [encoder_dict['<pad>']] * (max_seq_len - len(val_y[-1]) - 2)
 
 test_x = []
 test_y = []
@@ -125,7 +119,7 @@ for i in range(len(test_data)):
     if len(test_x[-1]) < max_seq_len:
         test_x[-1] = test_x[-1] + [encoder_dict['<pad>']] * (max_seq_len - len(test_x[-1]))
     if len(test_y[-1]) < max_seq_len:
-        test_y[-1] = sos_tok + test_y[-1] + eos_tok + [encoder_dict['<pad>']] * (max_seq_len - len(test_y[-1])-2)
+        test_y[-1] = sos_tok + test_y[-1] + eos_tok + [encoder_dict['<pad>']] * (max_seq_len - len(test_y[-1]) - 2)
 
 train_x = torch.tensor(train_x)
 train_y = torch.tensor(train_y)
@@ -147,7 +141,6 @@ test_loader = torch.utils.data.DataLoader(test_data, batch_size=batch_size, shuf
 
 # update block size to be the max sequence length
 block_size = max_seq_len
-
 
 # Create the model, loss function and optimiser
 loss_fn = nn.CrossEntropyLoss(ignore_index=encoder_dict[gpt_tokeniser.pad])
@@ -238,27 +231,25 @@ for epoch in range(max_iters):
         train_losses.append(train_loss)
 
         # Print training and validation loss
-        print(f"Epoch [{epoch+1}/{max_iters}] - Train Loss: {train_loss:.4f}, Est Val Loss: {val_loss:.4f}")
+        print(f"Epoch [{epoch + 1}/{max_iters}] - Train Loss: {train_loss:.4f}, Est Val Loss: {val_loss:.4f}")
 
         # Save the model if the validation loss is the best we've seen so far
         if val_loss < best_val_loss:
             best_val_loss = val_loss
-            torch.save(model, "gravity_gpt_diff_min.pt")
+            torch.save(model, f'{function_name}_best_model.pt')
             counter = 0
 
         else:
             counter += 1
             if counter > 2:
-                print(f"Stopping early at epoch {epoch+1}")
+                print(f"Stopping early at epoch {epoch + 1}")
                 break
-
 
 # Plot the losses
 plt.plot(train_losses, label="Training loss")
 plt.plot(val_losses, label="Validation loss")
 plt.legend()
 plt.show()
-
 
 model.eval()
 with torch.no_grad():
@@ -277,11 +268,11 @@ with torch.no_grad():
         predictions.extend(output.view(-1).tolist())
         targets.extend(target.view(-1).tolist())
         if batch_idx % (len(test_loader) // 100) == 0:
-            with open("gravity_diff_min_examples.txt","a") as f:
-                f.write('Question is ' + ''.join(decode(inputs[0].tolist(),True))+'\n')
-                f.write('Target is ' + ''.join(decode(target[0].tolist()))+'\n')
-                pred= ''.join(decode(outpt.argmax(-1).tolist()))
-                f.write(f"Prediction is {pred.split('<eos>')[0]+'<eos>'}"+"\n\n")
+            with open(f"{function_name}_numbers_predictions.txt", "a") as f:
+                f.write('Question is ' + ''.join(decode(inputs[0].tolist(), True)) + '\n')
+                f.write('Target is ' + ''.join(decode(target[0].tolist())) + '\n')
+                pred = ''.join(decode(outpt.argmax(-1).tolist()))
+                f.write(f"Prediction is {pred.split('<eos>')[0] + '<eos>'}" + "\n\n")
 
     test_loss /= len(test_loader)
     print(f"Test Loss: {test_loss:.4f}")
