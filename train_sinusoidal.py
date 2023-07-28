@@ -267,7 +267,7 @@ with torch.no_grad():
         test_loss += loss.item()
         predictions.extend(output.view(-1).tolist())
         targets.extend(target.view(-1).tolist())
-        if batch_idx % (len(test_loader) // 100) == 0:
+        if batch_idx % (len(test_loader) // 10) == 0:
             with open(f"{function_name}_numbers_predictions.txt", "a") as f:
                 f.write('Question is ' + ''.join(decode(inputs[0].tolist(), True)) + '\n')
                 f.write('Target is ' + ''.join(decode(target[0].tolist())) + '\n')

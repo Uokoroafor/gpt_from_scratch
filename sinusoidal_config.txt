@@ -1,5 +1,5 @@
 batch_size: 32
-epochs: 50
+epochs: 500
 learning_rate: 3e-4
 max_seq_len: 256
 num_heads: 4
