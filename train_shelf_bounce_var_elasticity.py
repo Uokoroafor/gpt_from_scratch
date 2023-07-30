@@ -27,7 +27,7 @@ max_iters = training_hyperparams["epochs"]
 lr = training_hyperparams["learning_rate"]
 
 # data_folder = "data/madlibs/"
-data_folder = "data/shelf_bounce/var_gravity/"
+data_folder = "data/shelf_bounce/var_elasticity/"
 file_path = "bounce_log_var_elasticity.txt"
 
 use_bpe = False  # Set to True to use BPE, False to use a character encoder/decoder
