@@ -1,14 +1,12 @@
+import matplotlib.pyplot as plt
+import pandas as pd
 import torch
 from torch import nn
 from gpt.models.do_transformer import DecodeOnlyTransformer
 from utils.basic_tokeniser import BasicTokeniser
-from utils.data_utils import read_in_data, text_to_tensor
-from utils.train_utils import Trainer
-from utils.file_utils import load_config
 from utils.bpe import BPE
-import pandas as pd
-import matplotlib.pyplot as plt
-
+from utils.data_utils import read_in_data
+from utils.file_utils import load_config
 
 # # Save the training hyperparameters as a  txt file
 # save_config(training_hyperparams, 'gpt_config.txt')
@@ -29,7 +27,7 @@ max_iters = training_hyperparams["epochs"]
 lr = training_hyperparams["learning_rate"]
 
 # data_folder = "data/madlibs/"
-data_folder = "data/shelf_bounce/"
+data_folder = "data/shelf_bounce/all_fixed/"
 file_path = "bounce_log_fixed.txt"
 
 use_bpe = False  # Set to True to use BPE, False to use a character encoder/decoder
