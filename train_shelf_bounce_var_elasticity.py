@@ -63,10 +63,10 @@ train_data = pd.read_csv(data_folder + 'train_var_elasticity.csv')
 val_data = pd.read_csv(data_folder + 'val_var_elasticity.csv')
 test_data = pd.read_csv(data_folder + 'test_var_elasticity.csv')
 
-# datasets are too large. Take a subset of the data
-train_data = train_data[:20000]
-val_data = val_data[:2000]
-test_data = test_data[:2000]
+# # datasets are too large. Take a subset of the data
+# train_data = train_data[:20000]
+# val_data = val_data[:2000]
+# test_data = test_data[:2000]
 
 sos_tok = [encoder_dict['<sos>']]
 eos_tok = [encoder_dict['<eos>']]
