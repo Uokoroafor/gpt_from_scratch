@@ -59,9 +59,9 @@ encoding_utils = dict(
 )
 
 # Read in the data as pandas dataframes
-train_data = pd.read_csv(data_folder + 'train_var_gravity_bounce.csv')
-val_data = pd.read_csv(data_folder + 'val_var_gravity_bounce.csv')
-test_data = pd.read_csv(data_folder + 'test_var_gravity_bounce.csv')
+train_data = pd.read_csv(data_folder + 'train_var_gravity.csv')
+val_data = pd.read_csv(data_folder + 'val_var_gravity.csv')
+test_data = pd.read_csv(data_folder + 'test_var_gravity.csv')
 
 sos_tok = [encoder_dict['<sos>']]
 eos_tok = [encoder_dict['<eos>']]
