@@ -333,8 +333,11 @@ def data_prep(folder_loc: str, file_name: str, line_delimiter: str, ans_delimite
         test_data = [data[i] for i in test_indices]
 
     # Save the data as csv files
-    pd.DataFrame(train_data).to_csv(os.path.join(folder_loc, "train_data.csv"), index=False)
-    pd.DataFrame(val_data).to_csv(os.path.join(folder_loc, "val_data.csv"), index=False)
+    pd.DataFrame(train_data, columns=["question", "answer"]).to_csv(os.path.join(folder_loc, "train_data.csv"),
+                                                                    index=False)
+    pd.DataFrame(val_data, columns=["question", "answer"]).to_csv(os.path.join(folder_loc, "val_data.csv"),
+                                                                  index=False)
 
     if split_method == "train_val_test":
-        pd.DataFrame(test_data).to_csv(os.path.join(folder_loc, "test_data.csv"), index=False)
+        pd.DataFrame(test_data, columns=["question", "answer"]).to_csv(os.path.join(folder_loc, "test_data.csv"),
+                                                                       index=False)
