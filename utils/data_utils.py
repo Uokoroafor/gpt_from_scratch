@@ -6,6 +6,8 @@ import requests as requests
 import torch
 from nltk.tokenize import sent_tokenize
 from utils.basic_tokeniser import make_char_dict
+import pandas as pd
+import random
 
 
 def read_in_data(
@@ -16,7 +18,7 @@ def read_in_data(
         filepath (str): The path to the file to read in.
         make_dict (Optional[bool], optional): Whether to make the character dictionary. Defaults to True.
     Returns:
-        Tuple[Dict[str, str],str]: The character dictionary ,if make_dict is True, and the data.
+        Tuple[Dict[str, str],str]: The character dictionary, if make_dict is True, and the data.
         str: The data if make_dict is False.
     """
 
@@ -126,7 +128,8 @@ def get_numerics_from_string(string: str) -> int:
 def text_to_tensor_(
         text: str, tokeniser: Any, add_sos_eos: Optional[bool] = True
 ) -> torch.Tensor:
-    """Convert a string of text into a tensor of token indices using sent_tokeniser. This version adds <sos> and <eos> tokens to the start and end of each sentence. It also adds a <newline> token to the end of each sentence.
+    """Convert a string of text into a tensor of token indices using sent_tokeniser. This version adds <sos> and <eos>
+    tokens to the start and end of each sentence. It also adds a <newline> token to the end of each sentence.
     Args:
         text: A string of text.
         tokeniser: A tokeniser object - it must have a lookup_table attribute and an encode method.
@@ -186,3 +189,152 @@ def text_to_tensor(
         encoded_text.append(eos)
 
     return torch.tensor(encoded_text, dtype=torch.long)
+
+
+# def data_prep(folder_loc: str, file_name: str, line_delimiter: str, ans_delimiter: str,
+#               split: Optional[List[float]] = None, save_indices: Optional[bool] = False,
+#               split_method: Optional[str] = "train_val_test") -> None:
+#     """ Prepares the data for training and testing.
+#
+#     Args:
+#         folder_loc (str): The location of the folder containing the data.
+#         file_name (str): The name of the file containing the data.
+#         line_delimiter (str): The text to split the lines on.
+#         ans_delimiter (str): The text to split the answers on.
+#         split (List[float]): The split to use for the training and testing data.
+#         save_indices (bool): Whether to save the indices of the training and testing data.
+#         split_method (str): The method to use for splitting the data. Options are "train_val_test", "train_test"
+#         and "train_val".
+#     """
+#     # Read in the data
+#     if not folder_loc.endswith("/"):
+#         folder_loc += "/"
+#
+#     data = read_in_data(os.path.join(folder_loc, file_name), make_dict=False)
+#
+#     # Split into questions and answers
+#     data = [line.split(ans_delimiter) for line in data.split(line_delimiter)]
+#
+#     if save_indices:
+#         assert split is not None, "A split must be provided when saving indices."
+#
+#     if split_method not in ["train_val_test", "train_val"]:
+#         raise ValueError("split_method must be one of 'train_val_test' or 'train_val'.")
+#
+#     if save_indices:
+#         # Randomly shuffle the indices
+#         indices = list(range(len(data)))
+#         random.shuffle(indices)
+#
+#         assert sum(split) == 1, "The split must sum to 1."
+#
+#         tr_weights, val_weights, test_weights = split
+#
+#         # Split the indices into train, validation and test sets
+#         train_indices = indices[:int(tr_weights * len(indices))]
+#         val_indices = indices[int(tr_weights * len(indices)):int((tr_weights + val_weights) * len(indices))]
+#
+#         if split_method == "train_val_test":
+#             test_indices = indices[int((tr_weights + val_weights) * len(indices)):]
+#
+#
+#         # Save the indices
+#         pd.DataFrame(train_indices).to_csv(os.path.join(folder_loc, "train_indices.csv"), index=False)
+#         pd.DataFrame(val_indices).to_csv(os.path.join(folder_loc, "val_indices.csv"), index=False)
+#
+#         if split_method == "train_val_test":
+#             pd.DataFrame(test_indices).to_csv(os.path.join(folder_loc, "test_indices.csv"), index=False)
+#     else:
+#         # If index files already exist, use them
+#
+#         train_indices = pd.read_csv(os.path.join(folder_loc, "train_indices.csv"))
+#         val_indices = pd.read_csv(os.path.join(folder_loc, "val_indices.csv"))
+#
+#         if split_method == "train_val_test":
+#             test_indices = pd.read_csv(os.path.join(folder_loc, "test_indices.csv"))
+#
+#
+#     # Split the data into training, validation, and testing data
+#     train_data = [data[i] for i in train_indices]
+#     val_data = [data[i] for i in val_indices]
+#
+#     if split_method == "train_val_test":
+#         test_data = [data[i] for i in test_indices]
+#
+#     # Save the data as csv files
+#     pd.DataFrame(train_data).to_csv(os.path.join(folder_loc, "train_data.csv"), index=False)
+#     pd.DataFrame(val_data).to_csv(os.path.join(folder_loc, "val_data.csv"), index=False)
+#
+#     if split_method == "train_val_test":
+#         pd.DataFrame(test_data).to_csv(os.path.join(folder_loc, "test_data.csv"), index=False)
+def data_prep(folder_loc: str, file_name: str, line_delimiter: str, ans_delimiter: str,
+              split: Optional[List[float]] = None, save_indices: Optional[bool] = False,
+              split_method: Optional[str] = "train_val_test") -> None:
+    """ Prepares the data for training and testing.
+
+    Args:
+        folder_loc (str): The location of the folder containing the data.
+        file_name (str): The name of the file containing the data.
+        line_delimiter (str): The text to split the lines on.
+        ans_delimiter (str): The text to split the answers on.
+        split (List[float]): The split to use for the training and testing data.
+        save_indices (bool): Whether to save the indices of the training and testing data.
+        split_method (str): The method to use for splitting the data. Options are "train_val_test" and "train_val".
+    """
+    # Read in the data
+    if not folder_loc.endswith("/"):
+        folder_loc += "/"
+
+    data = read_in_data(os.path.join(folder_loc, file_name), make_dict=False)
+
+    # Split into questions and answers
+    data = [line.split(ans_delimiter) for line in data.split(line_delimiter)]
+
+    train_indices, val_indices, test_indices = None, None, None
+    train_data, val_data, test_data = None, None, None
+
+    if save_indices:
+        if split is None:
+            raise ValueError("A split must be provided when saving indices.")
+
+        assert split_method == "train_val_test", "Indices can only be saved for 'train_val_test' method."
+
+        # Randomly shuffle the indices
+        indices = list(range(len(data)))
+        random.shuffle(indices)
+
+        assert sum(split) == 1, "The split must sum to 1."
+
+        tr_weights, val_weights, test_weights = split
+
+        # Split the indices into train, validation and test sets
+        train_indices = indices[:int(tr_weights * len(indices))]
+        val_indices = indices[int(tr_weights * len(indices)):int((tr_weights + val_weights) * len(indices))]
+        test_indices = indices[int((tr_weights + val_weights) * len(indices)):]
+
+        # Save the indices
+        pd.DataFrame(train_indices).to_csv(os.path.join(folder_loc, "train_indices.csv"), index=False)
+        pd.DataFrame(val_indices).to_csv(os.path.join(folder_loc, "val_indices.csv"), index=False)
+        pd.DataFrame(test_indices).to_csv(os.path.join(folder_loc, "test_indices.csv"), index=False)
+    else:
+        # If index files already exist, use them
+
+        train_indices = pd.read_csv(os.path.join(folder_loc, "train_indices.csv"))
+        val_indices = pd.read_csv(os.path.join(folder_loc, "val_indices.csv"))
+
+        if split_method == "train_val_test":
+            test_indices = pd.read_csv(os.path.join(folder_loc, "test_indices.csv"))
+
+    # Split the data into training, validation, and testing data
+    train_data = [data[i] for i in train_indices]
+    val_data = [data[i] for i in val_indices]
+
+    if split_method == "train_val_test":
+        test_data = [data[i] for i in test_indices]
+
+    # Save the data as csv files
+    pd.DataFrame(train_data).to_csv(os.path.join(folder_loc, "train_data.csv"), index=False)
+    pd.DataFrame(val_data).to_csv(os.path.join(folder_loc, "val_data.csv"), index=False)
+
+    if split_method == "train_val_test":
+        pd.DataFrame(test_data).to_csv(os.path.join(folder_loc, "test_data.csv"), index=False)
