@@ -456,17 +456,18 @@ class PhysicalTrainer(Trainer):
                 val_loss = self.training_loop(val_dataloader, method="val")
                 val_losses.append(val_loss)
 
-                logger.log_info(
-                    f"At Iteration: {i + 1}/{self.epochs}, Train loss: {train_loss: .4f}, "
-                    f"Val loss: {val_loss: .4f}"
-                )
-
-                timer.lap()
-                logger.log_info(
-                    timer.print_last_epoch_time(
-                        label=f"Time taken for last {self.eval_every} iterations: "
+                if i % self.eval_every == 0:
+                    logger.log_info(
+                        f"At Iteration: {i + 1}/{self.epochs}, Train loss: {train_loss: .4f}, "
+                        f"Val loss: {val_loss: .4f}"
                     )
-                )
+
+                    timer.lap()
+                    logger.log_info(
+                        timer.print_last_epoch_time(
+                            label=f"Time taken for last {self.eval_every} iteration(s): "
+                        )
+                    )
 
                 # Update the best model state dict and lowest validation loss
                 lowest_val_loss, count = self.update_best_model_dict_(
@@ -697,7 +698,7 @@ class PhysicalTrainer(Trainer):
             self.logger.log_info(f"Test loss was {test_loss:.4f}")
 
             plot_save_path = (
-                f"{self.path}/training_logs/{type(self.model).__name__}_losses.png"
+                f"{self.path}/training_logs/{type(self.model).__name__}_predictions.png"
             )
 
             if output_type == "text":
