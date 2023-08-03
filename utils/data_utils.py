@@ -4,6 +4,7 @@ import os
 from typing import Union, Dict, Tuple, Callable, Optional, List, Any
 import requests as requests
 import torch
+from torch.utils.data import DataLoader
 from nltk.tokenize import sent_tokenize
 from utils.basic_tokeniser import make_char_dict
 import pandas as pd
@@ -191,82 +192,6 @@ def text_to_tensor(
     return torch.tensor(encoded_text, dtype=torch.long)
 
 
-# def data_prep(folder_loc: str, file_name: str, line_delimiter: str, ans_delimiter: str,
-#               split: Optional[List[float]] = None, save_indices: Optional[bool] = False,
-#               split_method: Optional[str] = "train_val_test") -> None:
-#     """ Prepares the data for training and testing.
-#
-#     Args:
-#         folder_loc (str): The location of the folder containing the data.
-#         file_name (str): The name of the file containing the data.
-#         line_delimiter (str): The text to split the lines on.
-#         ans_delimiter (str): The text to split the answers on.
-#         split (List[float]): The split to use for the training and testing data.
-#         save_indices (bool): Whether to save the indices of the training and testing data.
-#         split_method (str): The method to use for splitting the data. Options are "train_val_test", "train_test"
-#         and "train_val".
-#     """
-#     # Read in the data
-#     if not folder_loc.endswith("/"):
-#         folder_loc += "/"
-#
-#     data = read_in_data(os.path.join(folder_loc, file_name), make_dict=False)
-#
-#     # Split into questions and answers
-#     data = [line.split(ans_delimiter) for line in data.split(line_delimiter)]
-#
-#     if save_indices:
-#         assert split is not None, "A split must be provided when saving indices."
-#
-#     if split_method not in ["train_val_test", "train_val"]:
-#         raise ValueError("split_method must be one of 'train_val_test' or 'train_val'.")
-#
-#     if save_indices:
-#         # Randomly shuffle the indices
-#         indices = list(range(len(data)))
-#         random.shuffle(indices)
-#
-#         assert sum(split) == 1, "The split must sum to 1."
-#
-#         tr_weights, val_weights, test_weights = split
-#
-#         # Split the indices into train, validation and test sets
-#         train_indices = indices[:int(tr_weights * len(indices))]
-#         val_indices = indices[int(tr_weights * len(indices)):int((tr_weights + val_weights) * len(indices))]
-#
-#         if split_method == "train_val_test":
-#             test_indices = indices[int((tr_weights + val_weights) * len(indices)):]
-#
-#
-#         # Save the indices
-#         pd.DataFrame(train_indices).to_csv(os.path.join(folder_loc, "train_indices.csv"), index=False)
-#         pd.DataFrame(val_indices).to_csv(os.path.join(folder_loc, "val_indices.csv"), index=False)
-#
-#         if split_method == "train_val_test":
-#             pd.DataFrame(test_indices).to_csv(os.path.join(folder_loc, "test_indices.csv"), index=False)
-#     else:
-#         # If index files already exist, use them
-#
-#         train_indices = pd.read_csv(os.path.join(folder_loc, "train_indices.csv"))
-#         val_indices = pd.read_csv(os.path.join(folder_loc, "val_indices.csv"))
-#
-#         if split_method == "train_val_test":
-#             test_indices = pd.read_csv(os.path.join(folder_loc, "test_indices.csv"))
-#
-#
-#     # Split the data into training, validation, and testing data
-#     train_data = [data[i] for i in train_indices]
-#     val_data = [data[i] for i in val_indices]
-#
-#     if split_method == "train_val_test":
-#         test_data = [data[i] for i in test_indices]
-#
-#     # Save the data as csv files
-#     pd.DataFrame(train_data).to_csv(os.path.join(folder_loc, "train_data.csv"), index=False)
-#     pd.DataFrame(val_data).to_csv(os.path.join(folder_loc, "val_data.csv"), index=False)
-#
-#     if split_method == "train_val_test":
-#         pd.DataFrame(test_data).to_csv(os.path.join(folder_loc, "test_data.csv"), index=False)
 def data_prep(folder_loc: str, file_name: str, line_delimiter: str, ans_delimiter: str,
               split: Optional[List[float]] = None, save_indices: Optional[bool] = False,
               split_method: Optional[str] = "train_val_test") -> None:
@@ -341,3 +266,108 @@ def data_prep(folder_loc: str, file_name: str, line_delimiter: str, ans_delimite
     if split_method == "train_val_test":
         pd.DataFrame(test_data, columns=["question", "answer"]).to_csv(os.path.join(folder_loc, "test_data.csv"),
                                                                        index=False)
+
+
+def make_data_loaders(tokeniser: Any, train_data: pd.DataFrame, val_data: pd.DataFrame,
+                      test_data: pd.DataFrame, batch_size: int = 32, max_seq_len: Optional[int] = None,
+                      max_ans_len: Optional[int] = None, output: str = 'text',
+                      shuffle: bool = True) -> Tuple[DataLoader, DataLoader, DataLoader, int]:
+    """ Creates the data loaders for the training validation and testing data.
+
+    Args:
+        tokeniser (Any): The tokeniser to use.
+        train_data (pd.DataFrame): The training data.
+        val_data (pd.DataFrame): The validation data.
+        test_data (Optional[pd.DataFrame]): The testing data.
+        batch_size (int): The batch size to use.
+        max_seq_len (int): The maximum sequence length to use.
+        max_ans_len (int): The maximum answer length to use. Not used if output is 'num'.
+        output (str): The output to use. Options are 'text' and 'num'.
+        shuffle (bool): Whether to shuffle the data.
+
+    Returns:
+        Tuple[DataLoader, DataLoader, DataLoader, int]: The training, validation and testing data loaders
+        and the max sequence length.
+    """
+    if max_seq_len is None:
+        max_seq_len = 0
+
+    if max_ans_len is None:
+        max_ans_len = 0
+
+    # Find the longest question in the training data. This will be used to set the max sequence length
+    max_seq_len = max(max(train_data['question'].apply(lambda x: len(x))),
+                      max(val_data['question'].apply(lambda x: len(x))),
+                      max(test_data['question'].apply(lambda x: len(x))),
+                      max_seq_len)
+
+    if output == 'text':
+        max_ans_len = 2 + max(max(train_data['answer'].apply(lambda x: len(str(x)))),
+                              max(val_data['answer'].apply(lambda x: len(str(x)))),
+                              max(test_data['answer'].apply(lambda x: len(str(x)))),
+                              max_ans_len)  # 2 for sos and eos tokens
+
+        max_seq_len = max(max_seq_len, max_ans_len)
+
+    # Encode each question and answer.
+    train_x, train_y = encode_and_pad(train_data, tokeniser, max_seq_len, output)
+    val_x, val_y = encode_and_pad(val_data, tokeniser, max_seq_len, output)
+    test_x, test_y = encode_and_pad(test_data, tokeniser, max_seq_len, output)
+
+    train_x, train_y = torch.tensor(train_x), torch.tensor(train_y)
+    val_x, val_y = torch.tensor(val_x), torch.tensor(val_y)
+    test_x, test_y = torch.tensor(test_x), torch.tensor(test_y)
+
+    # Create the data loaders
+    train_data = torch.utils.data.TensorDataset(train_x, train_y)
+    val_data = torch.utils.data.TensorDataset(val_x, val_y)
+    test_data = torch.utils.data.TensorDataset(test_x, test_y)
+
+    train_loader = torch.utils.data.DataLoader(train_data, batch_size=batch_size, shuffle=shuffle)
+    val_loader = torch.utils.data.DataLoader(val_data, batch_size=batch_size, shuffle=shuffle)
+    test_loader = torch.utils.data.DataLoader(test_data, batch_size=batch_size, shuffle=shuffle)
+
+    return train_loader, val_loader, test_loader, max_seq_len
+
+
+def encode_and_pad(data: pd.DataFrame, tokeniser: Any, max_seq_len: int, output: str) -> Tuple[List, List]:
+    """Encodes and pads the data.
+
+    Args:
+        data (pd.DataFrame): The data to encode and pad.
+        tokeniser (Any): The tokeniser to use.
+        max_seq_len (int): The maximum sequence length to use.
+        output (str): The output to use. Options are 'text' and 'num'.
+
+    Returns:
+        Tuple[List, List]: The encoded and padded data.
+    """
+    data = data.copy()
+    encode = tokeniser.encode
+    encoder_dict = tokeniser.lookup_table
+    sos_tok = [encoder_dict['<sos>']]
+    eos_tok = [encoder_dict['<eos>']]
+    pad_tok = [encoder_dict['<pad>']]
+
+    # Encode each question and answer.
+    x = []
+    y = []
+    for i in range(len(data)):
+        x.append(encode(data['question'][i]))
+        # prepend and append sos and eos tokens to the answer
+
+        if output == 'text':
+            # convert float to string
+            data['answer'][i] = str(data['answer'][i])
+            y.append(encode(data['answer'][i]))
+        elif output == 'num':
+            y.append([float(data['answer'][i])])
+        # pad the question with the pad token if they are shorter than the max_seq_len
+        if len(x[-1]) < max_seq_len:
+            x[-1] = x[-1] + pad_tok * (max_seq_len - len(x[-1]))
+
+        if output == 'text':
+            if len(y[-1]) < max_seq_len:
+                y[-1] = sos_tok + y[-1] + eos_tok + pad_tok * (
+                        max_seq_len - len(y[-1]) - 2)
+    return x, y
