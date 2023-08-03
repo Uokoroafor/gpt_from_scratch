@@ -4,11 +4,11 @@ import torch
 
 
 def plot_losses(
-        train_losses: List[float],
-        val_losses: List[float],
-        model_name: Optional[str] = None,
-        num_epochs: Optional[int] = None,
-        saved_path: Optional[str] = None,
+    train_losses: List[float],
+    val_losses: List[float],
+    model_name: Optional[str] = None,
+    num_epochs: Optional[int] = None,
+    saved_path: Optional[str] = None,
 ) -> None:
     """Plot the training and validation losses
     Args:
@@ -42,10 +42,10 @@ def plot_losses(
 
 
 def plot_predictions(
-        predictions: List[float],
-        targets: List[float],
-        model_name: Optional[str] = None,
-        saved_path: Optional[str] = None,
+    predictions: List[float],
+    targets: List[float],
+    model_name: Optional[str] = None,
+    saved_path: Optional[str] = None,
 ) -> None:
     """Plot the predictions and targets
     Args:

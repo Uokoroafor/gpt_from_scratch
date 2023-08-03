@@ -5,20 +5,22 @@ from gpt.models.gpt_encoder import GPTEncoder
 
 
 class DecodeOnlyTransformer(nn.Module):
-    def __init__(self,
-                 src_pad: int,
-                 src_sos: int,
-                 vocab_size_enc: int,
-                 output_size: int,
-                 pooling: str,
-                 d_model: int,
-                 d_ff: int,
-                 max_seq_len: int,
-                 num_layers: Optional[int] = 6,
-                 num_heads: Optional[int] = 8,
-                 dropout_prob: Optional[float] = 0.1,
-                 device: Optional[str] = "cpu", ):
-        """ Constructor class for the transformer. It consists of both the encoder and the decoder.
+    def __init__(
+        self,
+        src_pad: int,
+        src_sos: int,
+        vocab_size_enc: int,
+        output_size: int,
+        pooling: str,
+        d_model: int,
+        d_ff: int,
+        max_seq_len: int,
+        num_layers: Optional[int] = 6,
+        num_heads: Optional[int] = 8,
+        dropout_prob: Optional[float] = 0.1,
+        device: Optional[str] = "cpu",
+    ):
+        """Constructor class for the transformer. It consists of both the encoder and the decoder.
         Args:
             src_pad (int): Source padding index
             src_sos (int): Source start of sentence token
@@ -32,7 +34,7 @@ class DecodeOnlyTransformer(nn.Module):
             num_heads (int): Number of heads in the multi-head attention
             dropout_prob (float): Dropout probability
             device (str): Device - 'cpu' or 'cuda'
-            """
+        """
         super(DecodeOnlyTransformer, self).__init__()
         self.src_pad = src_pad
         self.src_sos = src_sos

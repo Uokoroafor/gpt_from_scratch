@@ -30,10 +30,10 @@ lr = training_hyperparams["learning_rate"]
 data_folder = "data/sinusoidal_functions/"
 file_path = "sinusoidal_numbers.txt"
 function_name = "sin"
-train_data_path = f'train_{function_name}.csv'
-val_data_path = f'val_{function_name}.csv'
-test_data_path = f'test_{function_name}.csv'
-output_type = 'text'  # 'num' or 'text'
+train_data_path = f"train_{function_name}.csv"
+val_data_path = f"val_{function_name}.csv"
+test_data_path = f"test_{function_name}.csv"
+output_type = "text"  # 'num' or 'text'
 
 use_bpe = False  # Set to True to use BPE, False to use a character encoder/decoder
 
@@ -52,8 +52,10 @@ else:
 
 # Create the encoder and decoder dictionaries and the encode and decode functions
 encoder_dict, decoder_dict, encode, decode = (
-    gpt_tokeniser.lookup_table, gpt_tokeniser.reverse_lookup_table,
-    gpt_tokeniser.encode, gpt_tokeniser.decode,
+    gpt_tokeniser.lookup_table,
+    gpt_tokeniser.reverse_lookup_table,
+    gpt_tokeniser.encode,
+    gpt_tokeniser.decode,
 )
 
 encoding_utils = dict(
@@ -65,22 +67,32 @@ train_data = pd.read_csv(data_folder + train_data_path, dtype=str)
 val_data = pd.read_csv(data_folder + val_data_path, dtype=str)
 test_data = pd.read_csv(data_folder + test_data_path, dtype=str)
 
-train_loader, val_loader, test_loader, max_seq_len = make_data_loaders(tokeniser=gpt_tokeniser, train_data=train_data,
-                                                                       val_data=val_data, test_data=test_data,
-                      batch_size=batch_size, output=output_type, shuffle=True)
+train_loader, val_loader, test_loader, max_seq_len = make_data_loaders(
+    tokeniser=gpt_tokeniser,
+    train_data=train_data,
+    val_data=val_data,
+    test_data=test_data,
+    batch_size=batch_size,
+    output=output_type,
+    shuffle=True,
+)
 
 # update block size to be the max sequence length
 block_size = max_seq_len
 
 # Create the model, loss function and optimiser
-loss_fn = nn.MSELoss() if output_type == "num" else nn.CrossEntropyLoss(ignore_index=encoder_dict[gpt_tokeniser.pad])
+loss_fn = (
+    nn.MSELoss()
+    if output_type == "num"
+    else nn.CrossEntropyLoss(ignore_index=encoder_dict[gpt_tokeniser.pad])
+)
 
 model = DecodeOnlyTransformer(
     src_pad=encoder_dict["<pad>"],
     src_sos=encoder_dict["<sos>"],
     vocab_size_enc=len(encoder_dict),
     output_size=1 if output_type == "num" else len(encoder_dict),
-    pooling='max' if output_type == "num" else 'none',
+    pooling="max" if output_type == "num" else "none",
     max_seq_len=block_size,
     num_heads=training_hyperparams["num_heads"],
     num_layers=training_hyperparams["num_layers"],
@@ -99,21 +111,25 @@ device = torch.device(training_hyperparams["device"])
 model = model.to(device)
 loss_fn = loss_fn.to(device)
 
-trainer = PhysicalTrainer(model=model,
-                          optimiser=optimiser,
-                          loss_fn=loss_fn,
-                          training_hyperparameters=training_hyperparams,
-                          encoding_utils=encoding_utils,
-                          scheduler=scheduler)
+trainer = PhysicalTrainer(
+    model=model,
+    optimiser=optimiser,
+    loss_fn=loss_fn,
+    training_hyperparameters=training_hyperparams,
+    encoding_utils=encoding_utils,
+    scheduler=scheduler,
+)
 
-model, _, _ = trainer.train(train_dataloader=train_loader,
-                            val_dataloader=val_loader,
-                            save_model=True,
-                            plotting=True,
-                            verbose=True,
-                            early_stopping=True,
-                            early_stopping_patience=10)
+model, _, _ = trainer.train(
+    train_dataloader=train_loader,
+    val_dataloader=val_loader,
+    save_model=True,
+    plotting=True,
+    verbose=True,
+    early_stopping=True,
+    early_stopping_patience=10,
+)
 
-trainer.log_numerical_outputs(test_loader, decode, "test_log.txt", output_type=output_type)
-
-
+trainer.log_numerical_outputs(
+    test_loader, decode, "test_log.txt", output_type=output_type
+)

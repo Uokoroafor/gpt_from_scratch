@@ -4,6 +4,7 @@ from typing import Optional, Tuple
 
 # A class for logging and printing epoch times
 
+
 class EpochTimer:
     def __init__(self):
         """
@@ -68,7 +69,9 @@ class EpochTimer:
         return self.print_time(self.get_total_time(), label)
 
     @staticmethod
-    def print_time(time_tuple: Tuple[int, int, int], label: Optional[str] = None) -> str:
+    def print_time(
+        time_tuple: Tuple[int, int, int], label: Optional[str] = None
+    ) -> str:
         """
         Print the time elapsed between two times
         """
@@ -76,7 +79,6 @@ class EpochTimer:
             label = "Time elapsed: "
 
         return f"{label} {time_tuple[0]:02d} hour(s) {time_tuple[1]:02d} minute(s) {time_tuple[2]:02d} second(s)"
-
 
     @staticmethod
     def _calculate_lap_time(time1: float, time2: float) -> Tuple[int, int, int]:

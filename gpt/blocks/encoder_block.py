@@ -48,9 +48,7 @@ class EncoderBlock(nn.Module):
         # Layer Norm
         src_norm = self.layer_norm1(src)
         # Self attention
-        self_attention, _ = self.attention(
-            src_norm, src_norm, src_norm, src_mask
-        )
+        self_attention, _ = self.attention(src_norm, src_norm, src_norm, src_mask)
         # Residual connection and dropout
         src = src + self.dropout(self_attention)
         # Layer normalization

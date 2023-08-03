@@ -8,17 +8,17 @@ import torch.distributions as dist
 
 class GPT(nn.Module):
     def __init__(
-            self,
-            trg_pad: int,
-            trg_sos: int,
-            vocab_size_dec: int,
-            d_model: int,
-            d_ff: int,
-            max_seq_len: int,
-            num_layers: Optional[int] = 6,
-            num_heads: Optional[int] = 8,
-            dropout_prob: Optional[float] = 0.1,
-            device: Optional[str] = "cpu",
+        self,
+        trg_pad: int,
+        trg_sos: int,
+        vocab_size_dec: int,
+        d_model: int,
+        d_ff: int,
+        max_seq_len: int,
+        num_layers: Optional[int] = 6,
+        num_heads: Optional[int] = 8,
+        dropout_prob: Optional[float] = 0.1,
+        device: Optional[str] = "cpu",
     ):
         """Constructor class for the transformer. It consists of both the encoder and the decoder.
         Args:
@@ -78,12 +78,12 @@ class GPT(nn.Module):
         return trg_mask
 
     def generate(
-            self,
-            start_token: int,
-            max_length: int,
-            sampled: Optional[bool] = True,
-            k: Optional[int] = 5,
-            temp: Optional[float] = 1.0,
+        self,
+        start_token: int,
+        max_length: int,
+        sampled: Optional[bool] = True,
+        k: Optional[int] = 5,
+        temp: Optional[float] = 1.0,
     ) -> torch.Tensor:
         """
         Generate a sequence given a start token
@@ -110,14 +110,14 @@ class GPT(nn.Module):
                     break
                 if generated.shape[1] > self.max_seq_len:
                     # If the generated sequence is longer than the maximum length, truncate it
-                    generated = generated[:, -self.max_seq_len:]
+                    generated = generated[:, -self.max_seq_len :]
                 output = self.forward(generated)
 
                 if sampled:
                     # apply a temperature to the output logits
                     assert temp > 0.0, "Temperature must be greater than 0.0"
                     assert (
-                            k > 0
+                        k > 0
                     ), "k, the number of top-k tokens, must be greater than 0"
                     # output = output[:, -1, :] / temp
                     output /= temp

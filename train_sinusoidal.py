@@ -59,20 +59,24 @@ encoding_utils = dict(
 )
 
 # Read in the data as pandas dataframes
-train_data = pd.read_csv(data_folder + f'train_{function_name}.csv', dtype=str)
-val_data = pd.read_csv(data_folder + f'val_{function_name}.csv', dtype=str)
-test_data = pd.read_csv(data_folder + f'test_{function_name}.csv', dtype=str)
+train_data = pd.read_csv(data_folder + f"train_{function_name}.csv", dtype=str)
+val_data = pd.read_csv(data_folder + f"val_{function_name}.csv", dtype=str)
+test_data = pd.read_csv(data_folder + f"test_{function_name}.csv", dtype=str)
 
-sos_tok = [encoder_dict['<sos>']]
-eos_tok = [encoder_dict['<eos>']]
-pad_tok = [encoder_dict['<pad>']]
+sos_tok = [encoder_dict["<sos>"]]
+eos_tok = [encoder_dict["<eos>"]]
+pad_tok = [encoder_dict["<pad>"]]
 
 # Find the longest question in the training data. This will be used to set the max sequence length
-max_seq_len = max(max(train_data['question'].apply(lambda x: len(x))),
-                  max(val_data['question'].apply(lambda x: len(x))))
+max_seq_len = max(
+    max(train_data["question"].apply(lambda x: len(x))),
+    max(val_data["question"].apply(lambda x: len(x))),
+)
 
-max_ans_len = 2 + max(max(train_data['answer'].apply(lambda x: len(str(x)))),
-                      max(val_data['answer'].apply(lambda x: len(str(x)))))
+max_ans_len = 2 + max(
+    max(train_data["answer"].apply(lambda x: len(str(x)))),
+    max(val_data["answer"].apply(lambda x: len(str(x)))),
+)
 
 max_seq_len = max(max_seq_len, max_ans_len)
 
@@ -83,43 +87,62 @@ max_seq_len = max(max_seq_len, max_ans_len)
 train_x = []
 train_y = []
 for i in range(len(train_data)):
-    train_x.append(encode(train_data['question'][i]))
+    train_x.append(encode(train_data["question"][i]))
     # prepend and append sos and eos tokens to the answer
 
     # convert float to string
-    train_data['answer'][i] = str(train_data['answer'][i])
-    train_y.append(encode(train_data['answer'][i]))
+    train_data["answer"][i] = str(train_data["answer"][i])
+    train_y.append(encode(train_data["answer"][i]))
     # pad the question with the pad token if they are shorter than the max_seq_len
     if len(train_x[-1]) < max_seq_len:
-        train_x[-1] = train_x[-1] + [encoder_dict['<pad>']] * (max_seq_len - len(train_x[-1]))
+        train_x[-1] = train_x[-1] + [encoder_dict["<pad>"]] * (
+            max_seq_len - len(train_x[-1])
+        )
     if len(train_y[-1]) < max_seq_len:
-        train_y[-1] = sos_tok + train_y[-1] + eos_tok + [encoder_dict['<pad>']] * (max_seq_len - len(train_y[-1]) - 2)
+        train_y[-1] = (
+            sos_tok
+            + train_y[-1]
+            + eos_tok
+            + [encoder_dict["<pad>"]] * (max_seq_len - len(train_y[-1]) - 2)
+        )
 
 val_x = []
 val_y = []
 for i in range(len(val_data)):
-    val_x.append(encode(val_data['question'][i]))
+    val_x.append(encode(val_data["question"][i]))
     # convert float to string
-    val_data['answer'][i] = str(val_data['answer'][i])
-    val_y.append(encode(val_data['answer'][i]))
+    val_data["answer"][i] = str(val_data["answer"][i])
+    val_y.append(encode(val_data["answer"][i]))
     # pad the question with the pad token if they are shorter than the max_seq_len
     if len(val_x[-1]) < max_seq_len:
-        val_x[-1] = val_x[-1] + [encoder_dict['<pad>']] * (max_seq_len - len(val_x[-1]))
+        val_x[-1] = val_x[-1] + [encoder_dict["<pad>"]] * (max_seq_len - len(val_x[-1]))
     if len(val_y[-1]) < max_seq_len:
-        val_y[-1] = sos_tok + val_y[-1] + eos_tok + [encoder_dict['<pad>']] * (max_seq_len - len(val_y[-1]) - 2)
+        val_y[-1] = (
+            sos_tok
+            + val_y[-1]
+            + eos_tok
+            + [encoder_dict["<pad>"]] * (max_seq_len - len(val_y[-1]) - 2)
+        )
 
 test_x = []
 test_y = []
 for i in range(len(test_data)):
-    test_x.append(encode(test_data['question'][i]))
+    test_x.append(encode(test_data["question"][i]))
     # convert float to string
-    test_data['answer'][i] = str(test_data['answer'][i])
-    test_y.append(encode(test_data['answer'][i]))
+    test_data["answer"][i] = str(test_data["answer"][i])
+    test_y.append(encode(test_data["answer"][i]))
     # pad the question with the pad token if they are shorter than the max_seq_len
     if len(test_x[-1]) < max_seq_len:
-        test_x[-1] = test_x[-1] + [encoder_dict['<pad>']] * (max_seq_len - len(test_x[-1]))
+        test_x[-1] = test_x[-1] + [encoder_dict["<pad>"]] * (
+            max_seq_len - len(test_x[-1])
+        )
     if len(test_y[-1]) < max_seq_len:
-        test_y[-1] = sos_tok + test_y[-1] + eos_tok + [encoder_dict['<pad>']] * (max_seq_len - len(test_y[-1]) - 2)
+        test_y[-1] = (
+            sos_tok
+            + test_y[-1]
+            + eos_tok
+            + [encoder_dict["<pad>"]] * (max_seq_len - len(test_y[-1]) - 2)
+        )
 
 train_x = torch.tensor(train_x)
 train_y = torch.tensor(train_y)
@@ -135,9 +158,13 @@ train_data = torch.utils.data.TensorDataset(train_x, train_y)
 val_data = torch.utils.data.TensorDataset(val_x, val_y)
 test_data = torch.utils.data.TensorDataset(test_x, test_y)
 
-train_loader = torch.utils.data.DataLoader(train_data, batch_size=batch_size, shuffle=True)
+train_loader = torch.utils.data.DataLoader(
+    train_data, batch_size=batch_size, shuffle=True
+)
 val_loader = torch.utils.data.DataLoader(val_data, batch_size=batch_size, shuffle=True)
-test_loader = torch.utils.data.DataLoader(test_data, batch_size=batch_size, shuffle=True)
+test_loader = torch.utils.data.DataLoader(
+    test_data, batch_size=batch_size, shuffle=True
+)
 
 # update block size to be the max sequence length
 block_size = max_seq_len
@@ -150,7 +177,7 @@ model = DecodeOnlyTransformer(
     src_sos=encoder_dict["<sos>"],
     vocab_size_enc=len(encoder_dict),
     output_size=len(encoder_dict),
-    pooling='none',
+    pooling="none",
     max_seq_len=block_size,
     num_heads=training_hyperparams["num_heads"],
     num_layers=training_hyperparams["num_layers"],
@@ -200,7 +227,7 @@ optimizer = optimiser
 
 train_losses = []
 val_losses = []
-best_val_loss = float('inf')
+best_val_loss = float("inf")
 counter = 0
 # Training loop
 for epoch in range(max_iters):
@@ -231,12 +258,14 @@ for epoch in range(max_iters):
         train_losses.append(train_loss)
 
         # Print training and validation loss
-        print(f"Epoch [{epoch + 1}/{max_iters}] - Train Loss: {train_loss:.4f}, Est Val Loss: {val_loss:.4f}")
+        print(
+            f"Epoch [{epoch + 1}/{max_iters}] - Train Loss: {train_loss:.4f}, Est Val Loss: {val_loss:.4f}"
+        )
 
         # Save the model if the validation loss is the best we've seen so far
         if val_loss < best_val_loss:
             best_val_loss = val_loss
-            torch.save(model, f'{function_name}_best_model.pt')
+            torch.save(model, f"{function_name}_best_model.pt")
             counter = 0
 
         else:
@@ -269,9 +298,11 @@ with torch.no_grad():
         targets.extend(target.view(-1).tolist())
         if batch_idx % (len(test_loader) // 10) == 0:
             with open(f"{function_name}_numbers_predictions.txt", "a") as f:
-                f.write('Question is ' + ''.join(decode(inputs[0].tolist(), True)) + '\n')
-                f.write('Target is ' + ''.join(decode(target[0].tolist())) + '\n')
-                pred = ''.join(decode(outpt.argmax(-1).tolist()))
+                f.write(
+                    "Question is " + "".join(decode(inputs[0].tolist(), True)) + "\n"
+                )
+                f.write("Target is " + "".join(decode(target[0].tolist())) + "\n")
+                pred = "".join(decode(outpt.argmax(-1).tolist()))
                 f.write(f"Prediction is {pred.split('<eos>')[0] + '<eos>'}" + "\n\n")
 
     test_loss /= len(test_loader)

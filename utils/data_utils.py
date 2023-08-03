@@ -12,7 +12,7 @@ import random
 
 
 def read_in_data(
-        filepath: str, make_dict: Optional[bool] = True
+    filepath: str, make_dict: Optional[bool] = True
 ) -> Union[Tuple[Dict[str, List[str]], str], str]:
     """Read in the data from a file and makes the character dictionary.
     Args:
@@ -127,7 +127,7 @@ def get_numerics_from_string(string: str) -> int:
 
 
 def text_to_tensor_(
-        text: str, tokeniser: Any, add_sos_eos: Optional[bool] = True
+    text: str, tokeniser: Any, add_sos_eos: Optional[bool] = True
 ) -> torch.Tensor:
     """Convert a string of text into a tensor of token indices using sent_tokeniser. This version adds <sos> and <eos>
     tokens to the start and end of each sentence. It also adds a <newline> token to the end of each sentence.
@@ -165,7 +165,8 @@ def text_to_tensor_(
 
 
 def text_to_tensor(
-        text: str, tokeniser: Any, add_sos_eos: Optional[bool] = True) -> torch.Tensor:
+    text: str, tokeniser: Any, add_sos_eos: Optional[bool] = True
+) -> torch.Tensor:
     """Convert a string of text into a tensor of token indices using sent_tokeniser.
     Args:
         text: A string of text.
@@ -192,10 +193,16 @@ def text_to_tensor(
     return torch.tensor(encoded_text, dtype=torch.long)
 
 
-def data_prep(folder_loc: str, file_name: str, line_delimiter: str, ans_delimiter: str,
-              split: Optional[List[float]] = None, save_indices: Optional[bool] = False,
-              split_method: Optional[str] = "train_val_test") -> None:
-    """ Prepares the data for training and testing.
+def data_prep(
+    folder_loc: str,
+    file_name: str,
+    line_delimiter: str,
+    ans_delimiter: str,
+    split: Optional[List[float]] = None,
+    save_indices: Optional[bool] = False,
+    split_method: Optional[str] = "train_val_test",
+) -> None:
+    """Prepares the data for training and testing.
 
     Args:
         folder_loc (str): The location of the folder containing the data.
@@ -222,7 +229,9 @@ def data_prep(folder_loc: str, file_name: str, line_delimiter: str, ans_delimite
         if split is None:
             raise ValueError("A split must be provided when saving indices.")
 
-        assert split_method == "train_val_test", "Indices can only be saved for 'train_val_test' method."
+        assert (
+            split_method == "train_val_test"
+        ), "Indices can only be saved for 'train_val_test' method."
 
         # Randomly shuffle the indices
         indices = list(range(len(data)))
@@ -233,14 +242,24 @@ def data_prep(folder_loc: str, file_name: str, line_delimiter: str, ans_delimite
         tr_weights, val_weights, test_weights = split
 
         # Split the indices into train, validation and test sets
-        train_indices = indices[:int(tr_weights * len(indices))]
-        val_indices = indices[int(tr_weights * len(indices)):int((tr_weights + val_weights) * len(indices))]
-        test_indices = indices[int((tr_weights + val_weights) * len(indices)):]
+        train_indices = indices[: int(tr_weights * len(indices))]
+        val_indices = indices[
+            int(tr_weights * len(indices)) : int(
+                (tr_weights + val_weights) * len(indices)
+            )
+        ]
+        test_indices = indices[int((tr_weights + val_weights) * len(indices)) :]
 
         # Save the indices
-        pd.DataFrame(train_indices).to_csv(os.path.join(folder_loc, "train_indices.csv"), index=False)
-        pd.DataFrame(val_indices).to_csv(os.path.join(folder_loc, "val_indices.csv"), index=False)
-        pd.DataFrame(test_indices).to_csv(os.path.join(folder_loc, "test_indices.csv"), index=False)
+        pd.DataFrame(train_indices).to_csv(
+            os.path.join(folder_loc, "train_indices.csv"), index=False
+        )
+        pd.DataFrame(val_indices).to_csv(
+            os.path.join(folder_loc, "val_indices.csv"), index=False
+        )
+        pd.DataFrame(test_indices).to_csv(
+            os.path.join(folder_loc, "test_indices.csv"), index=False
+        )
     else:
         # If index files already exist, use them
 
@@ -258,21 +277,31 @@ def data_prep(folder_loc: str, file_name: str, line_delimiter: str, ans_delimite
         test_data = [data[i] for i in test_indices]
 
     # Save the data as csv files
-    pd.DataFrame(train_data, columns=["question", "answer"]).to_csv(os.path.join(folder_loc, "train_data.csv"),
-                                                                    index=False)
-    pd.DataFrame(val_data, columns=["question", "answer"]).to_csv(os.path.join(folder_loc, "val_data.csv"),
-                                                                  index=False)
+    pd.DataFrame(train_data, columns=["question", "answer"]).to_csv(
+        os.path.join(folder_loc, "train_data.csv"), index=False
+    )
+    pd.DataFrame(val_data, columns=["question", "answer"]).to_csv(
+        os.path.join(folder_loc, "val_data.csv"), index=False
+    )
 
     if split_method == "train_val_test":
-        pd.DataFrame(test_data, columns=["question", "answer"]).to_csv(os.path.join(folder_loc, "test_data.csv"),
-                                                                       index=False)
+        pd.DataFrame(test_data, columns=["question", "answer"]).to_csv(
+            os.path.join(folder_loc, "test_data.csv"), index=False
+        )
 
 
-def make_data_loaders(tokeniser: Any, train_data: pd.DataFrame, val_data: pd.DataFrame,
-                      test_data: pd.DataFrame, batch_size: int = 32, max_seq_len: Optional[int] = None,
-                      max_ans_len: Optional[int] = None, output: str = 'text',
-                      shuffle: bool = True) -> Tuple[DataLoader, DataLoader, DataLoader, int]:
-    """ Creates the data loaders for the training validation and testing data.
+def make_data_loaders(
+    tokeniser: Any,
+    train_data: pd.DataFrame,
+    val_data: pd.DataFrame,
+    test_data: pd.DataFrame,
+    batch_size: int = 32,
+    max_seq_len: Optional[int] = None,
+    max_ans_len: Optional[int] = None,
+    output: str = "text",
+    shuffle: bool = True,
+) -> Tuple[DataLoader, DataLoader, DataLoader, int]:
+    """Creates the data loaders for the training validation and testing data.
 
     Args:
         tokeniser (Any): The tokeniser to use.
@@ -296,16 +325,20 @@ def make_data_loaders(tokeniser: Any, train_data: pd.DataFrame, val_data: pd.Dat
         max_ans_len = 0
 
     # Find the longest question in the training data. This will be used to set the max sequence length
-    max_seq_len = max(max(train_data['question'].apply(lambda x: len(x))),
-                      max(val_data['question'].apply(lambda x: len(x))),
-                      max(test_data['question'].apply(lambda x: len(x))),
-                      max_seq_len)
+    max_seq_len = max(
+        max(train_data["question"].apply(lambda x: len(x))),
+        max(val_data["question"].apply(lambda x: len(x))),
+        max(test_data["question"].apply(lambda x: len(x))),
+        max_seq_len,
+    )
 
-    if output == 'text':
-        max_ans_len = 2 + max(max(train_data['answer'].apply(lambda x: len(str(x)))),
-                              max(val_data['answer'].apply(lambda x: len(str(x)))),
-                              max(test_data['answer'].apply(lambda x: len(str(x)))),
-                              max_ans_len)  # 2 for sos and eos tokens
+    if output == "text":
+        max_ans_len = 2 + max(
+            max(train_data["answer"].apply(lambda x: len(str(x)))),
+            max(val_data["answer"].apply(lambda x: len(str(x)))),
+            max(test_data["answer"].apply(lambda x: len(str(x)))),
+            max_ans_len,
+        )  # 2 for sos and eos tokens
 
         max_seq_len = max(max_seq_len, max_ans_len)
 
@@ -323,14 +356,22 @@ def make_data_loaders(tokeniser: Any, train_data: pd.DataFrame, val_data: pd.Dat
     val_data = torch.utils.data.TensorDataset(val_x, val_y)
     test_data = torch.utils.data.TensorDataset(test_x, test_y)
 
-    train_loader = torch.utils.data.DataLoader(train_data, batch_size=batch_size, shuffle=shuffle)
-    val_loader = torch.utils.data.DataLoader(val_data, batch_size=batch_size, shuffle=shuffle)
-    test_loader = torch.utils.data.DataLoader(test_data, batch_size=batch_size, shuffle=shuffle)
+    train_loader = torch.utils.data.DataLoader(
+        train_data, batch_size=batch_size, shuffle=shuffle
+    )
+    val_loader = torch.utils.data.DataLoader(
+        val_data, batch_size=batch_size, shuffle=shuffle
+    )
+    test_loader = torch.utils.data.DataLoader(
+        test_data, batch_size=batch_size, shuffle=shuffle
+    )
 
     return train_loader, val_loader, test_loader, max_seq_len
 
 
-def encode_and_pad(data: pd.DataFrame, tokeniser: Any, max_seq_len: int, output: str) -> Tuple[List, List]:
+def encode_and_pad(
+    data: pd.DataFrame, tokeniser: Any, max_seq_len: int, output: str
+) -> Tuple[List, List]:
     """Encodes and pads the data.
 
     Args:
@@ -345,29 +386,30 @@ def encode_and_pad(data: pd.DataFrame, tokeniser: Any, max_seq_len: int, output:
     data = data.copy()
     encode = tokeniser.encode
     encoder_dict = tokeniser.lookup_table
-    sos_tok = [encoder_dict['<sos>']]
-    eos_tok = [encoder_dict['<eos>']]
-    pad_tok = [encoder_dict['<pad>']]
+    sos_tok = [encoder_dict["<sos>"]]
+    eos_tok = [encoder_dict["<eos>"]]
+    pad_tok = [encoder_dict["<pad>"]]
 
     # Encode each question and answer.
     x = []
     y = []
     for i in range(len(data)):
-        x.append(encode(data['question'][i]))
+        x.append(encode(data["question"][i]))
         # prepend and append sos and eos tokens to the answer
 
-        if output == 'text':
+        if output == "text":
             # convert float to string
-            data['answer'][i] = str(data['answer'][i])
-            y.append(encode(data['answer'][i]))
-        elif output == 'num':
-            y.append([float(data['answer'][i])])
+            data["answer"][i] = str(data["answer"][i])
+            y.append(encode(data["answer"][i]))
+        elif output == "num":
+            y.append([float(data["answer"][i])])
         # pad the question with the pad token if they are shorter than the max_seq_len
         if len(x[-1]) < max_seq_len:
             x[-1] = x[-1] + pad_tok * (max_seq_len - len(x[-1]))
 
-        if output == 'text':
+        if output == "text":
             if len(y[-1]) < max_seq_len:
-                y[-1] = sos_tok + y[-1] + eos_tok + pad_tok * (
-                        max_seq_len - len(y[-1]) - 2)
+                y[-1] = (
+                    sos_tok + y[-1] + eos_tok + pad_tok * (max_seq_len - len(y[-1]) - 2)
+                )
     return x, y

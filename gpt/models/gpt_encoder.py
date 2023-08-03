@@ -9,16 +9,16 @@ from gpt.layers.layer_norm import LayerNorm
 
 class GPTEncoder(nn.Module):
     def __init__(
-            self,
-            vocab_size_enc: int,
-            output_size: int,
-            d_model: int,
-            max_seq_len: int,
-            num_layers: int,
-            num_heads: int,
-            d_ff: int,
-            dropout_prob: float,
-            pooling: Optional[str] = "mean",
+        self,
+        vocab_size_enc: int,
+        output_size: int,
+        d_model: int,
+        max_seq_len: int,
+        num_layers: int,
+        num_heads: int,
+        d_ff: int,
+        dropout_prob: float,
+        pooling: Optional[str] = "mean",
     ):
         """Constructor class for the decoder of GPT model which is a decoder-only transformer
 
@@ -64,7 +64,9 @@ class GPTEncoder(nn.Module):
 
         self.final_norm = LayerNorm(d_model)
 
-        self.lm_head = nn.Linear(d_model, output_size)   # output_size is the required size of the output
+        self.lm_head = nn.Linear(
+            d_model, output_size
+        )  # output_size is the required size of the output
 
         self.apply(self._init_weights)
 
@@ -86,7 +88,7 @@ class GPTEncoder(nn.Module):
             module.weight.data.fill_(1.0)
 
     def forward(self, src: torch.Tensor, src_mask: torch.Tensor) -> torch.Tensor:
-        """ Forward pass for the decoder of GPT model
+        """Forward pass for the decoder of GPT model
 
         Args:
             src (torch.Tensor): Source sequence
