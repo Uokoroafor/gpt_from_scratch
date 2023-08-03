@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Dict
 import torch
 from torch import nn
 from gpt.models.gpt_encoder import GPTEncoder
@@ -83,3 +83,20 @@ class DecodeOnlyTransformer(nn.Module):
         src_mask = src_pad_mask.expand(-1, src.size(1), -1)
 
         return src_mask
+
+    def count_parameters(self) -> Dict[str, int]:
+        """Counts the parameters of the model and returns a dictionary
+        Returns:
+            Dict[str, int]: Dictionary of the parameter counts
+        """
+        counts = {}
+        for name, module in self.named_modules():
+            if isinstance(module, nn.Module):
+                count = sum(p.numel() for p in module.parameters() if p.requires_grad)
+
+                # format the counts to have commas for thousands
+                count = "{:,}".format(count)
+                counts[name] = count
+        # Change name of the first key to total and format the value to integer
+        counts["total"] = int(counts.pop("").replace(",", ""))
+        return counts
