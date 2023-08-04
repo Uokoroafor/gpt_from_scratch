@@ -457,6 +457,11 @@ class PhysicalTrainer(Trainer):
                 val_loss = self.training_loop(val_dataloader, method="val")
                 val_losses.append(val_loss)
 
+                if len(val_losses) != len(train_losses):
+                    print("ERROR: train and val losses are not the same length")
+                    print(f"train losses: {len(train_losses)}, val losses: {len(val_losses)}")
+                    raise ValueError
+
                 if i % self.eval_every == 0:
                     logger.log_info(
                         f"At Iteration: {i + 1}/{self.epochs}, Train loss: {train_loss: .4f}, "
@@ -488,6 +493,8 @@ class PhysicalTrainer(Trainer):
                     save_model_path = self.save_best_model(save_model_path)
 
                 if stop_training:
+                    # Set number of epochs to the current iteration
+                    self.epochs = i + 1
                     break
 
 
