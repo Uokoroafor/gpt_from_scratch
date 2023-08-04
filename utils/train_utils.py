@@ -432,6 +432,7 @@ class PhysicalTrainer(Trainer):
         train_losses = []
         val_losses = []
         lowest_val_loss = float("inf")
+        stop_training = False
         logger = TrainingLogger(
             self.path + "/training_logs/training_log.txt",
             name="training_log",
@@ -476,7 +477,7 @@ class PhysicalTrainer(Trainer):
 
                 if early_stopping and i > 0 and count >= early_stopping_patience:
                     logger.log_info(f"Stopping early after {i} iterations")
-                    break
+                    stop_training = True
 
                 if self.save_every is not None and i % self.save_every == 0:
                     self.save_model(
@@ -486,8 +487,9 @@ class PhysicalTrainer(Trainer):
                 if save_model and count == 0:
                     save_model_path = self.save_best_model(save_model_path)
 
-                if i == self.epochs:
+                if stop_training:
                     break
+
 
             timer.lap()
             logger.log_info(timer.print_total_time(label="Total time taken: "))
@@ -522,6 +524,8 @@ class PhysicalTrainer(Trainer):
 
         except KeyboardInterrupt:
             logger.log_info("Training interrupted by the user")
+            # Exit the program
+            sys.exit()
 
         return self.model, train_losses, val_losses
 
