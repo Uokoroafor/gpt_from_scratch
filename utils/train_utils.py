@@ -488,8 +488,6 @@ class PhysicalTrainer(Trainer):
                     save_model_path = self.save_best_model(save_model_path)
 
                 if stop_training:
-                    # Set number of epochs to the current iteration
-                    self.epochs = i + 1
                     break
 
 
@@ -517,7 +515,6 @@ class PhysicalTrainer(Trainer):
                     train_losses,
                     val_losses,
                     model_name=type(self.model).__name__,
-                    num_epochs=self.epochs,
                     saved_path=plot_save_path,
                 )
         except Exception as e:
