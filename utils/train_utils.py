@@ -11,13 +11,13 @@ import sys
 
 class Trainer:
     def __init__(
-        self,
-        model: nn.Module,
-        optimiser: torch.optim.Optimizer,
-        loss_fn: torch.nn.modules.loss._Loss,
-        training_hyperparameters: Dict,
-        encoding_utils: Dict,
-        scheduler: Optional[torch.optim.lr_scheduler._LRScheduler] = None,
+            self,
+            model: nn.Module,
+            optimiser: torch.optim.Optimizer,
+            loss_fn: torch.nn.modules.loss._Loss,
+            training_hyperparameters: Dict,
+            encoding_utils: Dict,
+            scheduler: Optional[torch.optim.lr_scheduler._LRScheduler] = None,
     ):
         """Constructor class for Trainer used to train a transformer model for language modelling and text generation
         Args:
@@ -71,14 +71,14 @@ class Trainer:
             pickle.dump(self.encoding_utils, file)
 
     def train(
-        self,
-        train_data: torch.Tensor,
-        val_data: torch.Tensor,
-        save_model: bool = True,
-        save_model_path: Optional[str] = None,
-        plotting: bool = True,
-        verbose: bool = True,
-        early_stopping: bool = False,
+            self,
+            train_data: torch.Tensor,
+            val_data: torch.Tensor,
+            save_model: bool = True,
+            save_model_path: Optional[str] = None,
+            plotting: bool = True,
+            verbose: bool = True,
+            early_stopping: bool = False,
     ):
         """Train the model
         Args:
@@ -133,7 +133,7 @@ class Trainer:
                         chars = decode(
                             self.model.generate(
                                 start_token=self.model.trg_sos
-                                * torch.ones((1, 1), dtype=torch.long),
+                                            * torch.ones((1, 1), dtype=torch.long),
                                 max_length=30,
                                 sampled=False,
                             )[0].tolist()
@@ -151,9 +151,9 @@ class Trainer:
                     )
 
                     if (
-                        early_stopping
-                        and i > 0
-                        and val_losses[-1] > val_losses[-2] > val_losses[-3]
+                            early_stopping
+                            and i > 0
+                            and val_losses[-1] > val_losses[-2] > val_losses[-3]
                     ):
                         logger.log_info(f"Stopping early after {i} iterations")
                         break
@@ -229,10 +229,10 @@ class Trainer:
         return self.model, train_losses, val_losses
 
     def evaluate(
-        self,
-        test_data: torch.Tensor,
-        verbose: bool = True,
-        num_iters: Optional[int] = None,
+            self,
+            test_data: torch.Tensor,
+            verbose: bool = True,
+            num_iters: Optional[int] = None,
     ) -> float:
         """Evaluate the model
         Args:
@@ -296,7 +296,7 @@ class Trainer:
         return lowest_val_loss
 
     def get_batch(
-        self, split: Optional[str] = None, data: Optional[torch.Tensor] = None
+            self, split: Optional[str] = None, data: Optional[torch.Tensor] = None
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         """Get a batch of data from the train, validation or a provided data tensor
         Args:
@@ -316,8 +316,8 @@ class Trainer:
             else:
                 raise ValueError(f"Unknown split: '{split}'")
         ix = torch.randint(len(data) - self.max_seq_len, (self.batch_size,))
-        x = torch.stack([data[i : i + self.max_seq_len] for i in ix])
-        y = torch.stack([data[i + 1 : i + self.max_seq_len + 1] for i in ix])
+        x = torch.stack([data[i: i + self.max_seq_len] for i in ix])
+        y = torch.stack([data[i + 1: i + self.max_seq_len + 1] for i in ix])
         x, y = x.to(self.device), y.to(
             self.device
         )  # Transfer the data to the GPU if we are using it
@@ -356,7 +356,7 @@ class Trainer:
         return test_loss.item()
 
     def estimate_test_loss(
-        self, test_data: torch.Tensor, num_iters: int = 100
+            self, test_data: torch.Tensor, num_iters: int = 100
     ) -> float:
         """Estimate the loss on the test data by sampling a number of batches
         Args:
@@ -377,13 +377,13 @@ class Trainer:
 
 class PhysicalTrainer(Trainer):
     def __init__(
-        self,
-        model: nn.Module,
-        optimiser: torch.optim.Optimizer,
-        loss_fn: torch.nn.modules.loss._Loss,
-        training_hyperparameters: Dict,
-        encoding_utils: Dict,
-        scheduler: Optional[torch.optim.lr_scheduler._LRScheduler] = None,
+            self,
+            model: nn.Module,
+            optimiser: torch.optim.Optimizer,
+            loss_fn: torch.nn.modules.loss._Loss,
+            training_hyperparameters: Dict,
+            encoding_utils: Dict,
+            scheduler: Optional[torch.optim.lr_scheduler._LRScheduler] = None,
     ):
         """Initialize the trainer for the physical model. This is for training on the generated physical scenarios.
         No generation is done during training so this method is obviated. The training data is loaded from the
@@ -407,15 +407,15 @@ class PhysicalTrainer(Trainer):
         )
 
     def train(
-        self,
-        train_dataloader: torch.utils.data.DataLoader,
-        val_dataloader: torch.utils.data.DataLoader,
-        save_model: bool = True,
-        save_model_path: Optional[str] = None,
-        plotting: bool = True,
-        verbose: bool = True,
-        early_stopping: bool = False,
-        early_stopping_patience: int = 10,
+            self,
+            train_dataloader: torch.utils.data.DataLoader,
+            val_dataloader: torch.utils.data.DataLoader,
+            save_model: bool = True,
+            save_model_path: Optional[str] = None,
+            plotting: bool = True,
+            verbose: bool = True,
+            early_stopping: bool = False,
+            early_stopping_patience: int = 10,
     ):
         """Train the model
 
@@ -490,7 +490,6 @@ class PhysicalTrainer(Trainer):
                 if stop_training:
                     break
 
-
             timer.lap()
             logger.log_info(timer.print_total_time(label="Total time taken: "))
 
@@ -529,7 +528,7 @@ class PhysicalTrainer(Trainer):
         return self.model, train_losses, val_losses
 
     def training_loop(
-        self, dataloader: torch.utils.data.DataLoader, method: str = "train"
+            self, dataloader: torch.utils.data.DataLoader, method: str = "train"
     ) -> float:
         """Training loop for the model
 
@@ -583,7 +582,7 @@ class PhysicalTrainer(Trainer):
         return total_loss / len(dataloader)
 
     def update_best_model_dict_(
-        self, loss_val: float, lowest_val_loss: float, count: int
+            self, loss_val: float, lowest_val_loss: float, count: int
     ) -> Tuple[float, int]:
         """Update the best model dictionary if the validation loss is the lowest so far
         Args:
@@ -623,11 +622,11 @@ class PhysicalTrainer(Trainer):
         return test_loss.item()
 
     def log_numerical_outputs(
-        self,
-        dataloader: torch.utils.data.DataLoader,
-        decode: Callable,
-        log_name: Optional[str] = None,
-        output_type: str = "num",
+            self,
+            dataloader: torch.utils.data.DataLoader,
+            decode: Callable,
+            log_name: Optional[str] = None,
+            output_type: str = "num",
     ):
         """Log the numerical outputs of the model to a file. It also plots the predictions vs the targets
         Args:
@@ -712,6 +711,9 @@ class PhysicalTrainer(Trainer):
                     self.logger.log_warning(
                         f"Could not convert {count} predictions to floats"
                     )
+                # log MSE error
+                self.logger.log_info(f"MSE Error on converted numerical outputs "
+                                     f"is {nn.MSELoss()(torch.tensor(predictions), torch.tensor(targets)):.4f}")
 
             plot_predictions(
                 predictions=predictions,
@@ -722,7 +724,7 @@ class PhysicalTrainer(Trainer):
 
     @staticmethod
     def convert_string_to_float(
-        predictions: List[str], targets: List[str], decode: Callable
+            predictions: List[str], targets: List[str], decode: Callable
     ) -> Tuple[List[float], List[float], int]:
         """Convert the predictions and targets from strings to floats
         Args:
