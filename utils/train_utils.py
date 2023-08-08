@@ -118,8 +118,8 @@ class Trainer:
                 if i % self.eval_every == 0:
                     losses = self.estimate_loss()
                     logger.log_info(
-                        f'At Iteration: {max(1, i)}/{self.epochs}, Train loss: {losses["train"]: .4f}, '
-                        f'Val loss: {losses["val"]: .4f}'
+                        f'At Iteration: {max(1, i)}/{self.epochs}, Train loss: {losses["train"]: ,.4f}, '
+                        f'Val loss: {losses["val"]: ,.4f}'
                     )
 
                     timer.lap()
@@ -248,11 +248,11 @@ class Trainer:
         if num_iters is None:
             test_loss = self.calculate_test_loss(test_data)
             if verbose:
-                print(f"Test loss: {test_loss: .4f}")
+                print(f"Test loss: {test_loss: ,.4f}")
         else:
             test_loss = self.estimate_test_loss(test_data, num_iters=num_iters)
             if verbose:
-                print(f"Test loss: {test_loss: .4f}")
+                print(f"Test loss: {test_loss: ,.4f}")
         return test_loss
 
     def set_training_hyperparameters(self, **kwargs):
@@ -459,8 +459,8 @@ class PhysicalTrainer(Trainer):
 
                 if i % self.eval_every == 0:
                     logger.log_info(
-                        f"At Iteration: {i + 1}/{self.epochs}, Train loss: {train_loss: .4f}, "
-                        f"Val loss: {val_loss: .4f}"
+                        f"At Iteration: {i + 1}/{self.epochs}, Train loss: {train_loss: ,.4f}, "
+                        f"Val loss: {val_loss: ,.4f}"
                     )
 
                     timer.lap()
