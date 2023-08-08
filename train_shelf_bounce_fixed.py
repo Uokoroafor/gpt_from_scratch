@@ -26,9 +26,10 @@ max_iters = training_hyperparams["epochs"]
 lr = training_hyperparams["learning_rate"]
 
 # data_folder = "data/madlibs/"
-data_folder = "data/shelf_bounce/var_elasticity/"
-file_path = "bounce_log_var_elasticity.txt"
-function_name = "var_elasticity"
+data_folder = "data/shelf_bounce/all_fixed/"
+file_path = "bounce_log_fixed.txt"
+function_name = "fixed_bounce"
+
 train_data_path = f"train_{function_name}.csv"
 val_data_path = f"val_{function_name}.csv"
 test_data_path = f"test_{function_name}.csv"
