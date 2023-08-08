@@ -745,7 +745,7 @@ class PhysicalTrainer(Trainer):
 
         for i in range(len(predictions)):
             try:
-                pred = "".join(decode(predictions[i], True))
+                pred = "".join(decode(predictions[i]))
                 pred = pred.split('<eos>')[0].replace('<sos>', '')
                 pred_out.append(float(pred))
                 target_out.append(float("".join(decode(targets[i], True))))
