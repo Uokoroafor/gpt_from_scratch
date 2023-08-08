@@ -58,7 +58,7 @@ def plot_predictions(
 
     # Scatter of predictions vs targets with a diagonal line
     plt.scatter(predictions, targets, s=1)
-    plt.plot(targets, targets, color="red", label="Actual")
+    plt.plot(targets, targets, color="red", label="Perfect Predictions", linestyle="dashed")
     plt.title(f"Predictions vs Targets for the {model_name} model")
     plt.xlabel("Predictions")
     plt.ylabel("Targets")

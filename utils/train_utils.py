@@ -682,12 +682,16 @@ class PhysicalTrainer(Trainer):
                             if output_type == "text":
                                 f.write(
                                     "Target is "
-                                    + "".join(decode(target[i, :].tolist()))
+                                    + "".join(decode(target[i, :].tolist(), True))
                                     + "\n"
                                 )
-                                pred = "".join(decode(output[i, :].argmax(-1).tolist()))
+                                pred = "".join(decode(output[i, :].argmax(-1).tolist(),True))
+                                # f.write(
+                                #     f"Prediction is {pred.split('<eos>')[0] + '<eos>'}"
+                                #     + "\n\n"
+                                # )
                                 f.write(
-                                    f"Prediction is {pred.split('<eos>')[0] + '<eos>'}"
+                                    f"Prediction is {pred}"
                                     + "\n\n"
                                 )
                             else:
