@@ -685,13 +685,9 @@ class PhysicalTrainer(Trainer):
                                     + "".join(decode(target[i, :].tolist(), True))
                                     + "\n"
                                 )
-                                pred = "".join(decode(output[i, :].argmax(-1).tolist(),True))
-                                # f.write(
-                                #     f"Prediction is {pred.split('<eos>')[0] + '<eos>'}"
-                                #     + "\n\n"
-                                # )
+                                pred = "".join(decode(output[i, :].argmax(-1).tolist()))
                                 f.write(
-                                    f"Prediction is {pred}"
+                                    f"Prediction is {pred.split('<eos>')[0].replace('<sos>', '')}"
                                     + "\n\n"
                                 )
                             else:
@@ -750,6 +746,7 @@ class PhysicalTrainer(Trainer):
         for i in range(len(predictions)):
             try:
                 pred = "".join(decode(predictions[i], True))
+                pred = pred.split('<eos>')[0].replace('<sos>', '')
                 pred_out.append(float(pred))
                 target_out.append(float("".join(decode(targets[i], True))))
 
