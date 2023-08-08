@@ -26,7 +26,8 @@ class Trainer:
             loss_fn (torch.nn.modules.loss._Loss): Loss function to use for training
             training_hyperparameters (Dict): Dictionary containing training hyperparameters
             encoding_utils (Dict): Dictionary containing encoder/decoder dictionaries and functions
-            scheduler (Optional[torch.optim.lr_scheduler._LRScheduler], optional): Learning rate scheduler. Defaults to None.
+            scheduler (Optional[torch.optim.lr_scheduler._LRScheduler], optional): Learning rate scheduler.
+            Defaults to None.
         """
         self.train_data = None
         self.val_data = None
@@ -132,8 +133,7 @@ class Trainer:
                         # Generate a sample from the model
                         chars = decode(
                             self.model.generate(
-                                start_token=self.model.trg_sos
-                                            * torch.ones((1, 1), dtype=torch.long),
+                                start_token=self.model.trg_sos * torch.ones((1, 1), dtype=torch.long),
                                 max_length=30,
                                 sampled=False,
                             )[0].tolist()
@@ -393,7 +393,8 @@ class PhysicalTrainer(Trainer):
             model (nn.Module): Model to train
             optimiser (torch.optim.Optimizer): Optimiser
             loss_fn (torch.nn.modules.loss._Loss): Loss function
-            training_hyperparameters (Dict): Training hyperparameters which include the batch size, number of epochs defined in the config file
+            training_hyperparameters (Dict): Training hyperparameters which include the batch size, number of epochs
+            defined in the config file
             encoding_utils (Dict): Encoding utilities
             scheduler (Optional[torch.optim.lr_scheduler._LRScheduler], optional): Scheduler. Defaults to None.
         """
@@ -405,6 +406,7 @@ class PhysicalTrainer(Trainer):
             encoding_utils,
             scheduler,
         )
+        self.logger = None
 
     def train(
             self,
@@ -588,7 +590,8 @@ class PhysicalTrainer(Trainer):
         Args:
             loss_val (float): Dictionary containing the training and validation losses
             lowest_val_loss (float): Lowest validation loss so far
-            count (int): Number of times the validation loss has not been lower than the lowest validation loss. If this exceeds the early stopping patience, training will stop
+            count (int): Number of times the validation loss has not been lower than the lowest validation loss.
+            If this exceeds the early stopping patience, training will stop
         Returns:
             float: The updated lowest validation loss
         """
@@ -694,10 +697,10 @@ class PhysicalTrainer(Trainer):
                                     + "\n"
                                 )
                                 pred = output[i].tolist()
-                                f.write(f"Prediction is {pred:.4f}" + "\n\n")
+                                f.write(f"Prediction is {pred:,.4f}" + "\n\n")
 
             test_loss /= len(dataloader)
-            self.logger.log_info(f"Test loss was {test_loss:.4f}")
+            self.logger.log_info(f"Test loss was {test_loss :,.4f}")
 
             plot_save_path = (
                 f"{self.path}/training_logs/{type(self.model).__name__}_predictions.png"
@@ -713,7 +716,7 @@ class PhysicalTrainer(Trainer):
                     )
                 # log MSE error
                 self.logger.log_info(f"MSE Error on converted numerical outputs "
-                                     f"is {nn.MSELoss()(torch.tensor(predictions), torch.tensor(targets)):.4f}")
+                                     f"is {nn.MSELoss()(torch.tensor(predictions), torch.tensor(targets)) :,.4f}")
 
             plot_predictions(
                 predictions=predictions,

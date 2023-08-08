@@ -33,7 +33,7 @@ function_name = "fixed_bounce"
 train_data_path = f"train_{function_name}.csv"
 val_data_path = f"val_{function_name}.csv"
 test_data_path = f"test_{function_name}.csv"
-output_type = "num"  # 'num' or 'text'
+output_type = "text"  # 'num' or 'text'
 
 use_bpe = False  # Set to True to use BPE, False to use a character encoder/decoder
 
