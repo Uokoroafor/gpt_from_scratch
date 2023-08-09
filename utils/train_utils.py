@@ -754,8 +754,8 @@ class PhysicalTrainer(Trainer):
 
             except ValueError:
                 count += 1
-                error_log += f"Could not convert Prediction: {predictions[i]} to float.\n"
-                error_log += f"Target was {targets[i]}\n\n"
+                error_log += f"Could not convert Prediction: {pred} to float.\n"
+                error_log += f"Target was {float(''.join(decode(targets[i], True)))}\n\n"
                 continue
         return pred_out, target_out, count, error_log
 
