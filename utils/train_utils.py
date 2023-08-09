@@ -707,13 +707,14 @@ class PhysicalTrainer(Trainer):
             )
 
             if output_type == "text":
-                predictions, targets, count = self.convert_string_to_float(
+                predictions, targets, count, error_log = self.convert_string_to_float(
                     predictions, targets, decode
                 )
                 if count > 0:
                     self.logger.log_warning(
                         f"Could not convert {count} predictions to floats"
                     )
+                    self.logger.log_warning(error_log)
                 # log MSE error
                 self.logger.log_info(f"MSE Error on converted numerical outputs "
                                      f"is {nn.MSELoss()(torch.tensor(predictions), torch.tensor(targets)) :,.4f}")
@@ -728,20 +729,21 @@ class PhysicalTrainer(Trainer):
     @staticmethod
     def convert_string_to_float(
             predictions: List[str], targets: List[str], decode: Callable
-    ) -> Tuple[List[float], List[float], int]:
+    ) -> Tuple[List[float], List[float], int, str]:
         """Convert the predictions and targets from strings to floats
         Args:
             predictions (List[str]): List of predicted tokens
             targets (List[str]): List of targets
             decode (Callable): Function to decode the numerical outputs
         Returns:
-            Tuple[List[float],List[float]]: Tuple containing the converted predictions and targets
+            Tuple[List[float],List[float], int, str]: Tuple containing the converted predictions and targets, the number of errors and the error log
         """
         # convert each element in both lists to numbers. Decode and convert to float. If there is an error
         # Then remove that index from both lists and raise a warning
         pred_out = []
         target_out = []
         count = 0
+        error_log = ''
 
         for i in range(len(predictions)):
             try:
@@ -752,8 +754,10 @@ class PhysicalTrainer(Trainer):
 
             except ValueError:
                 count += 1
+                error_log += f"Could not convert Prediction: {predictions[i]} to float.\n"
+                error_log += f"Target was {targets[i]}\n\n"
                 continue
-        return pred_out, target_out, count
+        return pred_out, target_out, count, error_log
 
 
 def set_seed(seed: Optional[int] = 0):
