@@ -27,7 +27,7 @@ lr = training_hyperparams["learning_rate"]
 
 # data_folder = "data/madlibs/"
 data_folder = "data/shelf_bounce/fixed/"
-file_path = "shelf_bounce_descriptive_text.txt"
+file_path = "shelf_bounce_minimal_text.txt"
 function_name = "fixed"
 
 train_data_path = f"train_{function_name}.csv"

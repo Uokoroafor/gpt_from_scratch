@@ -4,8 +4,8 @@ learning_rate: 3e-4
 max_seq_len: 256
 num_heads: 4
 num_layers: 6
-d_model: 128
-d_ff: 528
+d_model: 256
+d_ff: 1024
 dropout_prob: 0.2
 device: cuda
 eval_every: 1
