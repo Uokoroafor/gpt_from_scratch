@@ -35,6 +35,34 @@ class BasicTokeniser(BPE):
         pass
 
 
+class NumericTokeniser(BPE):
+    def __init__(
+            self,
+            vocab_size: Optional[int] = 100000,
+            sos: Optional[str] = "<sos>",
+            eos: Optional[str] = "<eos>",
+            pad: Optional[str] = "<pad>",
+            unk: Optional[str] = "<unk>",
+    ):
+        """Constructor class for a tokeniser that only tokenises numbers. Basically the BPE class but only for numbers.
+        Args:
+            vocab_size (Optional[int], optional): Maximum size of the vocabulary. Defaults to 100000.
+            sos (Optional[str], optional): Start of sentence token. Defaults to "<sos>".
+            eos (Optional[str], optional): End of sentence token. Defaults to "<eos>".
+            pad (Optional[str], optional): Padding token. Defaults to "<pad>".
+            unk (Optional[str], optional): Unknown token. Defaults to "<unk>".
+        """
+        # Underlying data is all possible floats
+
+        data = "0123456789."
+
+        super().__init__(
+            data=data, vocab_size=vocab_size, sos=sos, eos=eos, pad=pad, unk=unk
+        )
+        # Create the dictionaries and the encode and decode functions
+        super().train(0)
+
+
 # The methods below will likely be deprecated in the future
 def make_char_dict(
     char_list: Union[List[str], str],
@@ -193,3 +221,5 @@ if __name__ == "__main__":
     print("Original data: ", data[:100])
     print("Encoded data: ", encoded_data)
     print("Decoded data: ", decoded_data)
+
+

@@ -478,7 +478,7 @@ class PhysicalTrainer(Trainer):
                 )
 
                 if early_stopping and i > 0 and count >= early_stopping_patience:
-                    logger.log_info(f"Stopping early after {i} iterations")
+                    logger.log_info(f"Stopping early after {i+1} iterations")
                     stop_training = True
 
                 if self.save_every is not None and i % self.save_every == 0:
