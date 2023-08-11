@@ -99,7 +99,7 @@ for output_type in ["text", "num"]:
             src_sos=encoder_dict["<sos>"],
             vocab_size_enc=len(encoder_dict),
             output_size=1 if output_type == "num" else len(encoder_dict),
-            pooling="max" if output_type == "num" else "none",
+            pooling="mean" if output_type == "num" else "none",
             max_seq_len=block_size,
             num_heads=training_hyperparams["num_heads"],
             num_layers=training_hyperparams["num_layers"],
