@@ -2,20 +2,21 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import torch
 from torch import nn
+import random
 from gpt.models.do_transformer import DecodeOnlyTransformer
 from utils.basic_tokeniser import BasicTokeniser
 from utils.bpe import BPE
-from utils.data_utils import read_in_data
+from utils.data_utils import read_in_data, make_data_loaders
 from utils.file_utils import load_config
-
-# # Save the training hyperparameters as a  txt file
+from utils.train_utils import PhysicalTrainer, set_seed
 
 # Load the training hyperparameters from the txt file
 training_hyperparams = load_config("sinusoidal_config.txt")
 
 # Set the random seed for reproducibility
-torch.manual_seed(6345789)
+set_seed(6_345_789)
 # Wilson Pickett - 634-5789 https://www.youtube.com/watch?v=TSGuaVAufV0
+
 
 print("Using device: ", training_hyperparams["device"])
 device = training_hyperparams["device"]
@@ -29,6 +30,10 @@ lr = training_hyperparams["learning_rate"]
 data_folder = "data/sinusoidal_functions/"
 file_path = "sinusoidal_numbers.txt"
 function_name = "sin"
+train_data_path = f"train_{function_name}.csv"
+val_data_path = f"val_{function_name}.csv"
+test_data_path = f"test_{function_name}.csv"
+output_type = "text"  # 'num' or 'text'
 
 use_bpe = False  # Set to True to use BPE, False to use a character encoder/decoder
 
@@ -43,8 +48,7 @@ if use_bpe:
     gpt_tokeniser = bpe
 else:
     # Use BasicTokeniser for char-level encoding
-    basic_tokeniser = BasicTokeniser(data)
-    gpt_tokeniser = basic_tokeniser
+    gpt_tokeniser = BasicTokeniser(data)
 
 # Create the encoder and decoder dictionaries and the encode and decode functions
 encoder_dict, decoder_dict, encode, decode = (
@@ -59,125 +63,36 @@ encoding_utils = dict(
 )
 
 # Read in the data as pandas dataframes
-train_data = pd.read_csv(data_folder + f"train_{function_name}.csv", dtype=str)
-val_data = pd.read_csv(data_folder + f"val_{function_name}.csv", dtype=str)
-test_data = pd.read_csv(data_folder + f"test_{function_name}.csv", dtype=str)
+train_data = pd.read_csv(data_folder + train_data_path, dtype=str)
+val_data = pd.read_csv(data_folder + val_data_path, dtype=str)
+test_data = pd.read_csv(data_folder + test_data_path, dtype=str)
 
-sos_tok = [encoder_dict["<sos>"]]
-eos_tok = [encoder_dict["<eos>"]]
-pad_tok = [encoder_dict["<pad>"]]
-
-# Find the longest question in the training data. This will be used to set the max sequence length
-max_seq_len = max(
-    max(train_data["question"].apply(lambda x: len(x))),
-    max(val_data["question"].apply(lambda x: len(x))),
-)
-
-max_ans_len = 2 + max(
-    max(train_data["answer"].apply(lambda x: len(str(x)))),
-    max(val_data["answer"].apply(lambda x: len(str(x)))),
-)
-
-max_seq_len = max(max_seq_len, max_ans_len)
-
-# Convert the data to tensors
-
-
-# Encode each question and answer.
-train_x = []
-train_y = []
-for i in range(len(train_data)):
-    train_x.append(encode(train_data["question"][i]))
-    # prepend and append sos and eos tokens to the answer
-
-    # convert float to string
-    train_data["answer"][i] = str(train_data["answer"][i])
-    train_y.append(encode(train_data["answer"][i]))
-    # pad the question with the pad token if they are shorter than the max_seq_len
-    if len(train_x[-1]) < max_seq_len:
-        train_x[-1] = train_x[-1] + [encoder_dict["<pad>"]] * (
-            max_seq_len - len(train_x[-1])
-        )
-    if len(train_y[-1]) < max_seq_len:
-        train_y[-1] = (
-            sos_tok
-            + train_y[-1]
-            + eos_tok
-            + [encoder_dict["<pad>"]] * (max_seq_len - len(train_y[-1]) - 2)
-        )
-
-val_x = []
-val_y = []
-for i in range(len(val_data)):
-    val_x.append(encode(val_data["question"][i]))
-    # convert float to string
-    val_data["answer"][i] = str(val_data["answer"][i])
-    val_y.append(encode(val_data["answer"][i]))
-    # pad the question with the pad token if they are shorter than the max_seq_len
-    if len(val_x[-1]) < max_seq_len:
-        val_x[-1] = val_x[-1] + [encoder_dict["<pad>"]] * (max_seq_len - len(val_x[-1]))
-    if len(val_y[-1]) < max_seq_len:
-        val_y[-1] = (
-            sos_tok
-            + val_y[-1]
-            + eos_tok
-            + [encoder_dict["<pad>"]] * (max_seq_len - len(val_y[-1]) - 2)
-        )
-
-test_x = []
-test_y = []
-for i in range(len(test_data)):
-    test_x.append(encode(test_data["question"][i]))
-    # convert float to string
-    test_data["answer"][i] = str(test_data["answer"][i])
-    test_y.append(encode(test_data["answer"][i]))
-    # pad the question with the pad token if they are shorter than the max_seq_len
-    if len(test_x[-1]) < max_seq_len:
-        test_x[-1] = test_x[-1] + [encoder_dict["<pad>"]] * (
-            max_seq_len - len(test_x[-1])
-        )
-    if len(test_y[-1]) < max_seq_len:
-        test_y[-1] = (
-            sos_tok
-            + test_y[-1]
-            + eos_tok
-            + [encoder_dict["<pad>"]] * (max_seq_len - len(test_y[-1]) - 2)
-        )
-
-train_x = torch.tensor(train_x)
-train_y = torch.tensor(train_y)
-
-val_x = torch.tensor(val_x)
-val_y = torch.tensor(val_y)
-
-test_x = torch.tensor(test_x)
-test_y = torch.tensor(test_y)
-
-# Create the data loaders
-train_data = torch.utils.data.TensorDataset(train_x, train_y)
-val_data = torch.utils.data.TensorDataset(val_x, val_y)
-test_data = torch.utils.data.TensorDataset(test_x, test_y)
-
-train_loader = torch.utils.data.DataLoader(
-    train_data, batch_size=batch_size, shuffle=True
-)
-val_loader = torch.utils.data.DataLoader(val_data, batch_size=batch_size, shuffle=True)
-test_loader = torch.utils.data.DataLoader(
-    test_data, batch_size=batch_size, shuffle=True
+train_loader, val_loader, test_loader, max_seq_len = make_data_loaders(
+    tokeniser=gpt_tokeniser,
+    train_data=train_data,
+    val_data=val_data,
+    test_data=test_data,
+    batch_size=batch_size,
+    output=output_type,
+    shuffle=True,
 )
 
 # update block size to be the max sequence length
 block_size = max_seq_len
 
 # Create the model, loss function and optimiser
-loss_fn = nn.CrossEntropyLoss(ignore_index=encoder_dict[gpt_tokeniser.pad])
+loss_fn = (
+    nn.MSELoss()
+    if output_type == "num"
+    else nn.CrossEntropyLoss(ignore_index=encoder_dict[gpt_tokeniser.pad])
+)
 
 model = DecodeOnlyTransformer(
     src_pad=encoder_dict["<pad>"],
     src_sos=encoder_dict["<sos>"],
     vocab_size_enc=len(encoder_dict),
-    output_size=len(encoder_dict),
-    pooling="none",
+    output_size=1 if output_type == "num" else len(encoder_dict),
+    pooling="max" if output_type == "num" else "none",
     max_seq_len=block_size,
     num_heads=training_hyperparams["num_heads"],
     num_layers=training_hyperparams["num_layers"],
@@ -188,122 +103,33 @@ model = DecodeOnlyTransformer(
 )
 
 optimiser = torch.optim.Adam(model.parameters(), lr=lr)
+scheduler = None
 
-
-# Define the training loop
-def train(model, data_loader, loss_fn, optimizer, device):
-    model.train()
-    total_loss = 0
-    # Only want to loop through a subset of the data_loader as it is too large
-
-    for batch_idx, (inputs, targets) in enumerate(data_loader):
-        inputs = inputs.to(device)
-        targets = targets.to(device)
-
-        optimizer.zero_grad()
-
-        outputs = model(inputs)
-        # print('outputs: ', outputs.shape)
-        # print('targets: ', targets.shape)
-        loss = loss_fn(outputs.view(-1, outputs.size(-1)), targets.view(-1))
-
-        loss.backward()
-        optimizer.step()
-
-        total_loss += loss.item()
-
-    return total_loss / len(data_loader)
-
-
-# Set the device
 device = torch.device(training_hyperparams["device"])
 
 # Move the model and loss function to the device
 model = model.to(device)
 loss_fn = loss_fn.to(device)
 
-# Define the optimizer
-optimizer = optimiser
+trainer = PhysicalTrainer(
+    model=model,
+    optimiser=optimiser,
+    loss_fn=loss_fn,
+    training_hyperparameters=training_hyperparams,
+    encoding_utils=encoding_utils,
+    scheduler=scheduler,
+)
 
-train_losses = []
-val_losses = []
-best_val_loss = float("inf")
-counter = 0
-# Training loop
-for epoch in range(max_iters):
-    train_loss = train(model, train_loader, loss_fn, optimizer, device)
-    # print(f'Epoch [{epoch+1}/{max_iters}] - Train Loss: {train_loss:.4f}')
-    if (epoch + 1) % eval_iters == 0:
-        # Perform evaluation on the validation set
-        model.eval()
-        with torch.no_grad():
-            val_loss = 0
+model, _, _ = trainer.train(
+    train_dataloader=train_loader,
+    val_dataloader=val_loader,
+    save_model=True,
+    plotting=True,
+    verbose=True,
+    early_stopping=True,
+    early_stopping_patience=10,
+)
 
-            for batch_idx, (inputs, targets) in enumerate(val_loader):
-                # inputs, targets = next(iter(val_loader))
-
-                inputs = inputs.to(device)
-                targets = targets.to(device)
-
-                outputs = model(inputs)
-                # print('outputs: ', outputs.shape)
-                # print('targets: ', targets.shape)
-
-                loss = loss_fn(outputs.view(-1, outputs.size(-1)), targets.view(-1))
-
-                val_loss += loss.item()
-
-        val_loss /= len(val_loader)
-        val_losses.append(val_loss)
-        train_losses.append(train_loss)
-
-        # Print training and validation loss
-        print(
-            f"Epoch [{epoch + 1}/{max_iters}] - Train Loss: {train_loss:.4f}, Est Val Loss: {val_loss:.4f}"
-        )
-
-        # Save the model if the validation loss is the best we've seen so far
-        if val_loss < best_val_loss:
-            best_val_loss = val_loss
-            torch.save(model, f"{function_name}_best_model.pt")
-            counter = 0
-
-        else:
-            counter += 1
-            if counter > 2:
-                print(f"Stopping early at epoch {epoch + 1}")
-                break
-
-# Plot the losses
-plt.plot(train_losses, label="Training loss")
-plt.plot(val_losses, label="Validation loss")
-plt.legend()
-plt.show()
-
-model.eval()
-with torch.no_grad():
-    test_loss = 0
-    predictions = []
-    targets = []
-    for batch_idx, (inputs, target) in enumerate(test_loader):
-        inputs = inputs.to(device)
-        target = target.to(device)
-
-        output = model(inputs).squeeze(1)
-        loss = loss_fn(output.view(-1, output.size(-1)), target.view(-1))
-        outpt = output.view(-1, output.size(-1))
-
-        test_loss += loss.item()
-        predictions.extend(output.view(-1).tolist())
-        targets.extend(target.view(-1).tolist())
-        if batch_idx % (len(test_loader) // 10) == 0:
-            with open(f"{function_name}_numbers_predictions.txt", "a") as f:
-                f.write(
-                    "Question is " + "".join(decode(inputs[0].tolist(), True)) + "\n"
-                )
-                f.write("Target is " + "".join(decode(target[0].tolist())) + "\n")
-                pred = "".join(decode(outpt.argmax(-1).tolist()))
-                f.write(f"Prediction is {pred.split('<eos>')[0] + '<eos>'}" + "\n\n")
-
-    test_loss /= len(test_loader)
-    print(f"Test Loss: {test_loss:.4f}")
+trainer.log_numerical_outputs(
+    test_loader, decode, "test_log.txt", output_type=output_type
+)
