@@ -5,14 +5,15 @@ from utils.bpe import BPE
 
 
 class BasicTokeniser(BPE):
-
-    def __init__(self,
-                 data: str,
-                 vocab_size: Optional[int] = 100000,
-                 sos: Optional[str] = "<sos>",
-                 eos: Optional[str] = "<eos>",
-                 pad: Optional[str] = "<pad>",
-                 unk: Optional[str] = "<unk>", ):
+    def __init__(
+        self,
+        data: str,
+        vocab_size: Optional[int] = 100000,
+        sos: Optional[str] = "<sos>",
+        eos: Optional[str] = "<eos>",
+        pad: Optional[str] = "<pad>",
+        unk: Optional[str] = "<unk>",
+    ):
         """Constructor class for a character level Tokeniser. Basically the BPE class but without the BPE training.
         Args:
             data (str): String of data to build the tokeniser on.
@@ -21,8 +22,10 @@ class BasicTokeniser(BPE):
             eos (Optional[str], optional): End of sentence token. Defaults to "<eos>".
             pad (Optional[str], optional): Padding token. Defaults to "<pad>".
             unk (Optional[str], optional): Unknown token. Defaults to "<unk>".
-            """
-        super().__init__(data=data, vocab_size=vocab_size, sos=sos, eos=eos, pad=pad, unk=unk)
+        """
+        super().__init__(
+            data=data, vocab_size=vocab_size, sos=sos, eos=eos, pad=pad, unk=unk
+        )
         # Create the dictionaries and the encode and decode functions
         super().train(0)
 
@@ -32,9 +35,39 @@ class BasicTokeniser(BPE):
         pass
 
 
+class NumericTokeniser(BPE):
+    def __init__(
+            self,
+            vocab_size: Optional[int] = 100000,
+            sos: Optional[str] = "<sos>",
+            eos: Optional[str] = "<eos>",
+            pad: Optional[str] = "<pad>",
+            unk: Optional[str] = "<unk>",
+    ):
+        """Constructor class for a tokeniser that only tokenises numbers. Basically the BPE class but only for numbers.
+        Args:
+            vocab_size (Optional[int], optional): Maximum size of the vocabulary. Defaults to 100000.
+            sos (Optional[str], optional): Start of sentence token. Defaults to "<sos>".
+            eos (Optional[str], optional): End of sentence token. Defaults to "<eos>".
+            pad (Optional[str], optional): Padding token. Defaults to "<pad>".
+            unk (Optional[str], optional): Unknown token. Defaults to "<unk>".
+        """
+        # Underlying data is all possible floats
+
+        data = "0123456789."
+
+        super().__init__(
+            data=data, vocab_size=vocab_size, sos=sos, eos=eos, pad=pad, unk=unk
+        )
+        # Create the dictionaries and the encode and decode functions
+        super().train(0)
+
+
 # The methods below will likely be deprecated in the future
 def make_char_dict(
-        char_list: Union[List[str], str], allow_uppers: Optional[bool] = False, verbose: Optional[bool] = False
+    char_list: Union[List[str], str],
+    allow_uppers: Optional[bool] = False,
+    verbose: Optional[bool] = False,
 ) -> Dict[str, List[str]]:
     """Make a dictionary of character types and their corresponding characters.
 
@@ -82,7 +115,7 @@ def make_char_dict(
 
 
 def create_simple_encoder_decoder(
-        char_dict: Dict[str, List[str]], add_specials: Optional[bool] = True
+    char_dict: Dict[str, List[str]], add_specials: Optional[bool] = True
 ) -> Tuple[Dict[str, int], Dict[int, str], Callable, Callable]:
     """This will be a character encoder and decoder for a simple character level language model based on the
     character dictionary.
@@ -188,3 +221,5 @@ if __name__ == "__main__":
     print("Original data: ", data[:100])
     print("Encoded data: ", encoded_data)
     print("Decoded data: ", decoded_data)
+
+

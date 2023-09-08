@@ -16,7 +16,7 @@ class CausalSelfAttention(nn.Module):
 
         # Check if the d_model is divisible by the number of heads
         assert (
-                d_model % num_heads == 0
+            d_model % num_heads == 0
         ), "d_model must be divisible by the number of heads"
 
         # Set the d_model and num_heads
@@ -36,7 +36,11 @@ class CausalSelfAttention(nn.Module):
         self.attention = Attention()
 
     def forward(
-            self, query: torch.Tensor, key: torch.Tensor, value: torch.Tensor, trg_mask: torch.Tensor
+        self,
+        query: torch.Tensor,
+        key: torch.Tensor,
+        value: torch.Tensor,
+        trg_mask: torch.Tensor,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         """Forward pass of the CausalSelfAttention layer
         Args:
@@ -73,16 +77,13 @@ class CausalSelfAttention(nn.Module):
 
         # Create the mask
         if trg_mask is None:
-
             mask = (torch.triu(torch.ones(seq_len, seq_len)) == 1).transpose(0, 1)
         else:
             mask = trg_mask
             # replicate the mask over the number of heads
             mask = mask.unsqueeze(1).repeat(1, self.num_heads, 1, 1)
 
-        mask = (
-            mask.float()
-        )
+        mask = mask.float()
         mask = mask.to(query.device)
 
         # Calculate the attention using the query, key and value

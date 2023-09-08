@@ -3,7 +3,7 @@ from torch import nn
 from gpt.models.gpt_transformer import GPT
 from utils.basic_tokeniser import BasicTokeniser
 from utils.data_utils import read_in_data, text_to_tensor
-from utils.train_utils import Trainer
+from utils.train_utils import Trainer, set_seed
 from utils.file_utils import load_config
 from utils.bpe import BPE
 
@@ -30,9 +30,13 @@ from utils.bpe import BPE
 training_hyperparams = load_config("gpt_config.txt")
 
 # Set the random seed for reproducibility
-torch.manual_seed(6345789)
+# torch.manual_seed(6345789)
+set_seed(6345789)
 # Wilson Pickett - 634-5789 https://www.youtube.com/watch?v=TSGuaVAufV0
 
+# update device if cuda isn't available
+if not torch.cuda.is_available():
+    training_hyperparams["device"] = torch.device("cpu")
 print("Using device: ", training_hyperparams["device"])
 device = training_hyperparams["device"]
 block_size = training_hyperparams["max_seq_len"]
@@ -42,8 +46,8 @@ max_iters = training_hyperparams["epochs"]
 lr = training_hyperparams["learning_rate"]
 
 # data_folder = "data/madlibs/"
-data_folder = 'data/gatsby/'
-file_path = 'great_gatsby.txt'
+data_folder = "data/gatsby/"
+file_path = "great_gatsby.txt"
 
 use_bpe = False  # Set to True to use BPE, False to use a character encoder/decoder
 
@@ -54,18 +58,25 @@ data = read_in_data(data_folder + file_path, make_dict=False)
 if use_bpe:
     bpe = BPE(data)
     # Train for 50 iterations
-    bpe.train(50)
+    bpe.train(510)
     gpt_tokeniser = bpe
 else:
     # Use BasicTokeniser for char-level encoding
-    basic_tokeniser = BasicTokeniser(data)
-    gpt_tokeniser = basic_tokeniser
+    gpt_tokeniser = BasicTokeniser(data)
 
 # Create the encoder and decoder dictionaries and the encode and decode functions
-encoder_dict, decoder_dict, encode, decode = gpt_tokeniser.lookup_table, gpt_tokeniser.reverse_lookup_table, \
-    gpt_tokeniser.encode, gpt_tokeniser.decode
+encoder_dict, decoder_dict, encode, decode = (
+    gpt_tokeniser.lookup_table,
+    gpt_tokeniser.reverse_lookup_table,
+    gpt_tokeniser.encode,
+    gpt_tokeniser.decode,
+)
 
-encoding_utils = dict(enc_dict=encoder_dict, dec_dict=decoder_dict, encode_fn=encode, decode_fn=decode)
+gpt_tokeniser.report_size()
+
+encoding_utils = dict(
+    enc_dict=encoder_dict, dec_dict=decoder_dict, encode_fn=encode, decode_fn=decode
+)
 
 # Read in the data
 with open(data_folder + "decoded_train_data.txt", "r", encoding="utf-8") as f:
@@ -96,6 +107,9 @@ model = GPT(
 )
 
 optimiser = torch.optim.Adam(model.parameters(), lr=lr)
+# TODO: Add scheduler and gradient clipping
+# TODO: Add weight decay
+# TODO: Include scheduler params in config file
 
 # Create a trainer object
 trainer = Trainer(
@@ -108,7 +122,12 @@ trainer = Trainer(
 
 # Train the model
 model, _, _ = trainer.train(
-    train_data, val_data, save_model=True, plotting=True, verbose=True,early_stopping=True
+    train_data,
+    val_data,
+    save_model=True,
+    plotting=True,
+    verbose=True,
+    early_stopping=True,
 )
 
 sampled_chars = decode(
