@@ -3,7 +3,7 @@ import pandas as pd
 import torch
 from torch import nn
 
-from gpt.models.do_transformer import DecodeOnlyTransformer
+from gpt.models.eo_transformer import EncodeOnlyTransformer
 from utils.basic_tokeniser import BasicTokeniser
 from utils.bpe import BPE
 from utils.data_utils import read_in_data
@@ -14,7 +14,7 @@ from utils.train_utils import set_seed
 # save_config(training_hyperparams, 'gpt_config.txt')
 
 # Load the training hyperparameters from the txt file
-training_hyperparams = load_config("ball_drop_config.txt")
+training_hyperparams = load_config("../ball_drop_config.txt")
 
 # Set the random seed for reproducibility
 # torch.manual_seed(6345789)
@@ -31,7 +31,7 @@ lr = training_hyperparams["learning_rate"]
 
 # data_folder = "data/madlibs/"
 data_folder = "data/gravity/"
-file_path = "examples_ball_drop_desc.txt"
+file_path = "examples_ball_drop.txt"
 
 use_bpe = False  # Set to True to use BPE, False to use a character encoder/decoder
 
@@ -62,9 +62,9 @@ encoding_utils = dict(
 )
 
 # Read in the data as pandas dataframes
-train_data = pd.read_csv(data_folder + "train_ball_drop_desc.csv")
-val_data = pd.read_csv(data_folder + "val_ball_drop_desc.csv")
-test_data = pd.read_csv(data_folder + "test_ball_drop_desc.csv")
+train_data = pd.read_csv(data_folder + "train_ball_drop.csv")
+val_data = pd.read_csv(data_folder + "val_ball_drop.csv")
+test_data = pd.read_csv(data_folder + "test_ball_drop.csv")
 
 # Encode the answer
 
@@ -131,6 +131,13 @@ train_y = [convert_to_cat(x) for x in train_y]
 val_y = [convert_to_cat(x) for x in val_y]
 test_y = [convert_to_cat(x) for x in test_y]
 
+# print a subset of test data
+# for i in range(10):
+#     print('Printing a subset of the test data')
+#     print("Question: ", decode(test_x[i]))
+#     print("Answer: ", test_y[i])
+#     print()
+
 train_x = torch.tensor(train_x)
 train_y = torch.tensor(train_y).float()
 val_x = torch.tensor(val_x)
@@ -159,7 +166,7 @@ block_size = max_seq_len
 # Use categorical cross entropy loss function
 loss_fn = nn.CrossEntropyLoss()
 
-model = DecodeOnlyTransformer(
+model = EncodeOnlyTransformer(
     src_pad=encoder_dict["<pad>"],
     src_sos=encoder_dict["<sos>"],
     vocab_size_enc=len(encoder_dict),
@@ -247,7 +254,7 @@ for epoch in range(max_iters):
         # Save the model if the validation loss is the best we've seen so far
         if val_loss < best_val_loss:
             best_val_loss = val_loss
-            torch.save(model, "ball_drop_gpt_desc.pt")
+            torch.save(model, "ball_drop_gpt.pt")
             counter = 0
 
         else:
@@ -264,7 +271,7 @@ plt.xlabel("Epoch")
 plt.ylabel("Loss")
 plt.legend()
 plt.title("Training and Validation Losses")
-plt.savefig("ball_drop_gpt_losses_desc.png")
+plt.savefig("ball_drop_gpt_losses.png")
 plt.show()
 
 # Evaluate the model on the test set and plot the results and print the metrics
@@ -275,6 +282,7 @@ with torch.no_grad():
     targets = []
     confusion_matrix = torch.zeros(3, 3)
     for batch_idx, (inputs, target) in enumerate(test_loader):
+        # data is categorical
         inputs = inputs.to(device)
         target = target.to(device)
 
@@ -282,25 +290,19 @@ with torch.no_grad():
         loss = loss_fn(output, target)
         test_loss += loss.item()
 
-        # Append predictions and targets to the respective lists
-        predictions.append(output.argmax(dim=1))
-        targets.append(target.argmax(dim=1))
-        # convert to lists of ints
-
-        # Update the confusion matrix
-        for t, p in zip(targets.view(-1), predictions.view(-1)):
+        # get the predicted class
+        pred = output.argmax(1, keepdim=True)
+        trg = target.argmax(1, keepdim=True)
+        predictions.append(pred)
+        targets.append(trg)
+        # update the confusion matrix
+        for t, p in zip(target.view(-1), pred.view(-1)):
             confusion_matrix[t.long(), p.long()] += 1
 
     test_loss /= len(test_loader)
     print(f"Test Loss: {test_loss:.4f}")
-
-    # Concatenate predictions and targets into a single tensor
-    predictions = torch.cat(predictions)
-    targets = torch.cat(targets)
-
-    # Calculate accuracy from the confusion matrix
+    # calculate the accuracy from the confusion matrix
     accuracy = confusion_matrix.diag() / confusion_matrix.sum(1)
     print(f"Accuracy: {accuracy}")
-
-    # Print the confusion matrix
-    print(f"Confusion Matrix:\n{confusion_matrix}")
+    # print the confusion matrix
+    print(f"Confusion Matrix: \n{confusion_matrix}")

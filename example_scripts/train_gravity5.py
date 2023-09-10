@@ -1,24 +1,23 @@
-import matplotlib.pyplot as plt
-import pandas as pd
 import torch
 from torch import nn
-
-from gpt.models.do_transformer import DecodeOnlyTransformer
+from gpt.models.eo_transformer import EncodeOnlyTransformer
 from utils.basic_tokeniser import BasicTokeniser
-from utils.bpe import BPE
-from utils.data_utils import read_in_data
+from utils.data_utils import read_in_data, text_to_tensor
+from utils.train_utils import Trainer
 from utils.file_utils import load_config
-from utils.train_utils import set_seed
+from utils.bpe import BPE
+import pandas as pd
+import matplotlib.pyplot as plt
+
 
 # # Save the training hyperparameters as a  txt file
 # save_config(training_hyperparams, 'gpt_config.txt')
 
 # Load the training hyperparameters from the txt file
-training_hyperparams = load_config("ball_drop_config.txt")
+training_hyperparams = load_config("../gravity_config.txt")
 
 # Set the random seed for reproducibility
-# torch.manual_seed(6345789)
-set_seed(6_345_789)
+torch.manual_seed(6345789)
 # Wilson Pickett - 634-5789 https://www.youtube.com/watch?v=TSGuaVAufV0
 
 print("Using device: ", training_hyperparams["device"])
@@ -31,7 +30,7 @@ lr = training_hyperparams["learning_rate"]
 
 # data_folder = "data/madlibs/"
 data_folder = "data/gravity/"
-file_path = "examples_ball_drop.txt"
+file_path = "examples_same_steps_min.txt"
 
 use_bpe = False  # Set to True to use BPE, False to use a character encoder/decoder
 
@@ -62,88 +61,101 @@ encoding_utils = dict(
 )
 
 # Read in the data as pandas dataframes
-train_data = pd.read_csv(data_folder + "train_ball_drop.csv")
-val_data = pd.read_csv(data_folder + "val_ball_drop.csv")
-test_data = pd.read_csv(data_folder + "test_ball_drop.csv")
+train_data = pd.read_csv(data_folder + "train_same_min.csv")
+val_data = pd.read_csv(data_folder + "val_same_min.csv")
+test_data = pd.read_csv(data_folder + "test_same_min.csv")
 
-# Encode the answer
+sos_tok = [encoder_dict["<sos>"]]
+eos_tok = [encoder_dict["<eos>"]]
+pad_tok = [encoder_dict["<pad>"]]
+
 
 # Find the longest question in the training data. This will be used to set the max sequence length
 max_seq_len = max(
     max(train_data["question"].apply(lambda x: len(x))),
     max(val_data["question"].apply(lambda x: len(x))),
-    max(test_data["question"].apply(lambda x: len(x))),
 )
 
-max_ans_len = max(
+max_ans_len = 2 + max(
     max(train_data["answer"].apply(lambda x: len(str(x)))),
     max(val_data["answer"].apply(lambda x: len(str(x)))),
-    max(test_data["answer"].apply(lambda x: len(str(x)))),
 )
+
+max_seq_len = max(max_seq_len, max_ans_len)
+
 # Convert the data to tensors
+
+
 # Encode each question and answer.
 train_x = []
 train_y = []
 for i in range(len(train_data)):
     train_x.append(encode(train_data["question"][i]))
-    train_y.append(train_data["answer"][i])
+    # prepend and append sos and eos tokens to the answer
+
+    # convert float to string
+    train_data["answer"][i] = str(train_data["answer"][i])
+    train_y.append(encode(train_data["answer"][i]))
     # pad the question with the pad token if they are shorter than the max_seq_len
     if len(train_x[-1]) < max_seq_len:
         train_x[-1] = train_x[-1] + [encoder_dict["<pad>"]] * (
             max_seq_len - len(train_x[-1])
+        )
+    if len(train_y[-1]) < max_seq_len:
+        train_y[-1] = (
+            sos_tok
+            + train_y[-1]
+            + eos_tok
+            + [encoder_dict["<pad>"]] * (max_seq_len - len(train_y[-1]) - 2)
         )
 
 val_x = []
 val_y = []
 for i in range(len(val_data)):
     val_x.append(encode(val_data["question"][i]))
-    val_y.append(val_data["answer"][i])
+    # convert float to string
+    val_data["answer"][i] = str(val_data["answer"][i])
+    val_y.append(encode(val_data["answer"][i]))
     # pad the question with the pad token if they are shorter than the max_seq_len
     if len(val_x[-1]) < max_seq_len:
         val_x[-1] = val_x[-1] + [encoder_dict["<pad>"]] * (max_seq_len - len(val_x[-1]))
+    if len(val_y[-1]) < max_seq_len:
+        val_y[-1] = (
+            sos_tok
+            + val_y[-1]
+            + eos_tok
+            + [encoder_dict["<pad>"]] * (max_seq_len - len(val_y[-1]) - 2)
+        )
+
 
 test_x = []
 test_y = []
 for i in range(len(test_data)):
     test_x.append(encode(test_data["question"][i]))
-    test_y.append(test_data["answer"][i])
+    # convert float to string
+    test_data["answer"][i] = str(test_data["answer"][i])
+    test_y.append(encode(test_data["answer"][i]))
     # pad the question with the pad token if they are shorter than the max_seq_len
     if len(test_x[-1]) < max_seq_len:
         test_x[-1] = test_x[-1] + [encoder_dict["<pad>"]] * (
             max_seq_len - len(test_x[-1])
         )
-
-
-# convert y variable to categorical tensor
-# 0 if the answer is 'same', 1 if the answer is 'ball_1' and 2 if the answer is 'ball_2'
-
-
-def convert_to_cat(x):
-    if x == "same":
-        return [1, 0, 0]
-    elif x == "ball_1":
-        return [0, 1, 0]
-    else:
-        return [0, 0, 1]
-
-
-train_y = [convert_to_cat(x) for x in train_y]
-val_y = [convert_to_cat(x) for x in val_y]
-test_y = [convert_to_cat(x) for x in test_y]
-
-# print a subset of test data
-# for i in range(10):
-#     print('Printing a subset of the test data')
-#     print("Question: ", decode(test_x[i]))
-#     print("Answer: ", test_y[i])
-#     print()
+    if len(test_y[-1]) < max_seq_len:
+        test_y[-1] = (
+            sos_tok
+            + test_y[-1]
+            + eos_tok
+            + [encoder_dict["<pad>"]] * (max_seq_len - len(test_y[-1]) - 2)
+        )
 
 train_x = torch.tensor(train_x)
-train_y = torch.tensor(train_y).float()
+train_y = torch.tensor(train_y)
+
 val_x = torch.tensor(val_x)
-val_y = torch.tensor(val_y).float()
+val_y = torch.tensor(val_y)
+
 test_x = torch.tensor(test_x)
-test_y = torch.tensor(test_y).float()
+test_y = torch.tensor(test_y)
 
 # Create the data loaders
 train_data = torch.utils.data.TensorDataset(train_x, train_y)
@@ -161,17 +173,16 @@ test_loader = torch.utils.data.DataLoader(
 # update block size to be the max sequence length
 block_size = max_seq_len
 
+
 # Create the model, loss function and optimiser
+loss_fn = nn.CrossEntropyLoss(ignore_index=encoder_dict[gpt_tokeniser.pad])
 
-# Use categorical cross entropy loss function
-loss_fn = nn.CrossEntropyLoss()
-
-model = DecodeOnlyTransformer(
+model = EncodeOnlyTransformer(
     src_pad=encoder_dict["<pad>"],
     src_sos=encoder_dict["<sos>"],
     vocab_size_enc=len(encoder_dict),
-    output_size=3,
-    pooling="mean",
+    output_size=len(encoder_dict),
+    pooling="none",
     max_seq_len=block_size,
     num_heads=training_hyperparams["num_heads"],
     num_layers=training_hyperparams["num_layers"],
@@ -196,8 +207,10 @@ def train(model, data_loader, loss_fn, optimizer, device):
 
         optimizer.zero_grad()
 
-        outputs = model(inputs).squeeze(1)
-        loss = loss_fn(outputs, targets)
+        outputs = model(inputs)
+        # print('outputs: ', outputs.shape)
+        # print('targets: ', targets.shape)
+        loss = loss_fn(outputs.view(-1, outputs.size(-1)), targets.view(-1))
 
         loss.backward()
         optimizer.step()
@@ -224,7 +237,7 @@ counter = 0
 # Training loop
 for epoch in range(max_iters):
     train_loss = train(model, train_loader, loss_fn, optimizer, device)
-    # print(f'Epoch [{epoch + 1}/{max_iters}] - Train Loss: {train_loss:.4f}')
+    # print(f'Epoch [{epoch+1}/{max_iters}] - Train Loss: {train_loss:.4f}')
     if (epoch + 1) % eval_iters == 0:
         # Perform evaluation on the validation set
         model.eval()
@@ -237,8 +250,11 @@ for epoch in range(max_iters):
                 inputs = inputs.to(device)
                 targets = targets.to(device)
 
-                outputs = model(inputs).squeeze(1)
-                loss = loss_fn(outputs, targets)
+                outputs = model(inputs)
+                # print('outputs: ', outputs.shape)
+                # print('targets: ', targets.shape)
+
+                loss = loss_fn(outputs.view(-1, outputs.size(-1)), targets.view(-1))
 
                 val_loss += loss.item()
 
@@ -248,61 +264,53 @@ for epoch in range(max_iters):
 
         # Print training and validation loss
         print(
-            f"Epoch [{epoch + 1}/{max_iters}] - Train Loss: {train_loss:.4f}, Est Val Loss: {val_loss:.4f}"
+            f"Epoch [{epoch+1}/{max_iters}] - Train Loss: {train_loss:.4f}, Est Val Loss: {val_loss:.4f}"
         )
 
         # Save the model if the validation loss is the best we've seen so far
         if val_loss < best_val_loss:
             best_val_loss = val_loss
-            torch.save(model, "ball_drop_gpt.pt")
+            torch.save(model, "gravity_gpt_same_min.pt")
             counter = 0
 
         else:
             counter += 1
-            if counter > 3:
-                print(f"Stopping early at epoch {epoch + 1}")
+            if counter > 2:
+                print(f"Stopping early at epoch {epoch+1}")
                 break
 
+
 # Plot the losses
-plt.figure(figsize=(12, 8))
 plt.plot(train_losses, label="Training loss")
 plt.plot(val_losses, label="Validation loss")
-plt.xlabel("Epoch")
-plt.ylabel("Loss")
 plt.legend()
-plt.title("Training and Validation Losses")
-plt.savefig("ball_drop_gpt_losses.png")
 plt.show()
 
-# Evaluate the model on the test set and plot the results and print the metrics
+
 model.eval()
 with torch.no_grad():
     test_loss = 0
     predictions = []
     targets = []
-    confusion_matrix = torch.zeros(3, 3)
     for batch_idx, (inputs, target) in enumerate(test_loader):
-        # data is categorical
         inputs = inputs.to(device)
         target = target.to(device)
 
         output = model(inputs).squeeze(1)
-        loss = loss_fn(output, target)
-        test_loss += loss.item()
+        loss = loss_fn(output.view(-1, output.size(-1)), target.view(-1))
+        outpt = output.view(-1, output.size(-1))
 
-        # get the predicted class
-        pred = output.argmax(1, keepdim=True)
-        trg = target.argmax(1, keepdim=True)
-        predictions.append(pred)
-        targets.append(trg)
-        # update the confusion matrix
-        for t, p in zip(target.view(-1), pred.view(-1)):
-            confusion_matrix[t.long(), p.long()] += 1
+        test_loss += loss.item()
+        predictions.extend(output.view(-1).tolist())
+        targets.extend(target.view(-1).tolist())
+        if batch_idx % (len(test_loader) // 100) == 0:
+            with open("gravity_same_min_examples.txt", "a") as f:
+                f.write(
+                    "Question is " + "".join(decode(inputs[0].tolist(), True)) + "\n"
+                )
+                f.write("Target is " + "".join(decode(target[0].tolist())) + "\n")
+                pred = "".join(decode(outpt.argmax(-1).tolist()))
+                f.write(f"Prediction is {pred.split('<eos>')[0]+'<eos>'}" + "\n\n")
 
     test_loss /= len(test_loader)
     print(f"Test Loss: {test_loss:.4f}")
-    # calculate the accuracy from the confusion matrix
-    accuracy = confusion_matrix.diag() / confusion_matrix.sum(1)
-    print(f"Accuracy: {accuracy}")
-    # print the confusion matrix
-    print(f"Confusion Matrix: \n{confusion_matrix}")

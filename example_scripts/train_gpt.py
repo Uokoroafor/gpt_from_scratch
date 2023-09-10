@@ -27,7 +27,7 @@ from utils.bpe import BPE
 # save_config(training_hyperparams, 'gpt_config.txt')
 
 # Load the training hyperparameters from the txt file
-training_hyperparams = load_config("gpt_config.txt")
+training_hyperparams = load_config("../gpt_config.txt")
 
 # Set the random seed for reproducibility
 # torch.manual_seed(6345789)
@@ -49,7 +49,7 @@ lr = training_hyperparams["learning_rate"]
 data_folder = "data/gatsby/"
 file_path = "great_gatsby.txt"
 
-use_bpe = False  # Set to True to use BPE, False to use a character encoder/decoder
+use_bpe = True  # Set to True to use BPE, False to use a character encoder/decoder
 
 # Read in the data
 data = read_in_data(data_folder + file_path, make_dict=False)
@@ -58,7 +58,7 @@ data = read_in_data(data_folder + file_path, make_dict=False)
 if use_bpe:
     bpe = BPE(data)
     # Train for 50 iterations
-    bpe.train(510)
+    bpe.train(50)
     gpt_tokeniser = bpe
 else:
     # Use BasicTokeniser for char-level encoding
@@ -133,7 +133,7 @@ model, _, _ = trainer.train(
 sampled_chars = decode(
     model.generate(
         start_token=model.trg_sos * torch.ones((1, 1), dtype=torch.long),
-        max_length=100,
+        max_length=1000,
         k=6,
         temp=1.6,
     )[0].tolist()
@@ -142,7 +142,7 @@ sampled_chars = decode(
 greedy_chars = decode(
     model.generate(
         start_token=model.trg_sos * torch.ones((1, 1), dtype=torch.long),
-        max_length=100,
+        max_length=1000,
         sampled=False,
     )[0].tolist()
 )
@@ -154,3 +154,10 @@ print("-----------------------------------------------------")
 print(greedy_chars)
 print(f"Generating Characters without sampling: {''.join(greedy_chars)}")
 print("-----------------------------------------------------")
+
+# write greedy and sampled chars to file
+with open(f"{data_folder}/sampled_chars.txt", "w", encoding="utf-8") as f:
+    f.write("".join(sampled_chars))
+
+with open(f"{data_folder}/greedy_chars.txt", "w", encoding="utf-8") as f:
+    f.write("".join(greedy_chars))

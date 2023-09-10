@@ -3,7 +3,7 @@ import pandas as pd
 import torch
 from torch import nn
 
-from gpt.models.do_transformer import DecodeOnlyTransformer
+from gpt.models.eo_transformer import EncodeOnlyTransformer
 from utils.basic_tokeniser import BasicTokeniser
 from utils.bpe import BPE
 from utils.data_utils import read_in_data
@@ -14,7 +14,7 @@ from utils.train_utils import set_seed
 # save_config(training_hyperparams, 'gpt_config.txt')
 
 # Load the training hyperparameters from the txt file
-training_hyperparams = load_config("gravity_config.txt")
+training_hyperparams = load_config("../ball_drop_config.txt")
 
 # Set the random seed for reproducibility
 # torch.manual_seed(6345789)
@@ -31,7 +31,7 @@ lr = training_hyperparams["learning_rate"]
 
 # data_folder = "data/madlibs/"
 data_folder = "data/gravity/"
-file_path = "examples_diff_steps.txt"
+file_path = "examples_ball_drop_desc.txt"
 
 use_bpe = False  # Set to True to use BPE, False to use a character encoder/decoder
 
@@ -62,9 +62,11 @@ encoding_utils = dict(
 )
 
 # Read in the data as pandas dataframes
-train_data = pd.read_csv(data_folder + "train_diff.csv")
-val_data = pd.read_csv(data_folder + "val_diff.csv")
-test_data = pd.read_csv(data_folder + "test_diff.csv")
+train_data = pd.read_csv(data_folder + "train_ball_drop_desc.csv")
+val_data = pd.read_csv(data_folder + "val_ball_drop_desc.csv")
+test_data = pd.read_csv(data_folder + "test_ball_drop_desc.csv")
+
+# Encode the answer
 
 # Find the longest question in the training data. This will be used to set the max sequence length
 max_seq_len = max(
@@ -112,6 +114,23 @@ for i in range(len(test_data)):
         )
 
 
+# convert y variable to categorical tensor
+# 0 if the answer is 'same', 1 if the answer is 'ball_1' and 2 if the answer is 'ball_2'
+
+
+def convert_to_cat(x):
+    if x == "same":
+        return [1, 0, 0]
+    elif x == "ball_1":
+        return [0, 1, 0]
+    else:
+        return [0, 0, 1]
+
+
+train_y = [convert_to_cat(x) for x in train_y]
+val_y = [convert_to_cat(x) for x in val_y]
+test_y = [convert_to_cat(x) for x in test_y]
+
 train_x = torch.tensor(train_x)
 train_y = torch.tensor(train_y).float()
 val_x = torch.tensor(val_x)
@@ -137,14 +156,14 @@ block_size = max_seq_len
 
 # Create the model, loss function and optimiser
 
-# Use regression loss function
-loss_fn = nn.MSELoss()
+# Use categorical cross entropy loss function
+loss_fn = nn.CrossEntropyLoss()
 
-model = DecodeOnlyTransformer(
+model = EncodeOnlyTransformer(
     src_pad=encoder_dict["<pad>"],
     src_sos=encoder_dict["<sos>"],
     vocab_size_enc=len(encoder_dict),
-    output_size=1,
+    output_size=3,
     pooling="mean",
     max_seq_len=block_size,
     num_heads=training_hyperparams["num_heads"],
@@ -228,12 +247,12 @@ for epoch in range(max_iters):
         # Save the model if the validation loss is the best we've seen so far
         if val_loss < best_val_loss:
             best_val_loss = val_loss
-            torch.save(model, "gravity_gpt.pt")
+            torch.save(model, "ball_drop_gpt_desc.pt")
             counter = 0
 
         else:
             counter += 1
-            if counter > 2:
+            if counter > 3:
                 print(f"Stopping early at epoch {epoch + 1}")
                 break
 
@@ -245,7 +264,7 @@ plt.xlabel("Epoch")
 plt.ylabel("Loss")
 plt.legend()
 plt.title("Training and Validation Losses")
-plt.savefig("gravity_gpt_losses_diff.png")
+plt.savefig("ball_drop_gpt_losses_desc.png")
 plt.show()
 
 # Evaluate the model on the test set and plot the results and print the metrics
@@ -254,26 +273,34 @@ with torch.no_grad():
     test_loss = 0
     predictions = []
     targets = []
+    confusion_matrix = torch.zeros(3, 3)
     for batch_idx, (inputs, target) in enumerate(test_loader):
         inputs = inputs.to(device)
         target = target.to(device)
 
         output = model(inputs).squeeze(1)
         loss = loss_fn(output, target)
-
         test_loss += loss.item()
-        predictions.extend(output.view(-1).tolist())
-        targets.extend(target.view(-1).tolist())
+
+        # Append predictions and targets to the respective lists
+        predictions.append(output.argmax(dim=1))
+        targets.append(target.argmax(dim=1))
+        # convert to lists of ints
+
+        # Update the confusion matrix
+        for t, p in zip(targets.view(-1), predictions.view(-1)):
+            confusion_matrix[t.long(), p.long()] += 1
 
     test_loss /= len(test_loader)
     print(f"Test Loss: {test_loss:.4f}")
 
-    # Plot the predictions vs targets with a diagonal line
-    plt.figure(figsize=(12, 8))
-    plt.scatter(targets, predictions, alpha=0.5)
-    plt.plot(targets, targets, c="r")
-    plt.xlabel("Targets")
-    plt.ylabel("Predictions")
-    plt.title("Targets vs Predictions")
-    plt.savefig("gravity_gpt_targets_vs_predictions_diff.png")
-    plt.show()
+    # Concatenate predictions and targets into a single tensor
+    predictions = torch.cat(predictions)
+    targets = torch.cat(targets)
+
+    # Calculate accuracy from the confusion matrix
+    accuracy = confusion_matrix.diag() / confusion_matrix.sum(1)
+    print(f"Accuracy: {accuracy}")
+
+    # Print the confusion matrix
+    print(f"Confusion Matrix:\n{confusion_matrix}")

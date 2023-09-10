@@ -2,7 +2,7 @@ import pandas as pd
 import torch
 from torch import nn
 
-from gpt.models.do_transformer import DecodeOnlyTransformer
+from gpt.models.eo_transformer import EncodeOnlyTransformer
 from utils.basic_tokeniser import BasicTokeniser
 from utils.bpe import BPE
 from utils.data_utils import read_in_data, make_data_loaders
@@ -10,7 +10,7 @@ from utils.file_utils import load_config
 from utils.train_utils import PhysicalTrainer, set_seed
 
 # Load the training hyperparameters from the txt file
-training_hyperparams = load_config("bounce_config.txt")
+training_hyperparams = load_config("../bounce_config.txt")
 
 # Set the random seed for reproducibility
 set_seed(6_345_789)
@@ -86,7 +86,7 @@ loss_fn = (
     else nn.CrossEntropyLoss(ignore_index=encoder_dict[gpt_tokeniser.pad])
 )
 
-model = DecodeOnlyTransformer(
+model = EncodeOnlyTransformer(
     src_pad=encoder_dict["<pad>"],
     src_sos=encoder_dict["<sos>"],
     vocab_size_enc=len(encoder_dict),

@@ -1,6 +1,6 @@
 import torch
 from torch import nn
-from gpt.models.do_transformer import DecodeOnlyTransformer
+from gpt.models.eo_transformer import EncodeOnlyTransformer
 from utils.basic_tokeniser import BasicTokeniser
 from utils.data_utils import read_in_data, text_to_tensor
 from utils.train_utils import Trainer
@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 # save_config(training_hyperparams, 'gpt_config.txt')
 
 # Load the training hyperparameters from the txt file
-training_hyperparams = load_config("gravity_config.txt")
+training_hyperparams = load_config("../gravity_config.txt")
 
 # Set the random seed for reproducibility
 torch.manual_seed(6345789)
@@ -30,7 +30,7 @@ lr = training_hyperparams["learning_rate"]
 
 # data_folder = "data/madlibs/"
 data_folder = "data/gravity/"
-file_path = "examples_same_steps_min.txt"
+file_path = "examples_diff_steps_min.txt"
 
 use_bpe = False  # Set to True to use BPE, False to use a character encoder/decoder
 
@@ -61,9 +61,9 @@ encoding_utils = dict(
 )
 
 # Read in the data as pandas dataframes
-train_data = pd.read_csv(data_folder + "train_same_min.csv")
-val_data = pd.read_csv(data_folder + "val_same_min.csv")
-test_data = pd.read_csv(data_folder + "test_same_min.csv")
+train_data = pd.read_csv(data_folder + "train_diff_min.csv")
+val_data = pd.read_csv(data_folder + "val_diff_min.csv")
+test_data = pd.read_csv(data_folder + "test_diff_min.csv")
 
 sos_tok = [encoder_dict["<sos>"]]
 eos_tok = [encoder_dict["<eos>"]]
@@ -177,7 +177,7 @@ block_size = max_seq_len
 # Create the model, loss function and optimiser
 loss_fn = nn.CrossEntropyLoss(ignore_index=encoder_dict[gpt_tokeniser.pad])
 
-model = DecodeOnlyTransformer(
+model = EncodeOnlyTransformer(
     src_pad=encoder_dict["<pad>"],
     src_sos=encoder_dict["<sos>"],
     vocab_size_enc=len(encoder_dict),
@@ -270,7 +270,7 @@ for epoch in range(max_iters):
         # Save the model if the validation loss is the best we've seen so far
         if val_loss < best_val_loss:
             best_val_loss = val_loss
-            torch.save(model, "gravity_gpt_same_min.pt")
+            torch.save(model, "gravity_gpt_diff_min.pt")
             counter = 0
 
         else:
@@ -304,7 +304,7 @@ with torch.no_grad():
         predictions.extend(output.view(-1).tolist())
         targets.extend(target.view(-1).tolist())
         if batch_idx % (len(test_loader) // 100) == 0:
-            with open("gravity_same_min_examples.txt", "a") as f:
+            with open("gravity_diff_min_examples.txt", "a") as f:
                 f.write(
                     "Question is " + "".join(decode(inputs[0].tolist(), True)) + "\n"
                 )

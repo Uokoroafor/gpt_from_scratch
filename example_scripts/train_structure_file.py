@@ -3,7 +3,7 @@ import pandas as pd
 import torch
 from torch import nn
 import random
-from gpt.models.do_transformer import DecodeOnlyTransformer
+from gpt.models.eo_transformer import EncodeOnlyTransformer
 from utils.basic_tokeniser import BasicTokeniser
 from utils.bpe import BPE
 from utils.data_utils import read_in_data, make_data_loaders
@@ -11,7 +11,7 @@ from utils.file_utils import load_config
 from utils.train_utils import PhysicalTrainer, set_seed
 
 # Load the training hyperparameters from the txt file
-training_hyperparams = load_config("sinusoidal_config.txt")
+training_hyperparams = load_config("../sinusoidal_config.txt")
 
 # Set the random seed for reproducibility
 set_seed(6_345_789)
@@ -33,7 +33,7 @@ function_name = "sin"
 train_data_path = f"train_{function_name}.csv"
 val_data_path = f"val_{function_name}.csv"
 test_data_path = f"test_{function_name}.csv"
-output_type = "num"  # 'num' or 'text'
+output_type = "text"  # 'num' or 'text'
 
 use_bpe = False  # Set to True to use BPE, False to use a character encoder/decoder
 
@@ -87,7 +87,7 @@ loss_fn = (
     else nn.CrossEntropyLoss(ignore_index=encoder_dict[gpt_tokeniser.pad])
 )
 
-model = DecodeOnlyTransformer(
+model = EncodeOnlyTransformer(
     src_pad=encoder_dict["<pad>"],
     src_sos=encoder_dict["<sos>"],
     vocab_size_enc=len(encoder_dict),
