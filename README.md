@@ -1,7 +1,12 @@
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 # gpt_from_scratch
+### Repository Notice
 
-This is a PyTorch implementation of a smaller version of the GPT model. It has been inspired by the work of Andrej Karpathy and his nanoGPT [repo](https://github.com/karpathy/nanoGPT/tree/master) and  video [tutorial](https://github.com/karpathy/ng-video-lecture/).
+This repository serves primarily as a sandbox environment used for experimentation and testing. While it is now publicly accessible for submission purposes, please be aware that the codebase might contain unfinished features, experimental code snippets, and other elements typically found in a developmental playground. As such, the code and its components might not represent a finalised or production-ready state. If you have questions or need further clarifications on specific parts, please feel free to reach out or raise an issue.
+
+## Overview
+
+This is a repository worked on as a larger part of the individual project submission MSc in Artificial Intelligence Course at Imperial College London. This is a PyTorch implementation of a smaller version of the GPT model. It has been inspired by the work of Andrej Karpathy and his nanoGPT [repo](https://github.com/karpathy/nanoGPT/tree/master) and  video [tutorial](https://github.com/karpathy/ng-video-lecture/).
 
 It enacts the components of the transformer architecture in the pre-Norm style, which is the style used in the original paper.
 
@@ -14,7 +19,7 @@ The key components are:
 <br><br>
 - *Feed Forward Network*: This network contains two fully connected layers with a [GeLU activation function](https://arxiv.org/abs/1606.08415) between the layers.
 <br><br>
-- *Pre-Norm Architecture*: In the original paper, Post-Norm architecture is used where the layer normalisation is applied before attention mechanism for added stability.
+- *Pre-Norm Architecture*: In the original paper, Post-Norm architecture is used where the layer normalisation is applied after the attention mechanism. In contrast GPT applies the layer normalisation first for added stability.
 ## Installation
 ```
 git clone https://github.com/Uokoroafor/gpt_from_scratch
