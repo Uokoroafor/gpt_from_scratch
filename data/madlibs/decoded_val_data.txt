@@ -1,4 +1,3 @@
- a green dog.
 a red book jumps at the gray tree.
 my white phone walks under its white tree.
 its purple chair jumps below the tall cat.
@@ -198,4 +197,3 @@ my green dog jumps above our yellow chair.
 its purple cat jumps at a purple dog.
 that smart phone writes above a fat car.
 your robotic book walks above a small phone.
-their bro

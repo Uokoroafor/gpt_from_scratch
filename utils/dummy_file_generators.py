@@ -1,12 +1,16 @@
 import os
 import random
 from typing import List, Dict, Optional
-from utils.data_handler import save_data_as_txt
+from utils.data_utils import save_data_as_txt
 
 
-def generate_dummy_char_data(char_dict: Dict[str, List[str]], min_length: Optional[int] = 1,
-                             max_length: Optional[int] = 100,
-                             num_lines: int = 5, seed: Optional[int] = 1111) -> str:
+def generate_dummy_char_data(
+    char_dict: Dict[str, List[str]],
+    min_length: Optional[int] = 1,
+    max_length: Optional[int] = 100,
+    num_lines: int = 5,
+    seed: Optional[int] = 1111,
+) -> str:
     """Generate dummy data that follows the rules defined above.
 
     Args:
@@ -31,7 +35,7 @@ def generate_dummy_char_data(char_dict: Dict[str, List[str]], min_length: Option
     char_list = list(set(char_list))
 
     # Generate the dummy data
-    dummy_data = ''
+    dummy_data = ""
 
     for i in range(num_lines):
         # Generate the length of the dummy data
@@ -40,48 +44,52 @@ def generate_dummy_char_data(char_dict: Dict[str, List[str]], min_length: Option
         for char in range(length):
             # Get the character type but first char must be a letter
             if char == 0:
-                char_value = random.choice(char_dict['letters'])
+                char_value = random.choice(char_dict["letters"])
             else:
                 char_value = random.choice(char_list)
             # Add the character to the dummy data
 
             dummy_data += char_value
         # Add a new line to the dummy data
-        dummy_data += '\n'
+        dummy_data += "\n"
     return dummy_data
 
 
-def generate_dummy_word_data(pos_dict: Dict[str, List[str]], min_length: Optional[int] = 1,
-                             max_length: Optional[int] = 10,
-                             num_lines: int = 5, seed: Optional[int] = 1111) -> str:
+def generate_dummy_word_data(
+    pos_dict: Dict[str, List[str]],
+    min_length: Optional[int] = 1,
+    max_length: Optional[int] = 10,
+    num_lines: int = 5,
+    seed: Optional[int] = 1111,
+) -> str:
     """Generate dummy data that follows the rules defined below"""
 
     # Set the random seed manually for reproducibility.
     random.seed(seed)
 
-    noun_list = pos_dict['nouns']
-    verb_list = pos_dict['verbs']
-    adj_list = pos_dict['adjectives']
-    adv_list = pos_dict['adverbs']
-    prep_list = pos_dict['prepositions']
-    det_list = pos_dict['determiners']
-    conj_list = pos_dict['conjunctions']
-    pron_list = pos_dict['pronouns']
-    inter_list = pos_dict['interjections']
+    noun_list = pos_dict["nouns"]
+    verb_list = pos_dict["verbs"]
+    adj_list = pos_dict["adjectives"]
+    adv_list = pos_dict["adverbs"]
+    prep_list = pos_dict["prepositions"]
+    det_list = pos_dict["determiners"]
+    conj_list = pos_dict["conjunctions"]
+    pron_list = pos_dict["pronouns"]
+    inter_list = pos_dict["interjections"]
 
     # Generate the dummy data
-    dummy_data = ''
+    dummy_data = ""
 
     for i in range(num_lines):
         # Sentence structure is: det, adj, noun, verb, det, adj, noun.
-        dummy_data += random.choice(det_list) + ' '
-        dummy_data += random.choice(adj_list) + ' '
-        dummy_data += random.choice(noun_list) + ' '
-        dummy_data += random.choice(verb_list) + ' '
-        dummy_data += random.choice(prep_list) + ' '
-        dummy_data += random.choice(det_list) + ' '
-        dummy_data += random.choice(adj_list) + ' '
-        dummy_data += random.choice(noun_list) + '.\n'
+        dummy_data += random.choice(det_list) + " "
+        dummy_data += random.choice(adj_list) + " "
+        dummy_data += random.choice(noun_list) + " "
+        dummy_data += random.choice(verb_list) + " "
+        dummy_data += random.choice(prep_list) + " "
+        dummy_data += random.choice(det_list) + " "
+        dummy_data += random.choice(adj_list) + " "
+        dummy_data += random.choice(noun_list) + ".\n"
 
     # Remove the last line break
     dummy_data = dummy_data[:-1]
@@ -89,8 +97,12 @@ def generate_dummy_word_data(pos_dict: Dict[str, List[str]], min_length: Optiona
     return dummy_data
 
 
-def generate_building_blocks_data(min_length: Optional[int] = 5, max_length: Optional[int] = 100, num_lines: int = 5,
-                                  seed: Optional[int] = 1111) -> str:
+def generate_building_blocks_data(
+    min_length: Optional[int] = 5,
+    max_length: Optional[int] = 100,
+    num_lines: int = 5,
+    seed: Optional[int] = 1111,
+) -> str:
     """Generate dummy data that follows the rules defined below"""
 
     # data= 'abcde\n '
@@ -103,7 +115,7 @@ def generate_building_blocks_data(min_length: Optional[int] = 5, max_length: Opt
     # Set the random seed manually for reproducibility.
     random.seed(seed)
 
-    output_data = ''
+    output_data = ""
 
     for i in range(num_lines):
         # Generate the length of the dummy data
@@ -111,26 +123,26 @@ def generate_building_blocks_data(min_length: Optional[int] = 5, max_length: Opt
         # Generate the dummy data
         for char in range(length):
             if char == 0:
-                char_value = random.choice('abcde')
+                char_value = random.choice("abcde")
                 output_data += char_value
-            elif output_data[-1] == 'c':
-                char_value = random.choice('db')
+            elif output_data[-1] == "c":
+                char_value = random.choice("db")
                 output_data += char_value
-            elif output_data[-1] == 'e':
-                char_value = '\n'
+            elif output_data[-1] == "e":
+                char_value = "\n"
                 output_data += char_value
-            elif output_data[-1] == 'a':
-                char_value = random.choice('abcde ')
+            elif output_data[-1] == "a":
+                char_value = random.choice("abcde ")
                 output_data += char_value
             else:
-                char_value = random.choice('abcde \n')
+                char_value = random.choice("abcde \n")
                 output_data += char_value
 
-            if char_value == '\n':
+            if char_value == "\n":
                 break
         # Add a new line if the last character is not a new line
-        if output_data[-1] != '\n':
-            output_data += '\n'
+        if output_data[-1] != "\n":
+            output_data += "\n"
 
     # Remove the last line break
     output_data = output_data[:-1]
@@ -147,11 +159,11 @@ def remove_non_unique_lines(string: str) -> str:
         str: The string with non-unique lines removed.
     """
     # Split the string into lines
-    lines = string.split('\n')
+    lines = string.split("\n")
     # Remove the non-unique lines
     unique_lines = list(set(lines))
     # Join the unique lines back together
-    string = '\n'.join(unique_lines)
+    string = "\n".join(unique_lines)
     return string
 
 
@@ -165,38 +177,38 @@ def shuffle_lines(string: str) -> str:
         str: The string with the lines shuffled.
     """
     # Split the string into lines
-    lines = string.split('\n')
+    lines = string.split("\n")
     # Shuffle the lines
     random.shuffle(lines)
     # Join the lines back together
-    string = '\n'.join(lines)
+    string = "\n".join(lines)
     return string
 
 
 def determinant_check(string: str) -> str:
     """Checks that the determinants are correct."""
     # Split the string into lines
-    lines = string.split('\n')
+    lines = string.split("\n")
     # Split the lines into words
-    words = [line.split(' ') for line in lines]
+    words = [line.split(" ") for line in lines]
     # Check that the determinants are correct
     # if determinant is a, then next word must start with a consonant
     # if determinant is an, then next word must start with a vowel
     for i in range(len(words)):
         for j in range(len(words[i])):
-            if words[i][j] == 'a':
-                if words[i][j + 1][0] in ['a', 'e', 'i', 'o', 'u']:
-                    words[i][j] = 'an'
-            if words[i][j] == 'an':
-                if words[i][j + 1][0] not in ['a', 'e', 'i', 'o', 'u']:
-                    words[i][j] = 'a'
+            if words[i][j] == "a":
+                if words[i][j + 1][0] in ["a", "e", "i", "o", "u"]:
+                    words[i][j] = "an"
+            if words[i][j] == "an":
+                if words[i][j + 1][0] not in ["a", "e", "i", "o", "u"]:
+                    words[i][j] = "a"
     # Join the words back together
-    lines = [' '.join(line) for line in words]
-    string = '\n'.join(lines)
+    lines = [" ".join(line) for line in words]
+    string = "\n".join(lines)
     return string
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pass
     # # First we read in the data 'data/asimov/asimov_data_1000.txt'
     # char_dict, data = read_in_data('data/asimov/asimov_data_1000.txt')
