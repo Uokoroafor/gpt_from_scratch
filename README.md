@@ -135,8 +135,9 @@ The plot below is for a training run on a small model (CPU) trained on the gatsb
 
 [//]: # (<img src="./images/gatsby_plot.png" alt="Learning Curve" width="500"/>)
 
-![My Image](./images/gatsby_plot.png)
+[//]: # (![My Image]&#40;./images/gatsby_plot.png&#41;)
 
+<img loading="lazy" width="800px" src="./images/gatsby_plot.png" alt="Training Plot" />
 ```
 the say went to be like a little for the house, and
 we were came into the miror. The miror hands  but she urttion her hand
