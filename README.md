@@ -130,10 +130,11 @@ greedy_chars = decode(
     )[0].tolist()
 )
 ```
-###  Results
+###  Sample
 The plot below is for a training run on a small model (CPU) trained on the gatsby dataset. Sample output is shown below the plot.
 
 <img src="./images/gatsby_plot.png" alt="Learning Curve" width="400"/>
+
 ```
 the say went to be like a little for the house, and
 we were came into the miror. The miror hands  but she urttion her hand
