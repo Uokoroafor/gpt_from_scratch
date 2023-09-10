@@ -133,7 +133,9 @@ greedy_chars = decode(
 ###  Sample
 The plot below is for a training run on a small model (CPU) trained on the gatsby dataset. Sample output is shown below the plot.
 
-<img src="./images/gatsby_plot.png" alt="Learning Curve" width="400"/>
+[//]: # (<img src="./images/gatsby_plot.png" alt="Learning Curve" width="500"/>)
+
+![My Image](./images/gatsby_plot.png)
 
 ```
 the say went to be like a little for the house, and
