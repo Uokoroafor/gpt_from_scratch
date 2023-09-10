@@ -14,7 +14,7 @@ The key components are:
 <br><br>
 - *Feed Forward Network*: This network contains two fully connected layers with a [GeLU activation function](https://arxiv.org/abs/1606.08415) between the layers.
 <br><br>
-- *Post-Norm Architecture*: This is a residual connection that is added to the output of each sub-layer and then normalised by layer normalisation. In the original paper, the residual connection is added to the input of each sub-layer and then normalised by layer normalisation.
+- *Pre-Norm Architecture*: In the original paper, Post-Norm architecture is used where the layer normalisation is applied before attention mechanism for added stability.
 ## Installation
 ```
 git clone https://github.com/Uokoroafor/gpt_from_scratch
@@ -60,8 +60,7 @@ eval_iters = training_hyperparams["eval_every"]
 max_iters = training_hyperparams["epochs"]
 lr = training_hyperparams["learning_rate"]
 
-data_folder = "data/madlibs/"
-# data_folder = 'data/gatsby/'
+data_folder = 'data/gatsby/'
 
 
 # Create the encoder and decoder dictionaries and the encode and decode functions
@@ -125,11 +124,23 @@ greedy_chars = decode(
         sampled=False,
     )[0].tolist()
 )
-``` 
+```
+###  Results
+The plot below is for a training run on a small model (CPU) trained on the gatsby dataset. Sample output is shown below the plot.
+<img src="./images/gatsby_plot.png" alt="Learning Curve" width="400"/>
+```
+the say went to be like a little for the house, and
+we were came into the miror. The miror hands  but she urttion her hand
+she cared at the chair, and then saw me for the door.
+
+"What do you like it?” said Mr. Wolfshiem, and I calmosed to the turned
+toward the familiar of the bridg and slowly for the door.
+```
 
 ## References
 - [Attention Is All You Need](https://arxiv.org/abs/1706.03762)
 - [Andrej Karpathy's github repo](https://github.com/karpathy)
+- [Language Models are Unsupervised Multitask Learners](https://d4mucfpksywv.cloudfront.net/better-language-models/language-models.pdf)
 
 ## License
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
